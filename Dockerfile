@@ -21,8 +21,14 @@ RUN npm ci
 
 COPY . .
 
+# Prevent Next.js production build OOM in constrained build environments.
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
 # Build Next.js (standalone) and a tiny prod CLI for migrations.
 RUN npm run build && npm run build:cli
+
+# Keep only runtime deps before copying node_modules into the final image.
+RUN npm prune --omit=dev
 
 # ---- Runner ----
 FROM base AS runner
@@ -33,6 +39,9 @@ ENV NODE_ENV=production
 COPY --from=build /app/.next/standalone /app
 COPY --from=build /app/.next/static /app/.next/static
 COPY --from=build /app/public /app/public
+
+# Runtime migration CLI depends on these packages being present.
+COPY --from=build /app/node_modules /app/node_modules
 
 # Copy DB migrations and CLI migration runner.
 COPY --from=build /app/drizzle /app/drizzle

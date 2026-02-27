@@ -9,12 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "db:seed": "npx tsx src/lib/db/seed.ts",
-    "db:seed-profile": "npx tsx src/lib/db/seed-profile.ts",
-    "db:seed-templates": "npx tsx src/lib/db/seed-templates.ts",
+    "db:seed": "sh -c 'if [ \"$NODE_ENV\" = \"production\" ] && [ -f dist-cli/cli/seed.js ]; then node dist-cli/cli/seed.js; else npx tsx src/lib/db/seed.ts; fi'",
+    "db:seed-profile": "sh -c 'if [ \"$NODE_ENV\" = \"production\" ] && [ -f dist-cli/cli/seed-profile.js ]; then node dist-cli/cli/seed-profile.js; else npx tsx src/lib/db/seed-profile.ts; fi'",
+    "db:seed-templates": "sh -c 'if [ \"$NODE_ENV\" = \"production\" ] && [ -f dist-cli/cli/seed-templates.js ]; then node dist-cli/cli/seed-templates.js; else npx tsx src/lib/db/seed-templates.ts; fi'",
     "sync": "npx tsx src/lib/scraper/test-scrape.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "npx tsx src/lib/db/migrate.ts",
+    "db:migrate": "sh -c 'if [ \"$NODE_ENV\" = \"production\" ] && [ -f dist-cli/cli/migrate.js ]; then node dist-cli/cli/migrate.js; else npx tsx src/lib/db/migrate.ts; fi'",
     "db:backfill-contacts": "npx tsx src/lib/db/backfill-contacts.ts"
   },
   "dependencies": {

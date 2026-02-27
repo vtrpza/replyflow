@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
   deploy:
     name: Deploy app
     needs: quality
