@@ -94,8 +94,10 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
     let charIndex = 0;
     let partial = "";
 
+    let interval: ReturnType<typeof setInterval> | null = null;
+
     const initialTimeout = setTimeout(() => {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         if (charIndex < line.length) {
           partial += line[charIndex];
           charIndex++;
@@ -105,15 +107,17 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
             return next;
           });
         } else {
-          clearInterval(interval);
+          clearInterval(interval!);
+          interval = null;
           setTimeout(() => setCurrentLine((c) => c + 1), delay / 2);
         }
       }, speed);
-
-      return () => clearInterval(interval);
     }, currentLine === 0 ? delay : 100);
 
-    return () => clearTimeout(initialTimeout);
+    return () => {
+      clearTimeout(initialTimeout);
+      if (interval !== null) clearInterval(interval);
+    };
   }, [currentLine, done, lines, speed, delay]);
 
   return { displayedLines, currentLine, done };
