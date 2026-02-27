@@ -6,6 +6,7 @@
 import { db, schema } from "@/lib/db";
 import { eq, and, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
+import { runSourceDiscovery } from "@/lib/sources/discovery";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -573,6 +574,23 @@ export function ensureUserExists(session: Session): string {
     })
     .onConflictDoNothing()
     .run();
+
+  // Auto-provision sources for new users via discovery.
+  // runSourceDiscovery is synchronous (reads JSON + SQLite inserts, ~20-50ms)
+  // and idempotent (checks existence before inserting).
+  const sourceCount = db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.repoSources)
+    .where(eq(schema.repoSources.userId, canonicalUserId))
+    .get();
+
+  if (!sourceCount || sourceCount.count === 0) {
+    try {
+      runSourceDiscovery(canonicalUserId);
+    } catch (e) {
+      console.error("Auto-discovery failed for new user:", canonicalUserId, e);
+    }
+  }
 
   // Keep caller/session aligned with canonical id in this request lifecycle.
   session.user.id = canonicalUserId;

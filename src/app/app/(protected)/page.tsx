@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   EmptyState,
@@ -76,6 +76,8 @@ export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [calculating, setCalculating] = useState<boolean>(false);
+  const [initialSyncing, setInitialSyncing] = useState<boolean>(false);
+  const initialSyncTriggered = useRef(false);
 
   useEffect(() => {
     fetch("/api/stats")
@@ -90,6 +92,35 @@ export default function Dashboard() {
       )
       .finally(() => setLoading(false));
   }, [toast, isPt]);
+
+  // Auto-sync on first visit when user has sources but no jobs yet
+  useEffect(() => {
+    if (
+      !stats ||
+      initialSyncTriggered.current ||
+      stats.totalReposMonitored <= 0 ||
+      stats.totalJobs > 0
+    ) {
+      return;
+    }
+
+    initialSyncTriggered.current = true;
+    setInitialSyncing(true);
+
+    fetch("/api/sync", { method: "POST", body: JSON.stringify({}) })
+      .then((r) => r.json())
+      .then(() => fetch("/api/stats"))
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() =>
+        toast.error(
+          isPt
+            ? "Falha na sincronização inicial"
+            : "Initial sync failed"
+        )
+      )
+      .finally(() => setInitialSyncing(false));
+  }, [stats, toast, isPt]);
 
   const handleCalculateScores = async (): Promise<void> => {
     setCalculating(true);
@@ -133,6 +164,21 @@ export default function Dashboard() {
           {[...Array(3)].map((_, i) => (
             <Skeleton key={i} className="h-56 rounded-xl" />
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (initialSyncing) {
+    return (
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-4">
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <div className="h-8 w-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[var(--rf-muted)] font-mono">
+            {isPt
+              ? "Preparando seu painel... Isso pode levar alguns segundos."
+              : "Preparing your panel... This may take a few seconds."}
+          </p>
         </div>
       </div>
     );
