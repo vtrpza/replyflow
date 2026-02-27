@@ -1,8 +1,18 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+const skipBuildValidation: boolean = process.env.SKIP_BUILD_VALIDATION === "1";
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  typescript: {
+    // CI quality job already runs `npx tsc --noEmit`.
+    ignoreBuildErrors: skipBuildValidation,
+  },
+  eslint: {
+    // CI quality job already validates lint/type-check before deploy.
+    ignoreDuringBuilds: skipBuildValidation,
+  },
 };
 
 export default withSentryConfig(nextConfig, {

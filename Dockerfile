@@ -11,6 +11,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # ---- Build ----
 FROM base AS build
 ARG SENTRY_AUTH_TOKEN
+ARG SKIP_BUILD_VALIDATION=0
 
 # Needed for native modules (better-sqlite3) during install.
 RUN apt-get update -qq && \
@@ -24,6 +25,7 @@ COPY . .
 
 # Prevent Next.js production build OOM in constrained build environments.
 ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV SKIP_BUILD_VALIDATION=$SKIP_BUILD_VALIDATION
 
 # Build Next.js (standalone) and a tiny prod CLI for migrations.
 RUN SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" npm run build && npm run build:cli
