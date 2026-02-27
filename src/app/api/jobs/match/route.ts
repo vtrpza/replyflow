@@ -14,9 +14,9 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
-    const updatedCount = await calculateMatchScoresForUser(session.user.id);
+    const updatedCount = await calculateMatchScoresForUser(userId);
 
     return NextResponse.json({
       success: true,

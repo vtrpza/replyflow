@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import { db, schema } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -32,8 +34,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        // Prefer canonical DB user id by email when available,
+        // so returning users are mapped correctly even if token.sub differs.
+        const email = session.user.email;
+        if (email) {
+          const existingUser = db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.email, email))
+            .get();
+
+          if (existingUser) {
+            session.user.id = existingUser.id;
+            return session;
+          }
+        }
+
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
       }
       return session;
     },

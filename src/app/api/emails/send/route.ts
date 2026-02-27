@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { to, subject, bodyHtml, bodyText, accountId, replyTo } = body;
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         .where(
           and(
             eq(schema.connectedEmailAccounts.id, accountId),
-            eq(schema.connectedEmailAccounts.userId, session.user.id)
+            eq(schema.connectedEmailAccounts.userId, userId)
           )
         )
         .get();
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       const accounts = db
         .select()
         .from(schema.connectedEmailAccounts)
-        .where(eq(schema.connectedEmailAccounts.userId, session.user.id))
+        .where(eq(schema.connectedEmailAccounts.userId, userId))
         .all();
 
       account = accounts.find((a) => a.isDefault) || accounts[0];
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sendCheck = assertWithinPlan(session.user.id, "sends");
+    const sendCheck = assertWithinPlan(userId, "sends");
     if (!sendCheck.ok) {
       return NextResponse.json(
         upgradeRequiredResponse(sendCheck.feature, sendCheck.limit),
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
       db.insert(schema.outboundEmails)
         .values({
           id: emailId,
-          userId: session.user.id,
+          userId,
           accountId: account.id,
           recipientEmail: to,
           senderEmail: account.emailAddress,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       db.insert(schema.outboundEmails)
         .values({
           id: emailId,
-          userId: session.user.id,
+          userId,
           accountId: account.id,
           recipientEmail: to,
           senderEmail: account.emailAddress,

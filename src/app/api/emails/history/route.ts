@@ -11,14 +11,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
     const requestedLimit = parseInt(searchParams.get("limit") || "50", 10);
     const offset = parseInt(searchParams.get("offset") || "0", 10);
 
-    const userId = session.user.id;
     const plan = getEffectivePlan(userId);
     const limits = getLimitsForPlan(plan);
 

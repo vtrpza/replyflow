@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { jobId } = body;

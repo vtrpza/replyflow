@@ -13,8 +13,8 @@ export default async function AppLayout({
     redirect("/app/signin");
   }
 
-  ensureUserExists(session);
-  getOrCreateProfile(session.user.id);
+  const userId = ensureUserExists(session);
+  getOrCreateProfile(userId);
 
   return (
     <div className="flex h-screen bg-[var(--rf-bg)] text-[var(--rf-text)]">

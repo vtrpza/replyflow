@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
@@ -79,8 +79,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { jobId, language = "pt-BR" } = body;
@@ -193,6 +192,7 @@ export async function PATCH(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { id, status, notes, emailSubject, emailBody } = body;
@@ -204,7 +204,7 @@ export async function PATCH(request: Request) {
     const existing = db
       .select()
       .from(schema.outreachRecords)
-      .where(and(eq(schema.outreachRecords.id, id), eq(schema.outreachRecords.userId, session.user.id)))
+      .where(and(eq(schema.outreachRecords.id, id), eq(schema.outreachRecords.userId, userId)))
       .get();
 
     if (!existing) {
@@ -243,8 +243,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { id, attachCV, toEmailOverride, accountId, emailSubject, emailBody } = body;

@@ -17,12 +17,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const accounts = db
       .select()
       .from(schema.connectedEmailAccounts)
-      .where(eq(schema.connectedEmailAccounts.userId, session.user.id))
+      .where(eq(schema.connectedEmailAccounts.userId, userId))
       .all();
 
     const sanitized = accounts.map((account) => ({
@@ -49,11 +49,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const body = await request.json();
     const { action } = body;
-    const userId = session.user.id;
 
     const existingAccounts = db
       .select()

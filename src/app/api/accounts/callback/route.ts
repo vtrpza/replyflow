@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/app/signin?error=unauthorized", request.url));
     }
 
-    ensureUserExists(session);
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");

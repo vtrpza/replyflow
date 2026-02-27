@@ -268,40 +268,72 @@ export function getPlanInfo(userId: string): PlanInfo {
  * Ensure user exists in the users table.
  * Upserts using session data so FK targets exist even without DB adapter.
  */
-export function ensureUserExists(session: Session): void {
-  if (!session?.user?.id) return;
+export function ensureUserExists(session: Session): string {
+  if (!session?.user?.id) {
+    return "";
+  }
 
   const now = new Date().toISOString();
-  const email = session.user.email || `${session.user.id}@unknown.local`;
-  const existing = db
+  const requestedId = session.user.id;
+  const requestedEmail = session.user.email || `${requestedId}@unknown.local`;
+
+  const existingById = db
     .select()
     .from(schema.users)
-    .where(eq(schema.users.id, session.user.id))
+    .where(eq(schema.users.id, requestedId))
     .get();
 
-  db.insert(schema.users)
-    .values({
-      id: session.user.id,
-      name: session.user.name || null,
-      email,
-      image: session.user.image || null,
-      createdAt: existing?.createdAt || now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: schema.users.id,
-      set: {
-        name: session.user.name || null,
-        email,
-        image: session.user.image || null,
+  const existingByEmail = db
+    .select()
+    .from(schema.users)
+    .where(eq(schema.users.email, requestedEmail))
+    .get();
+
+  // Existing user found by email but with a different ID.
+  // Keep canonical DB ID to avoid UNIQUE(email) crashes and user duplication.
+  let canonicalUserId = requestedId;
+  if (existingByEmail && existingByEmail.id !== requestedId) {
+    canonicalUserId = existingByEmail.id;
+
+    db.update(schema.users)
+      .set({
+        name: session.user.name || existingByEmail.name,
+        image: session.user.image || existingByEmail.image,
         updatedAt: now,
-      },
-    })
-    .run();
+      })
+      .where(eq(schema.users.id, existingByEmail.id))
+      .run();
+  } else if (!existingById) {
+    db.insert(schema.users)
+      .values({
+        id: requestedId,
+        name: session.user.name || null,
+        email: requestedEmail,
+        image: session.user.image || null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+  } else {
+    const safeEmail =
+      existingByEmail && existingByEmail.id !== existingById.id
+        ? existingById.email
+        : requestedEmail;
+
+    db.update(schema.users)
+      .set({
+        name: session.user.name || existingById.name,
+        email: safeEmail,
+        image: session.user.image || existingById.image,
+        updatedAt: now,
+      })
+      .where(eq(schema.users.id, existingById.id))
+      .run();
+  }
 
   db.insert(schema.userPlan)
     .values({
-      userId: session.user.id,
+      userId: canonicalUserId,
       plan: "free",
       planStartedAt: now,
       createdAt: now,
@@ -309,6 +341,11 @@ export function ensureUserExists(session: Session): void {
     })
     .onConflictDoNothing()
     .run();
+
+  // Keep caller/session aligned with canonical id in this request lifecycle.
+  session.user.id = canonicalUserId;
+
+  return canonicalUserId;
 }
 
 /**

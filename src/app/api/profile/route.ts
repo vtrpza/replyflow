@@ -12,8 +12,8 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const profile = getOrCreateProfile(session.user.id);
+    const userId = ensureUserExists(session);
+    const profile = getOrCreateProfile(userId);
 
     return NextResponse.json({
       ...profile,
@@ -38,8 +38,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const profile = getOrCreateProfile(session.user.id);
+    const userId = ensureUserExists(session);
+    const profile = getOrCreateProfile(userId);
     const body = await request.json();
 
     const updateData = {
@@ -68,7 +68,7 @@ export async function PUT(request: Request) {
       .where(eq(schema.userProfile.id, profile.id))
       .run();
 
-    const updatedCount = await calculateMatchScoresForUser(session.user.id);
+    const updatedCount = await calculateMatchScoresForUser(userId);
 
     return NextResponse.json({
       success: true,

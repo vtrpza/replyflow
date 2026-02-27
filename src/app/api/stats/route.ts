@@ -11,8 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    ensureUserExists(session);
-    const userId = session.user.id;
+    const userId = ensureUserExists(session);
 
     const totalResult = db
       .select({ count: sql<number>`count(*)` })
