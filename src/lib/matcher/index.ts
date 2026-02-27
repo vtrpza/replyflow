@@ -21,6 +21,14 @@ interface JobForMatching {
 interface MatchResult {
   score: number;
   reasons: string[];
+  missingSkills: string[];
+  breakdown: {
+    skills: number;
+    remote: number;
+    contract: number;
+    level: number;
+    location: number;
+  };
 }
 
 function generateId(): string {
@@ -29,8 +37,16 @@ function generateId(): string {
 
 export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult {
   const reasons: string[] = [];
+  const missingSkills: string[] = [];
   let totalWeight = 0;
   let earnedWeight = 0;
+  const breakdown = {
+    skills: 0,
+    remote: 0,
+    contract: 0,
+    level: 0,
+    location: 0,
+  };
 
   const stackWeight = 50;
   totalWeight += stackWeight;
@@ -55,6 +71,7 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
     const userMatchRatio = matchingSkills.length / Math.max(normalizedProfileSkills.length, 1);
     const stackScore = ((coverageRatio + userMatchRatio) / 2) * stackWeight;
     earnedWeight += Math.min(stackScore, stackWeight);
+    breakdown.skills = Math.round(Math.min(stackScore, stackWeight));
 
     if (matchingSkills.length > 0) {
       reasons.push(
@@ -63,12 +80,23 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
         }`
       );
     }
+
+    const matchingSet = new Set(matchingSkills.map((skill) => skill.toLowerCase()));
+    for (const jobSkill of normalizedJobStack) {
+      const isMatched = Array.from(matchingSet).some((skill) =>
+        jobSkill === skill || jobSkill.includes(skill) || skill.includes(jobSkill)
+      );
+      if (!isMatched) {
+        missingSkills.push(jobSkill);
+      }
+    }
   }
 
   const remoteWeight = 15;
   totalWeight += remoteWeight;
   if (profile.preferRemote && job.isRemote) {
     earnedWeight += remoteWeight;
+    breakdown.remote = remoteWeight;
     reasons.push("Remote");
   }
 
@@ -77,6 +105,7 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
   if (job.contractType && profile.preferredContractTypes.length > 0) {
     if (profile.preferredContractTypes.includes(job.contractType as ContractType)) {
       earnedWeight += contractWeight;
+      breakdown.contract = contractWeight;
       reasons.push(`Contract: ${job.contractType}`);
     }
   }
@@ -97,9 +126,11 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
 
     if (diff <= 0) {
       earnedWeight += levelWeight;
+      breakdown.level = levelWeight;
       reasons.push(`Level: ${job.experienceLevel}`);
     } else if (diff === 1) {
       earnedWeight += levelWeight * 0.3;
+      breakdown.level = Math.round(levelWeight * 0.3);
       reasons.push(`Level stretch: ${job.experienceLevel}`);
     }
   }
@@ -109,6 +140,7 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
   if (job.isRemote) {
     if (profile.preferRemote) {
       earnedWeight += locationWeight;
+      breakdown.location = locationWeight;
     }
   } else if (job.location && profile.preferredLocations.length > 0) {
     const normalizedJobLocation = job.location.toLowerCase();
@@ -117,6 +149,7 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
     );
     if (matches) {
       earnedWeight += locationWeight;
+      breakdown.location = locationWeight;
       reasons.push(`Location: ${job.location}`);
     }
   }
@@ -126,6 +159,8 @@ export function matchJob(job: JobForMatching, profile: UserProfile): MatchResult
   return {
     score: Math.min(score, 100),
     reasons,
+    missingSkills: Array.from(new Set(missingSkills)).slice(0, 8),
+    breakdown,
   };
 }
 
@@ -147,6 +182,11 @@ export async function calculateMatchScoresForUser(userId: string): Promise<numbe
     preferredLocations: JSON.parse(profile.preferredLocations) as string[],
     highlights: JSON.parse(profile.highlights) as string[],
     experienceLevel: profile.experienceLevel as ExperienceLevel,
+    profileScore: profile.profileScore,
+    profileScoreBand: profile.profileScoreBand as "low" | "medium" | "high",
+    profileScoreMissing: JSON.parse(profile.profileScoreMissing) as string[],
+    profileScoreSuggestions: JSON.parse(profile.profileScoreSuggestions) as string[],
+    profileScoreUpdatedAt: profile.profileScoreUpdatedAt,
   };
 
   const jobs = db.select().from(schema.jobs).all();
@@ -175,12 +215,18 @@ export async function calculateMatchScoresForUser(userId: string): Promise<numbe
         userId,
         jobId: job.id,
         score: result.score,
+        reasonsJson: JSON.stringify(result.reasons),
+        missingSkillsJson: JSON.stringify(result.missingSkills),
+        breakdownJson: JSON.stringify(result.breakdown),
         calculatedAt: now,
       })
       .onConflictDoUpdate({
         target: [schema.jobMatchScores.userId, schema.jobMatchScores.jobId],
         set: {
           score: result.score,
+          reasonsJson: JSON.stringify(result.reasons),
+          missingSkillsJson: JSON.stringify(result.missingSkills),
+          breakdownJson: JSON.stringify(result.breakdown),
           calculatedAt: now,
         },
       })

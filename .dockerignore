@@ -19,6 +19,7 @@
 
 # production
 /build
+dist-cli/
 
 # misc
 .DS_Store
@@ -39,6 +40,9 @@ yarn-error.log*
 data/*.db
 data/*.db-wal
 data/*.db-shm
+
+# local runtime/seeding artifacts (Fly uses /data volume in prod)
+data/
 
 # vercel
 .vercel

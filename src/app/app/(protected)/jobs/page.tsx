@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { EmptyState, LoadingButton, SkeletonList, useToast } from "@/components/ui";
+import { EmptyState, LoadingButton, SkeletonList, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 
 interface Job {
@@ -26,6 +26,26 @@ interface Job {
   contactLinkedin: string | null;
   matchScore: number | null;
   opportunityScore?: number;
+  source?: {
+    id: string;
+    type: string;
+    displayName: string;
+    healthScore: number;
+    healthStatus: "healthy" | "warning" | "critical";
+    attributionLabel: string | null;
+    attributionUrl: string | null;
+  } | null;
+  matchExplain?: {
+    reasons: string[];
+    missingSkills: string[];
+    breakdown: {
+      skills: number;
+      remote: number;
+      contract: number;
+      level: number;
+      location: number;
+    };
+  };
   outreachStatus: string;
   isRevealed: boolean;
   hasContact: boolean;
@@ -392,6 +412,9 @@ export default function JobsPage() {
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
                       {job.company && <span className="text-zinc-300">{job.company}</span>}
                       <span>{job.repoFullName}</span>
+                      {job.source?.displayName && (
+                        <span className="text-cyan-300">{job.source.displayName}</span>
+                      )}
                       {job.salary && <span className="text-emerald-400">{job.salary}</span>}
                       {job.location && <span>{job.location}</span>}
                       {job.contractType && <span className="px-1.5 py-0.5 text-xs bg-zinc-800 rounded">{job.contractType}</span>}
@@ -407,26 +430,49 @@ export default function JobsPage() {
                         ))}
                       </div>
                     )}
+                    {job.matchExplain?.reasons?.length ? (
+                      <p className="text-xs text-cyan-300 mt-2">
+                        {job.matchExplain.reasons[0]}
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     {job.matchScore !== null && (
-                      <span
-                        className={`hidden sm:inline-block text-xs font-medium px-2 py-1 rounded ${
-                          job.matchScore >= 70
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : job.matchScore >= 40
-                              ? "bg-amber-500/10 text-amber-400"
-                              : "bg-zinc-800 text-zinc-400"
-                        }`}
+                      <Tooltip
+                        content={
+                          job.matchExplain?.reasons?.length
+                            ? job.matchExplain.reasons.slice(0, 2).join(" • ")
+                            : isPt
+                              ? "Score de match com base em skills, remoto, contrato, senioridade e local."
+                              : "Match score based on skills, remote, contract, level, and location."
+                        }
                       >
-                        {job.matchScore}%
-                      </span>
+                        <span
+                          className={`hidden sm:inline-block text-xs font-medium px-2 py-1 rounded ${
+                            job.matchScore >= 70
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : job.matchScore >= 40
+                                ? "bg-amber-500/10 text-amber-400"
+                                : "bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {job.matchScore}%
+                        </span>
+                      </Tooltip>
                     )}
                     {job.opportunityScore !== undefined && (
-                      <span className="hidden sm:inline-block text-xs font-medium px-2 py-1 rounded bg-cyan-500/10 text-cyan-300">
-                        OPP {Math.round(job.opportunityScore)}
-                      </span>
+                      <Tooltip
+                        content={
+                          isPt
+                            ? "Opportunity = match + contato direto + ATS + frescor."
+                            : "Opportunity = match + direct contact + ATS + freshness."
+                        }
+                      >
+                        <span className="hidden sm:inline-block text-xs font-medium px-2 py-1 rounded bg-cyan-500/10 text-cyan-300">
+                          OPP {Math.round(job.opportunityScore)}
+                        </span>
+                      </Tooltip>
                     )}
                     <button
                       onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
@@ -527,6 +573,30 @@ export default function JobsPage() {
                       </div>
                     )}
                   </div>
+                  {job.matchExplain?.reasons?.length ? (
+                    <div className="mb-4">
+                      <p className="text-xs text-zinc-500 mb-1">{isPt ? "Razoes de match" : "Match reasons"}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.matchExplain.reasons.slice(0, 4).map((reason) => (
+                          <span key={reason} className="px-2 py-0.5 text-xs bg-cyan-500/10 text-cyan-300 rounded">
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {job.matchExplain?.missingSkills?.length ? (
+                    <div className="mb-4">
+                      <p className="text-xs text-zinc-500 mb-1">{isPt ? "Skill gaps" : "Skill gaps"}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {job.matchExplain.missingSkills.slice(0, 6).map((skill) => (
+                          <span key={skill} className="px-2 py-0.5 text-xs bg-amber-500/10 text-amber-300 rounded">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
                   <div className="bg-zinc-950 rounded-lg p-4 max-h-96 overflow-auto">
                     <pre className="text-xs text-zinc-400 whitespace-pre-wrap font-mono">
                       {job.body.substring(0, 2000)}

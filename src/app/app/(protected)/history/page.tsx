@@ -93,7 +93,7 @@ export default function HistoryPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-3">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-64 rounded-lg" />
@@ -103,8 +103,8 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">{isPt ? "Historico de Emails" : "Email History"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -114,7 +114,7 @@ export default function HistoryPage() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter(null)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
@@ -188,9 +188,9 @@ export default function HistoryPage() {
                       {email.subject}
                     </h3>
 
-                    <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
-                      <span>{isPt ? "Para" : "To"}: {email.recipientEmail}</span>
-                      <span>{isPt ? "De" : "From"}: {email.senderEmail}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 text-xs text-zinc-500">
+                      <span className="truncate">{isPt ? "Para" : "To"}: {email.recipientEmail}</span>
+                      <span className="truncate">{isPt ? "De" : "From"}: {email.senderEmail}</span>
                     </div>
 
                     {email.sentAt && (

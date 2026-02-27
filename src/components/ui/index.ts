@@ -4,3 +4,4 @@ export { Skeleton, SkeletonCard, SkeletonList, SkeletonText, SkeletonAvatar } fr
 export { LoadingOverlay, InlineLoading } from "./loading";
 export { ErrorBanner, ErrorState, EmptyState } from "./error";
 export { ModalProvider, useModal, Modal, ConfirmModal } from "./modal";
+export { Tooltip } from "./tooltip";

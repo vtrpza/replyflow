@@ -1,0 +1,79 @@
+{
+  "version": "1.1.0",
+  "generatedAt": "2026-02-27",
+  "description": "Curated public ATS sources for BR/LATAM and intl-latam-friendly openings.",
+  "sources": [
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "nubank",
+      "displayName": "Nubank",
+      "category": "fintech",
+      "regionTags": ["BR", "LATAM", "INTL_LATAM_FRIENDLY"],
+      "confidence": 94
+    },
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "quintoandar",
+      "displayName": "QuintoAndar",
+      "category": "proptech",
+      "regionTags": ["BR", "LATAM"],
+      "confidence": 91
+    },
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "brex",
+      "displayName": "Brex",
+      "category": "fintech",
+      "regionTags": ["LATAM", "INTL_LATAM_FRIENDLY"],
+      "confidence": 88
+    },
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "remotecom",
+      "displayName": "Remote",
+      "category": "hrtech",
+      "regionTags": ["LATAM", "INTL_LATAM_FRIENDLY"],
+      "confidence": 86
+    },
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "stripe",
+      "displayName": "Stripe",
+      "category": "fintech",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 84
+    },
+    {
+      "sourceType": "greenhouse_board",
+      "externalKey": "figma",
+      "displayName": "Figma",
+      "category": "saas",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 82
+    },
+    {
+      "sourceType": "lever_postings",
+      "externalKey": "dlocal",
+      "displayName": "dLocal",
+      "category": "fintech",
+      "regionTags": ["LATAM", "INTL_LATAM_FRIENDLY"],
+      "confidence": 90
+    },
+    {
+      "sourceType": "lever_postings",
+      "externalKey": "plaid",
+      "displayName": "Plaid",
+      "category": "fintech",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 86
+    },
+    {
+      "sourceType": "lever_postings",
+      "externalKey": "atlassian",
+      "displayName": "Atlassian",
+      "category": "saas",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 83
+    }
+  ]
+}

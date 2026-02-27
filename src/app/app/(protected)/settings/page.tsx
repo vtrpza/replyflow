@@ -1,11 +1,12 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useToast, Skeleton, LoadingButton } from "@/components/ui";
+import { useToast, Skeleton, LoadingButton, Tooltip } from "@/components/ui";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { LanguageSwitch } from "@/components/ui/language-switch";
 
 interface Profile {
   name: string;
@@ -25,6 +26,13 @@ interface Profile {
   maxSalary: number | null;
   bio: string | null;
   highlights: string[];
+  profileScore?: {
+    score: number;
+    band: "low" | "medium" | "high";
+    missing: string[];
+    suggestions: string[];
+    updatedAt: string | null;
+  };
 }
 
 interface ConnectedAccount {
@@ -76,6 +84,13 @@ function SettingsPageContent() {
     maxSalary: null,
     bio: null,
     highlights: [],
+    profileScore: {
+      score: 0,
+      band: "low",
+      missing: [],
+      suggestions: [],
+      updatedAt: null,
+    },
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -164,6 +179,9 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (data.success) {
+        if (data.profileScore) {
+          setProfile((prev) => ({ ...prev, profileScore: data.profileScore }));
+        }
         toast.success(isPt ? "Perfil salvo!" : "Profile saved!");
       } else {
         toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
@@ -299,7 +317,7 @@ function SettingsPageContent() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="space-y-4">
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-64 rounded-lg" />
@@ -310,7 +328,7 @@ function SettingsPageContent() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="p-8 max-w-md">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-md">
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
           <Mail className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-200 mb-2">
@@ -333,8 +351,8 @@ function SettingsPageContent() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white">{isPt ? "Configuracoes" : "Settings"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -343,11 +361,12 @@ function SettingsPageContent() {
               : "Configure your profile for job matching and email generation"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-zinc-400">{session?.user?.email}</span>
+        <div className="flex items-center gap-3">
+          <LanguageSwitch />
+          <span className="text-sm text-zinc-400 truncate max-w-[200px]">{session?.user?.email}</span>
           <button
             onClick={() => signOut()}
-            className="text-sm text-zinc-500 hover:text-zinc-300"
+            className="text-sm text-zinc-500 hover:text-zinc-300 shrink-0"
           >
             {isPt ? "Sair" : "Sign out"}
           </button>
@@ -355,6 +374,42 @@ function SettingsPageContent() {
       </div>
 
       <div className="space-y-8">
+        <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-lg font-semibold text-zinc-200">{isPt ? "Score de perfil" : "Profile score"}</h2>
+            <Tooltip
+              content={
+                isPt
+                  ? "Score de prontidao baseado em dados de perfil, skills e sinais de outreach."
+                  : "Readiness score based on profile data, skills, and outreach signals."
+              }
+            >
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-800 text-xs text-zinc-300">?</span>
+            </Tooltip>
+          </div>
+          <div className="flex items-end justify-between">
+            <p className="text-4xl font-bold text-white">{profile.profileScore?.score ?? 0}</p>
+            <span
+              className={`px-2 py-1 rounded text-xs ${
+                profile.profileScore?.band === "high"
+                  ? "bg-emerald-500/10 text-emerald-300"
+                  : profile.profileScore?.band === "medium"
+                  ? "bg-amber-500/10 text-amber-300"
+                  : "bg-red-500/10 text-red-300"
+              }`}
+            >
+              {(profile.profileScore?.band || "low").toUpperCase()}
+            </span>
+          </div>
+          {profile.profileScore?.suggestions?.length ? (
+            <ul className="mt-3 space-y-1 text-xs text-zinc-400">
+              {profile.profileScore.suggestions.slice(0, 4).map((suggestion) => (
+                <li key={suggestion}>- {suggestion}</li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
@@ -501,7 +556,7 @@ function SettingsPageContent() {
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
             {isPt ? "Informacoes pessoais" : "Personal Information"}
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-zinc-500 mb-1">{isPt ? "Nome" : "Name"}</label>
               <input
@@ -595,7 +650,7 @@ function SettingsPageContent() {
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
             {isPt ? "Experiencia" : "Experience"}
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
                 {isPt ? "Anos de experiencia" : "Years of Experience"}
@@ -841,7 +896,7 @@ function SettingsPageContent() {
 
 function SettingsPageFallback() {
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="space-y-4">
         <Skeleton className="h-8 w-32" />
         <Skeleton className="h-64 rounded-lg" />

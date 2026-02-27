@@ -14,6 +14,12 @@
 
   --background: #0B0F14;
   --foreground: #E6EDF3;
+
+  /* Avoid build-time Google Fonts fetch (Fly/CI/network-restricted environments). */
+  --font-geist-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
 @theme inline {
@@ -26,7 +32,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-geist-sans);
 }
 
 /* Subtle grid background for marketing pages */

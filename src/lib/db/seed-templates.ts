@@ -7,7 +7,9 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import * as schema from "./schema";
 import path from "path";
 
-const DB_PATH = path.join(process.cwd(), "data", "gitjobs.db");
+const DB_PATH =
+  process.env.DATABASE_PATH ||
+  path.join(process.cwd(), "data", "gitjobs.db");
 
 const sqlite = new Database(DB_PATH);
 sqlite.pragma("journal_mode = WAL");

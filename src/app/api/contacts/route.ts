@@ -47,6 +47,12 @@ export async function GET(request: NextRequest) {
         "status",
         "source",
         "source_ref",
+        "jobs_count",
+        "first_seen_at",
+        "last_seen_at",
+        "last_job_title",
+        "last_company",
+        "last_source_type",
         "updated_at",
       ].join(",");
 
@@ -59,6 +65,12 @@ export async function GET(request: NextRequest) {
           toCsvValue(row.status),
           toCsvValue(row.source),
           toCsvValue(row.sourceRef),
+          toCsvValue(String(row.jobsCount ?? 0)),
+          toCsvValue(row.firstSeenAt),
+          toCsvValue(row.lastSeenAt),
+          toCsvValue(row.lastJobTitle),
+          toCsvValue(row.lastCompany),
+          toCsvValue(row.lastSourceType),
           toCsvValue(row.updatedAt),
         ].join(",")
       );
@@ -126,6 +138,9 @@ export async function POST(request: NextRequest) {
         company: job.company,
         position: job.role,
         sourceRef: job.issueUrl,
+        sourceType: job.sourceType || "github_repo",
+        jobId: job.id,
+        jobTitle: job.title,
       });
 
       return NextResponse.json({ success: true, ...result });
@@ -161,6 +176,14 @@ export async function POST(request: NextRequest) {
         status: body.status || "lead",
         notes: body.notes || null,
         customFields: null,
+        firstSeenAt: now,
+        lastSeenAt: now,
+        jobsCount: 0,
+        lastJobId: null,
+        lastJobTitle: null,
+        lastCompany: body.company || null,
+        lastSourceType: "manual",
+        sourceHistoryJson: "[]",
         lastContactedAt: null,
         createdAt: now,
         updatedAt: now,

@@ -16,6 +16,9 @@ export function upsertContactFromJobForUser(
     company?: string | null;
     position?: string | null;
     sourceRef?: string | null;
+    sourceType?: string | null;
+    jobId?: string | null;
+    jobTitle?: string | null;
   }
 ): { id: string; created: boolean } {
   const normalizedEmail = normalizeEmail(input.email);
@@ -32,12 +35,50 @@ export function upsertContactFromJobForUser(
     )
     .get();
 
+  const historyEntry = input.sourceRef
+    ? {
+        sourceRef: input.sourceRef,
+        sourceType: input.sourceType || "github_repo",
+        jobId: input.jobId || null,
+        jobTitle: input.jobTitle || null,
+        seenAt: now,
+      }
+    : null;
+
   if (existing) {
+    const parsedHistory = existing.sourceHistoryJson
+      ? (() => {
+          try {
+            return JSON.parse(existing.sourceHistoryJson) as Array<{ sourceRef?: string }>;
+          } catch {
+            return [] as Array<{ sourceRef?: string }>;
+          }
+        })()
+      : [];
+
+    const hasSeenThisSource =
+      !!input.sourceRef &&
+      parsedHistory.some((entry) => entry.sourceRef && entry.sourceRef === input.sourceRef);
+
+    const nextHistory = historyEntry
+      ? hasSeenThisSource
+        ? parsedHistory
+        : [historyEntry, ...parsedHistory].slice(0, 25)
+      : parsedHistory;
+
     db.update(schema.contacts)
       .set({
         company: existing.company || input.company || null,
         position: existing.position || input.position || null,
-        sourceRef: existing.sourceRef || input.sourceRef || null,
+        sourceRef: input.sourceRef || existing.sourceRef || null,
+        firstSeenAt: existing.firstSeenAt || now,
+        lastSeenAt: now,
+        jobsCount: hasSeenThisSource ? existing.jobsCount : existing.jobsCount + 1,
+        lastJobId: input.jobId || existing.lastJobId || null,
+        lastJobTitle: input.jobTitle || existing.lastJobTitle || null,
+        lastCompany: input.company || existing.lastCompany || existing.company || null,
+        lastSourceType: input.sourceType || existing.lastSourceType || null,
+        sourceHistoryJson: JSON.stringify(nextHistory),
         updatedAt: now,
       })
       .where(eq(schema.contacts.id, existing.id))
@@ -60,6 +101,14 @@ export function upsertContactFromJobForUser(
       status: "lead",
       notes: null,
       customFields: null,
+      firstSeenAt: now,
+      lastSeenAt: now,
+      jobsCount: 1,
+      lastJobId: input.jobId || null,
+      lastJobTitle: input.jobTitle || null,
+      lastCompany: input.company || null,
+      lastSourceType: input.sourceType || null,
+      sourceHistoryJson: JSON.stringify(historyEntry ? [historyEntry] : []),
       lastContactedAt: null,
       createdAt: now,
       updatedAt: now,

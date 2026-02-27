@@ -5,14 +5,23 @@ import { eq } from "drizzle-orm";
 import { gmailProvider } from "@/lib/providers/email";
 import { ensureUserExists, getEffectivePlan, getLimitsForPlan } from "@/lib/plan";
 
+const BASE_URL = process.env.NEXTAUTH_URL || process.env.AUTH_URL || "https://replyflow.fly.dev";
 const CONNECT_REDIRECT_URI =
-  process.env.GOOGLE_CONNECT_REDIRECT_URI || `${process.env.NEXTAUTH_URL}/api/accounts/callback`;
+  process.env.GOOGLE_CONNECT_REDIRECT_URI || `${BASE_URL}/api/accounts/callback`;
+
+function buildUrl(path: string, params?: Record<string, string>): string {
+  const url = new URL(path, BASE_URL);
+  if (params) {
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  }
+  return url.toString();
+}
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.redirect(new URL("/app/signin?error=unauthorized", request.url));
+      return NextResponse.redirect(buildUrl("/app/signin", { error: "unauthorized" }));
     }
 
     const userId = ensureUserExists(session);
@@ -23,13 +32,13 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       return NextResponse.redirect(
-        new URL(`/app/settings?gmail=error&message=${encodeURIComponent(error)}`, request.url)
+        buildUrl("/app/settings", { gmail: "error", message: error })
       );
     }
 
     if (!code) {
       return NextResponse.redirect(
-        new URL("/app/settings?gmail=error&message=No+authorization+code", request.url)
+        buildUrl("/app/settings", { gmail: "error", message: "No authorization code" })
       );
     }
 
@@ -44,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     if (plan === "free" && existingAccounts.length >= limits.accounts) {
       return NextResponse.redirect(
-        new URL("/app/settings?gmail=upgrade_required&message=Free+plan+allows+1+connected+account", request.url)
+        buildUrl("/app/settings", { gmail: "upgrade_required", message: "Free plan allows 1 connected account" })
       );
     }
 
@@ -52,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokens || !tokens.access_token) {
       return NextResponse.redirect(
-        new URL("/app/settings?gmail=error&message=Failed+to+get+access+token", request.url)
+        buildUrl("/app/settings", { gmail: "error", message: "Failed to get access token" })
       );
     }
 
@@ -60,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     if (!gmailAddress) {
       return NextResponse.redirect(
-        new URL("/app/settings?gmail=error&message=Failed+to+get+email+address", request.url)
+        buildUrl("/app/settings", { gmail: "error", message: "Failed to get email address" })
       );
     }
 
@@ -85,12 +94,12 @@ export async function GET(request: NextRequest) {
       })
       .run();
 
-    return NextResponse.redirect(new URL("/app/settings?gmail=connected", request.url));
+    return NextResponse.redirect(buildUrl("/app/settings", { gmail: "connected" }));
   } catch (err) {
     console.error("Gmail callback error:", err);
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.redirect(
-      new URL(`/app/settings?gmail=error&message=${encodeURIComponent(errorMessage)}`, request.url)
+      buildUrl("/app/settings", { gmail: "error", message: errorMessage })
     );
   }
 }

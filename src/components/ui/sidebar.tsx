@@ -26,6 +26,15 @@ const navItems = [
     ),
   },
   {
+    href: "/app/sources",
+    labelKey: "sidebar.nav.sources",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14-7H5m14 14H5" />
+      </svg>
+    ),
+  },
+  {
     href: "/app/compose",
     labelKey: "sidebar.nav.compose",
     icon: (

@@ -1,4 +1,6 @@
 import { Sidebar } from "@/components/ui/sidebar";
+import { MobileTopBar } from "@/components/ui/mobile-top-bar";
+import { MobileTabBar } from "@/components/ui/mobile-tab-bar";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ensureUserExists, getOrCreateProfile } from "@/lib/plan";
@@ -19,7 +21,11 @@ export default async function AppLayout({
   return (
     <div className="flex h-screen bg-[var(--rf-bg)] text-[var(--rf-text)]">
       <Sidebar />
-      <main className="rf-grid-bg flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <MobileTopBar />
+        <main className="rf-grid-bg flex-1 overflow-auto pb-16 md:pb-0">{children}</main>
+        <MobileTabBar />
+      </div>
     </div>
   );
 }

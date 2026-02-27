@@ -374,6 +374,11 @@ export function getOrCreateProfile(userId: string) {
         preferredLocations: "[]",
         preferRemote: true,
         highlights: "[]",
+        profileScore: 0,
+        profileScoreBand: "low",
+        profileScoreMissing: "[]",
+        profileScoreSuggestions: "[]",
+        profileScoreUpdatedAt: now,
         updatedAt: now,
       })
       .run();

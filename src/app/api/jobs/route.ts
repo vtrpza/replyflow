@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { ensureUserExists, getEffectivePlan } from "@/lib/plan";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function safeJsonParse<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) {
+    return fallback;
+  }
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 export async function GET(request: NextRequest) {
@@ -111,6 +122,18 @@ export async function GET(request: NextRequest) {
       .offset(offset)
       .all();
 
+    const sourceIds = Array.from(
+      new Set(baseJobs.map((job) => job.sourceId).filter((value): value is string => !!value))
+    );
+    const sources = sourceIds.length > 0
+      ? db
+          .select()
+          .from(schema.repoSources)
+          .where(inArray(schema.repoSources.id, sourceIds))
+          .all()
+      : [];
+    const sourceMap = new Map(sources.map((source) => [source.id, source]));
+
     const enriched = baseJobs.map((job) => {
       const outreach = db
         .select()
@@ -133,6 +156,17 @@ export async function GET(request: NextRequest) {
           )
         )
         .get();
+
+      const source = job.sourceId ? sourceMap.get(job.sourceId) : null;
+      const parsedReasons = safeJsonParse<string[]>(score?.reasonsJson, []);
+      const parsedMissingSkills = safeJsonParse<string[]>(score?.missingSkillsJson, []);
+      const parsedBreakdown = safeJsonParse<{
+        skills: number;
+        remote: number;
+        contract: number;
+        level: number;
+        location: number;
+      }>(score?.breakdownJson, { skills: 0, remote: 0, contract: 0, level: 0, location: 0 });
 
       const revealed =
         plan === "pro"
@@ -160,6 +194,22 @@ export async function GET(request: NextRequest) {
           (Date.now() - new Date(job.updatedAt || job.createdAt).getTime()) /
             (1000 * 60 * 60 * 24) >
           staleDays,
+        source: source
+          ? {
+              id: source.id,
+              type: source.sourceType,
+              displayName: source.displayName || source.fullName,
+              healthScore: source.healthScore,
+              healthStatus: source.healthStatus,
+              attributionLabel: source.attributionLabel,
+              attributionUrl: source.attributionUrl,
+            }
+          : null,
+        matchExplain: {
+          reasons: parsedReasons,
+          missingSkills: parsedMissingSkills,
+          breakdown: parsedBreakdown,
+        },
         opportunityScore:
           Math.max(0, Math.min(100, (score?.score ?? 0))) +
           (job.contactEmail ? 20 : 0) +

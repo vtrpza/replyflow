@@ -9,8 +9,8 @@ CREATE TABLE `accounts` (
 	`expires_at` integer,
 	`scope` text,
 	`id_token` text,
-	`session_state` text,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	`token_type` text,
+	`session_state` text
 );
 --> statement-breakpoint
 CREATE TABLE `connected_email_accounts` (
@@ -25,8 +25,7 @@ CREATE TABLE `connected_email_accounts` (
 	`scope` text,
 	`is_default` integer DEFAULT false,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	`updated_at` text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `contacts` (
@@ -43,8 +42,7 @@ CREATE TABLE `contacts` (
 	`custom_fields` text,
 	`last_contacted_at` text,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	`updated_at` text NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE `conversation_threads` (
@@ -59,12 +57,47 @@ CREATE TABLE `conversation_threads` (
 	`last_message_at` text,
 	`message_count` integer DEFAULT 0,
 	`created_at` text NOT NULL,
-	`updated_at` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`account_id`) REFERENCES `connected_email_accounts`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE set null
+	`updated_at` text NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE `email_templates` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text,
+	`name` text NOT NULL,
+	`description` text,
+	`type` text NOT NULL,
+	`language` text NOT NULL,
+	`subject` text NOT NULL,
+	`subject_variants` text,
+	`body` text NOT NULL,
+	`is_default` integer DEFAULT false,
+	`usage_count` integer DEFAULT 0 NOT NULL,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `job_match_scores` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`job_id` text NOT NULL,
+	`score` real NOT NULL,
+	`calculated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`job_id`) REFERENCES `jobs`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `match_user_job` ON `job_match_scores` (`user_id`,`job_id`);--> statement-breakpoint
+CREATE TABLE `job_reveals` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`job_id` text NOT NULL,
+	`created_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`job_id`) REFERENCES `jobs`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `reveal_user_job` ON `job_reveals` (`user_id`,`job_id`);--> statement-breakpoint
 CREATE TABLE `jobs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`issue_url` text NOT NULL,
@@ -106,8 +139,8 @@ CREATE TABLE `outbound_emails` (
 	`user_id` text NOT NULL,
 	`account_id` text NOT NULL,
 	`contact_id` text,
-	`to` text NOT NULL,
-	`from` text NOT NULL,
+	`recipient_email` text NOT NULL,
+	`sender_email` text NOT NULL,
 	`reply_to` text,
 	`subject` text NOT NULL,
 	`body_html` text,
@@ -120,14 +153,12 @@ CREATE TABLE `outbound_emails` (
 	`failed_at` text,
 	`created_at` text NOT NULL,
 	`error_code` text,
-	`error_message` text,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`account_id`) REFERENCES `connected_email_accounts`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE set null
+	`error_message` text
 );
 --> statement-breakpoint
 CREATE TABLE `outreach_records` (
 	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
 	`job_id` text NOT NULL,
 	`status` text DEFAULT 'none' NOT NULL,
 	`email_subject` text,
@@ -138,9 +169,11 @@ CREATE TABLE `outreach_records` (
 	`notes` text,
 	`created_at` text NOT NULL,
 	`updated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`job_id`) REFERENCES `jobs`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `outreach_user_job` ON `outreach_records` (`user_id`,`job_id`);--> statement-breakpoint
 CREATE TABLE `repo_sources` (
 	`id` text PRIMARY KEY NOT NULL,
 	`owner` text NOT NULL,
@@ -167,15 +200,36 @@ CREATE TABLE `scrape_runs` (
 );
 --> statement-breakpoint
 CREATE TABLE `sessions` (
-	`id` text PRIMARY KEY NOT NULL,
-	`session_token` text NOT NULL,
+	`session_token` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
-	`expires` integer NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE cascade
+	`expires` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE `usage_counters` (
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
+	`period_start` text NOT NULL,
+	`reveals_used` integer DEFAULT 0 NOT NULL,
+	`drafts_used` integer DEFAULT 0 NOT NULL,
+	`sends_used` integer DEFAULT 0 NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `usage_user_period` ON `usage_counters` (`user_id`,`period_start`);--> statement-breakpoint
+CREATE TABLE `user_plan` (
+	`user_id` text PRIMARY KEY NOT NULL,
+	`plan` text DEFAULT 'free' NOT NULL,
+	`plan_started_at` text NOT NULL,
+	`plan_expires_at` text,
+	`created_at` text NOT NULL,
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `user_profile` (
-	`id` text PRIMARY KEY DEFAULT 'default' NOT NULL,
+	`id` text PRIMARY KEY NOT NULL,
+	`user_id` text NOT NULL,
 	`name` text DEFAULT '' NOT NULL,
 	`email` text DEFAULT '' NOT NULL,
 	`phone` text,
@@ -193,9 +247,11 @@ CREATE TABLE `user_profile` (
 	`max_salary` real,
 	`bio` text,
 	`highlights` text DEFAULT '[]' NOT NULL,
-	`updated_at` text NOT NULL
+	`updated_at` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
+CREATE UNIQUE INDEX `user_profile_user_id_unique` ON `user_profile` (`user_id`);--> statement-breakpoint
 CREATE TABLE `users` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text,

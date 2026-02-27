@@ -120,6 +120,9 @@ export async function POST(request: Request) {
         company: job.company,
         position: job.role,
         sourceRef: job.issueUrl,
+        sourceType: job.sourceType || "github_repo",
+        jobId: job.id,
+        jobTitle: job.title,
       });
     }
 
@@ -135,6 +138,8 @@ export async function POST(request: Request) {
       preferredContractTypes: JSON.parse(rawProfile.preferredContractTypes) as string[],
       preferredLocations: JSON.parse(rawProfile.preferredLocations) as string[],
       highlights: JSON.parse(rawProfile.highlights) as string[],
+      profileScoreMissing: JSON.parse(rawProfile.profileScoreMissing) as string[],
+      profileScoreSuggestions: JSON.parse(rawProfile.profileScoreSuggestions) as string[],
     } as UserProfile;
 
     const plan = getEffectivePlan(userId);

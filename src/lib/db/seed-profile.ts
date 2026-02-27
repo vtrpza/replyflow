@@ -5,7 +5,9 @@
 import Database from "better-sqlite3";
 import path from "path";
 
-const DB_PATH = path.join(process.cwd(), "data", "gitjobs.db");
+const DB_PATH =
+  process.env.DATABASE_PATH ||
+  path.join(process.cwd(), "data", "gitjobs.db");
 const sqlite = new Database(DB_PATH);
 
 const targetEmail = "vhnpouza@gmail.com";

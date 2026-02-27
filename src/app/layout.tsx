@@ -1,19 +1,8 @@
+import "@/instrument";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider, ModalProvider } from "@/components/ui";
 import { Providers } from "@/components/providers";
-import { LanguageSwitch } from "@/components/ui/language-switch";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "ReplyFlow — Outreach pipeline for devs who take ownership",
@@ -59,13 +48,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <Providers>
           <ToastProvider>
             <ModalProvider>
-              <LanguageSwitch />
               {children}
             </ModalProvider>
           </ToastProvider>

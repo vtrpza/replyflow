@@ -7,13 +7,52 @@ import { useI18n } from "@/lib/i18n";
 
 /* ───────────────────────── data ───────────────────────── */
 
-const PIPELINE_STEPS = [
-  { label: "Collect", desc: "Gather jobs from multiple sources", icon: ">", signal: "intel" },
-  { label: "Score", desc: "Prioritize by freshness, fit, and contact", icon: "~", signal: "rank" },
-  { label: "Apply", desc: "Track ATS applications and deadlines", icon: "|", signal: "ats" },
-  { label: "Outreach", desc: "Generate and send direct emails", icon: ">>", signal: "direct" },
-  { label: "Follow up", desc: "Run reminders and next actions", icon: "<", signal: "cadence" },
-  { label: "Interview", desc: "Move opportunities to interview", icon: "#", signal: "result" },
+const WHY_USE_ITEMS = [
+  {
+    id: "pain",
+    ptTitle: "Dor real",
+    ptDesc: "Vagas espalhadas, ATS confuso e contatos perdidos fazem você gastar energia sem ganhar tração.",
+    enTitle: "The real pain",
+    enDesc: "Scattered listings, ATS chaos, and lost contacts drain effort without traction.",
+  },
+  {
+    id: "solution",
+    ptTitle: "Como o ReplyFlow resolve",
+    ptDesc: "Centraliza vagas nacionais e internacionais e conecta ATS + CRM + Outreach + Network em um fluxo único.",
+    enTitle: "How ReplyFlow solves it",
+    enDesc: "It centralizes national and international roles and connects ATS + CRM + Outreach + Network in one unified flow.",
+  },
+  {
+    id: "outcome",
+    ptTitle: "Resultado prático",
+    ptDesc: "Menos esforço disperso, mais consistência na execução e mais chances reais de resposta.",
+    enTitle: "Practical outcome",
+    enDesc: "Less scattered effort, more execution consistency, and stronger odds of getting replies.",
+  },
+];
+
+const MISSION_PILLARS = [
+  {
+    id: "clarity",
+    ptTitle: "Clareza",
+    ptDesc: "Decidir melhor onde investir energia.",
+    enTitle: "Clarity",
+    enDesc: "Make better decisions on where to invest effort.",
+  },
+  {
+    id: "system",
+    ptTitle: "Sistema",
+    ptDesc: "Unir ATS + CRM + Outreach + Network no mesmo fluxo.",
+    enTitle: "System",
+    enDesc: "Unify ATS + CRM + Outreach + Network in one flow.",
+  },
+  {
+    id: "outcome",
+    ptTitle: "Resultado",
+    ptDesc: "Aumentar respostas com execução consistente.",
+    enTitle: "Outcome",
+    enDesc: "Increase replies through consistent execution.",
+  },
 ];
 
 const FEATURES = [
@@ -61,9 +100,9 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[var(--rf-bg)] text-[var(--rf-text)]">
       <Nav />
       <Hero />
-      <Pipeline />
+      <WhyUseReplyFlow />
       <Features />
-      <Banner />
+      <Mission />
       <Pricing />
       <Faq />
       <Footer />
@@ -81,13 +120,6 @@ function Nav() {
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src="/brand/replyflow/replyflow-icon.png"
-            alt="ReplyFlow"
-            width={24}
-            height={24}
-            className="rounded"
-          />
           <span className="font-semibold text-sm tracking-tight text-white">
             Reply<span className="text-[var(--rf-green)]">Flow</span>
           </span>
@@ -122,26 +154,22 @@ function Hero() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
           <span className="text-xs font-mono text-[var(--rf-muted)]">
-            {isPt ? "v1.0 - ja disponivel" : "v1.0 - now open"}
+            {isPt ? "v1.0 - já disponível" : "v1.0 - now open"}
           </span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-          <span className="text-white">{isPt ? "Framework para conseguir emprego" : "Framework to land interviews"}</span>
+          <span className="text-white">{isPt ? "Menos candidaturas no escuro. Mais entrevistas." : "Stop applying blindly. Start getting interviews."}</span>
           <br />
           <span className="rf-gradient-text">
-            {isPt ? "para devs brasileiros mid-senior." : "for Brazilian mid-senior devs."}
+            {isPt ? "Vagas nacionais e internacionais em um só fluxo." : "National and international roles in one flow."}
           </span>
         </h1>
 
         <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
           {isPt
-            ? "Intel de vagas + CRM + ATS + outreach no mesmo fluxo. Priorize vagas novas, salve contatos de recrutadores e execute follow-ups com consistencia."
-            : "Jobs intel + CRM + ATS + outreach in one flow. Prioritize fresh roles, save recruiter contacts, and execute follow-ups consistently."}
-          {" "}
-          {isPt
-            ? "Mais controle. Mais respostas."
-            : "More control. More replies."}
+            ? "Inteligência de vagas + CRM + ATS + outreach no mesmo sistema. Priorize oportunidades reais, acione contatos certos e mantenha follow-ups com consistência."
+            : "Jobs intelligence + CRM + ATS + outreach in one system. Prioritize real opportunities, activate the right contacts, and keep follow-ups consistent."}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -151,7 +179,7 @@ function Hero() {
             style={{ background: "var(--rf-gradient)" }}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
-            {isPt ? "Comecar gratis" : "Start free"}
+            {isPt ? "Começar grátis" : "Start free"}
           </Link>
           <Link
             href="/app/signin"
@@ -162,27 +190,18 @@ function Hero() {
         </div>
 
         <p className="mt-6 text-xs text-zinc-600 font-mono">
-          {isPt ? "plano gratis disponivel - sem cartao" : "free tier available - no credit card"}
+          {isPt ? "plano grátis disponível - sem cartão" : "free tier available - no credit card"}
         </p>
       </div>
     </section>
   );
 }
 
-/* ─── Pipeline (How it works) ─── */
+/* ─── Why Use ReplyFlow ─── */
 
-function Pipeline() {
+function WhyUseReplyFlow() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
-
-  const pipelinePt = [
-    { label: "Coletar", desc: "Reunir vagas de multiplas fontes" },
-    { label: "Priorizar", desc: "Rank por frescor, match e contato" },
-    { label: "ATS", desc: "Aplicar e marcar estagios" },
-    { label: "Outreach", desc: "Gerar e enviar emails diretos" },
-    { label: "Follow-up", desc: "Rodar proximas acoes" },
-    { label: "Entrevista", desc: "Avancar oportunidades quentes" },
-  ];
 
   return (
     <section className="relative py-24 px-6 border-t border-[var(--rf-border)] overflow-hidden">
@@ -192,57 +211,32 @@ function Pipeline() {
       />
 
       <div className="max-w-6xl mx-auto relative">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-14">
-          <div>
-            <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-              {isPt ? "Como funciona" : "How it works"}
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-              {isPt ? "Seis etapas. Um pipeline." : "Six steps. One pipeline."}
-            </h2>
-          </div>
-          <p className="text-xs font-mono text-[var(--rf-muted)] rounded-full border border-[var(--rf-border)] px-3 py-1.5 w-fit">
-            {isPt ? "fluxo operacional · ATS + contato direto" : "operator flow · ATS + direct outreach"}
+        <div className="text-center mb-14">
+          <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
+            {isPt ? "Por que usar" : "Why use it"}
           </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight max-w-3xl mx-auto">
+            {isPt ? "Tudo que move sua busca, reunido no mesmo fluxo." : "You don't need more jobs. You need direction."}
+          </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          {PIPELINE_STEPS.map((step, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {WHY_USE_ITEMS.map((item, i) => (
             <article
-              key={step.label}
+              key={item.id}
               className="rf-animate-in group relative overflow-hidden p-5 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-surface)] hover:border-zinc-500 hover:-translate-y-1 transition-all duration-300"
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
-
-              <div className="flex items-start justify-between mb-4">
-                <div className="text-[10px] font-mono text-zinc-500 border border-[var(--rf-border)] rounded-md px-1.5 py-0.5">
-                  {String(i + 1).padStart(2, "0")}
-                </div>
-                <span className="text-[10px] uppercase tracking-[0.16em] font-mono text-[var(--rf-muted)]">
-                  {step.signal}
-                </span>
+              <div className="mb-4 w-9 h-9 rounded-lg border border-[var(--rf-border)] bg-[var(--rf-bg)]/70 flex items-center justify-center text-[10px] font-mono text-zinc-500">
+                {String(i + 1).padStart(2, "0")}
               </div>
-
-              <div className="mb-4 w-9 h-9 rounded-lg border border-[var(--rf-border)] bg-[var(--rf-bg)]/70 flex items-center justify-center">
-                <span className="font-mono text-xl rf-gradient-text leading-none">
-                  {step.icon}
-                </span>
-              </div>
-
-              <h3 className="text-sm font-semibold text-white mb-1">
-                {isPt ? pipelinePt[i].label : step.label}
+              <h3 className="text-base font-semibold text-white mb-2">
+                {isPt ? item.ptTitle : item.enTitle}
               </h3>
-              <p className="text-xs text-[var(--rf-muted)] leading-relaxed">
-                {isPt ? pipelinePt[i].desc : step.desc}
+              <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+                {isPt ? item.ptDesc : item.enDesc}
               </p>
-
-              {i < PIPELINE_STEPS.length - 1 && (
-                <div className="hidden lg:flex absolute top-1/2 -right-4 w-7 items-center gap-1">
-                  <span className="w-5 h-px bg-gradient-to-r from-cyan-400/60 to-emerald-400/60" />
-                  <span className="text-[10px] font-mono text-cyan-300">&gt;</span>
-                </div>
-              )}
             </article>
           ))}
         </div>
@@ -260,11 +254,11 @@ function Features() {
   const featurePt = [
     {
       title: "Intel + dados + CRM",
-      desc: "Colete oportunidades, priorize por sinais reais e mantenha cada contato de recrutador em um unico framework.",
+      desc: "Colete oportunidades, priorize por sinais reais e mantenha cada contato de recrutador em um único framework.",
     },
     {
       title: "Modo realidade ATS",
-      desc: "Trate vagas ATS-only como etapas legitimas do pipeline sem abrir mao de contato direto.",
+      desc: "Trate vagas ATS-only como etapas legítimas do pipeline sem abrir mão do contato direto.",
     },
     {
       title: "Motor de outreach",
@@ -272,7 +266,7 @@ function Features() {
     },
     {
       title: "Banco de recrutadores",
-      desc: "Converta vagas antigas em leads reaproveitaveis em vez de perder contatos valiosos.",
+      desc: "Converta vagas antigas em leads reaproveitáveis em vez de perder contatos valiosos.",
     },
   ];
 
@@ -316,7 +310,7 @@ function Features() {
         <div className="mt-12 text-center">
           <p className="text-sm text-zinc-600 font-mono">
             {isPt
-              ? '"Voce nao precisa de mais abas abertas. Precisa de um sistema."'
+              ? "\"Você não precisa de mais abas abertas. Precisa de um sistema.\""
               : "\"You don't need more tabs open. You need a system.\""}
           </p>
         </div>
@@ -325,31 +319,46 @@ function Features() {
   );
 }
 
-/* ─── Banner / Visual ─── */
+/* ─── Mission ─── */
 
-function Banner() {
+function Mission() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)]">
       <div className="max-w-5xl mx-auto">
-        <div className="relative rounded-2xl overflow-hidden border border-[var(--rf-border)] rf-glow">
-          <Image
-            src="/brand/replyflow/replyflow-banner-dark.png"
-            alt="ReplyFlow pipeline view"
-            width={1920}
-            height={384}
-            className="w-full h-auto"
-            priority
-          />
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--rf-bg)] via-transparent to-transparent" />
-          <div className="absolute bottom-6 left-6 right-6">
-            <p className="text-sm font-mono text-[var(--rf-muted)]">
-              <span className="text-[var(--rf-cyan)]">$</span>{" "}
-              {isPt ? "replyflow --status funil" : "replyflow --status pipeline"}
+        <div className="relative rounded-2xl border border-[var(--rf-border)] bg-[var(--rf-surface)]/40 p-8 sm:p-12">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
+          <div className="text-center max-w-3xl mx-auto">
+            <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
+              {isPt ? "Nossa missão" : "Our mission"}
             </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5">
+              {isPt ? "Transformar busca de emprego em operação estratégica." : "Turn job search into a strategic operation."}
+            </h2>
+            <p className="text-sm sm:text-base text-[var(--rf-muted)] leading-relaxed mb-10">
+              {isPt
+                ? "Ajudar profissionais a sair do improviso e executar com clareza: vagas nacionais e internacionais, relacionamento ativo e consistência diária."
+                : "Help professionals move beyond improvisation and execute with clarity: national and international roles, active relationships, and daily consistency."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {MISSION_PILLARS.map((item, i) => (
+              <article
+                key={item.id}
+                className="rf-animate-in rounded-xl border border-[var(--rf-border)] bg-[var(--rf-bg)]/70 p-5"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <h3 className="text-base font-semibold text-white mb-1.5">
+                  {isPt ? item.ptTitle : item.enTitle}
+                </h3>
+                <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+                  {isPt ? item.ptDesc : item.enDesc}
+                </p>
+              </article>
+            ))}
           </div>
         </div>
       </div>
@@ -368,29 +377,29 @@ function Pricing() {
       name: "Free",
       price: "R$ 0",
       period: isPt ? "para sempre" : "forever",
-      desc: isPt ? "Comece agora. Sem cartao." : "Get started. No credit card.",
+      desc: isPt ? "Comece agora. Sem cartão." : "Get started. No credit card.",
       features: [
-        isPt ? "Ate 50 leads/mes" : "Up to 50 leads/month",
-        isPt ? "Rascunhos de email (PT-BR / EN)" : "Email drafts (PT-BR / EN)",
-        isPt ? "Acompanhamento basico do pipeline" : "Basic pipeline tracking",
+        isPt ? "Até 50 leads/mês" : "Up to 50 leads/month",
+        isPt ? "Rascunhos de e-mail (PT-BR / EN)" : "Email drafts (PT-BR / EN)",
+        isPt ? "Acompanhamento básico do pipeline" : "Basic pipeline tracking",
         isPt ? "Envio pela sua conta Gmail" : "Send via your Gmail",
       ],
-      cta: isPt ? "Comecar gratis" : "Start free",
+      cta: isPt ? "Começar grátis" : "Start free",
       href: "/app",
       primary: false,
     },
     {
       name: "Pro",
       price: "R$ 49",
-      period: isPt ? "/mes" : "/month",
+      period: isPt ? "/mês" : "/month",
       desc: isPt
-        ? "Para devs em busca ativa que querem operar com consistencia."
+        ? "Para devs em busca ativa que querem operar com consistência."
         : "For active job seekers who want to run a consistent process.",
       features: [
         isPt ? "Leads e contatos ilimitados" : "Unlimited leads and contacts",
-        isPt ? "Geracao de rascunho prioritaria" : "Priority draft generation",
-        isPt ? "Automacao de follow-up" : "Follow-up automation",
-        isPt ? "Historico completo e analytics" : "Full history & analytics",
+        isPt ? "Geração de rascunho prioritária" : "Priority draft generation",
+        isPt ? "Automação de follow-up" : "Follow-up automation",
+        isPt ? "Histórico completo e analytics" : "Full history & analytics",
         isPt ? "Score por oportunidade (match + frescor + contato)" : "Opportunity scoring (match + freshness + contact)",
       ],
       cta: isPt ? "Upgrade para Pro" : "Upgrade to Pro",
@@ -404,7 +413,7 @@ function Pricing() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "Precos" : "Pricing"}
+            {isPt ? "Preços" : "Pricing"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
             {isPt ? "Simples. Sem surpresa." : "Simple. No surprises."}
@@ -488,16 +497,16 @@ function Faq() {
 
   const faqPt = [
     {
-      q: "A ReplyFlow e um job board?",
-      a: "Nao somente. A ReplyFlow e um framework de busca de emprego: coleta, intel, ATS, CRM e outreach em um unico painel.",
+      q: "A ReplyFlow é um job board?",
+      a: "Não apenas. A ReplyFlow é um framework de busca de emprego: coleta, inteligência, ATS, CRM e outreach em um único painel.",
     },
     {
       q: "Ela garante entrevistas?",
-      a: "Nenhuma ferramenta garante isso. A ReplyFlow reduz friccao e aumenta consistencia no outreach. Mais envios e follow-ups melhores resultam em mais respostas.",
+      a: "Nenhuma ferramenta garante isso. A ReplyFlow reduz fricção e aumenta a consistência no outreach. Mais envios e follow-ups melhores resultam em mais respostas.",
     },
     {
       q: "Preciso usar plataformas ATS?",
-      a: "Na maioria das vezes, sim. A ReplyFlow assume a realidade: ATS e parte do processo, mas contato direto continua sendo vantagem competitiva.",
+      a: "Na maioria das vezes, sim. A ReplyFlow assume a realidade: ATS é parte do processo, mas o contato direto continua sendo uma vantagem competitiva.",
     },
   ];
 
@@ -588,7 +597,7 @@ function Footer() {
 
         <p className="text-xs text-zinc-600 font-mono">
           {isPt
-            ? "Mercado real: ATS + relacionamento + consistencia."
+            ? "Mercado real: ATS + relacionamento + consistência."
             : "Real market: ATS + relationships + consistency."}
         </p>
       </div>

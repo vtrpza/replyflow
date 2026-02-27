@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
+    "build:cli": "tsc -p tsconfig.cli.json",
     "start": "next start",
     "lint": "eslint",
     "db:seed": "npx tsx src/lib/db/seed.ts",
@@ -12,11 +13,13 @@
     "db:seed-templates": "npx tsx src/lib/db/seed-templates.ts",
     "sync": "npx tsx src/lib/scraper/test-scrape.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "npx tsx src/lib/db/migrate.ts",
+    "db:backfill-contacts": "npx tsx src/lib/db/backfill-contacts.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
     "@libsql/client": "^0.17.0",
+    "@sentry/node": "^10.40.0",
     "better-sqlite3": "^12.6.2",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.1",
@@ -30,6 +33,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@flydotio/dockerfile": "^0.7.10",
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",

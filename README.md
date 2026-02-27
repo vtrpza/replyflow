@@ -6,11 +6,42 @@ It combines sourcing/ATS intelligence, recruiter CRM, Gmail-powered outreach, an
 
 The core workflow:
 
-- gather opportunities from GitHub repos (plus soon ATS connectors) with freshness and contact scoring;
+- gather opportunities from GitHub repos plus ATS connectors (Greenhouse/Lever) with freshness and contact scoring;
 - prioritize by match/freshness/contact type (direct vs ATS) and mark stale ones to save recruiter leads;  
 - track ATS-only roles as pipeline stages while still generating drafts when direct contacts are available;  
 - sync recruiter emails into the built-in contacts table and export CSV/compose follow-ups directly from that bank;
 - monitor recruiter-email unique counts, ATS share, and outreach KPIs on the dashboard.
+
+## Sources and Connectors
+
+- Sources UI: `/app/sources` (enable/disable/add/validate source connectors)
+- Supported source types:
+  - `github_repo`
+  - `greenhouse_board`
+  - `lever_postings`
+- Guardrails:
+  - Attribution metadata is stored per source.
+  - Terms URL is stored per source and `termsAcceptedAt` is tracked.
+  - Source health score/status (`healthy|warning|critical`) is computed from sync outcomes and drives throttling.
+- Automation:
+  - Scheduled/system sync endpoint: `POST /api/sync/system`
+  - Header required: `x-replyflow-sync-token: <REPLYFLOW_SYNC_TOKEN>`
+  - Discovery can auto-register curated BR/LATAM-friendly sources from `data/brazilian-job-ecosystem.json`.
+
+## Explainability and Scoring
+
+- Job cards now expose matcher explainability:
+  - top reasons for match
+  - missing skills (skill gaps)
+  - weighted score breakdown
+- Contacts bank is dynamically enriched from gathered emails/jobs with:
+  - first/last seen timestamps
+  - jobs linked count
+  - last job/company/source context
+- Profile scoring is persisted and surfaced in Settings with:
+  - score band (`low|medium|high`)
+  - missing profile fields
+  - actionable suggestions
 
 ## Stack
 
@@ -61,6 +92,11 @@ npm run db:seed-profile
 npm run lint
 ```
 
+Notes:
+
+- `npm run lint` currently includes generated files under `dist-cli/` and may fail on `require()` style imports there.
+- `npx tsc --noEmit` is the reliable gate for core typed source/app code.
+
 ## Product Rules Implemented
 
 - Multi-tenant isolation for profile, outreach, match scores, reveals, usage counters.
@@ -78,6 +114,10 @@ This repository follows Semantic Versioning and conventional commit guidelines.
 - Versioning policy: `VERSIONING.md`
 - Contribution standards: `CONTRIBUTING.md`
 - Release history: `CHANGELOG.md`
+
+## Implementation Documentation
+
+- Full delivery runbook: `docs/IMPLEMENTATION_RUNBOOK.md`
 
 ## Security Notes
 

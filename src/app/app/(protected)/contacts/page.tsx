@@ -13,6 +13,12 @@ interface Contact {
   source: string | null;
   sourceRef: string | null;
   status: string | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  jobsCount: number;
+  lastJobTitle: string | null;
+  lastCompany: string | null;
+  lastSourceType: string | null;
   updatedAt: string;
 }
 
@@ -160,6 +166,16 @@ export default function ContactsPage() {
                   <p className="text-xs text-zinc-500 mt-1">
                     {[contact.name, contact.position, contact.company].filter(Boolean).join(" - ") || (isPt ? "Sem detalhes" : "No details")}
                   </p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    {isPt ? "Vagas vinculadas" : "Linked jobs"}: {contact.jobsCount || 0}
+                    {contact.lastSourceType ? ` • ${contact.lastSourceType}` : ""}
+                  </p>
+                  {contact.lastJobTitle && (
+                    <p className="text-xs text-zinc-400 mt-1">
+                      {isPt ? "Ultimo contexto" : "Last context"}: {contact.lastJobTitle}
+                      {contact.lastCompany ? ` @ ${contact.lastCompany}` : ""}
+                    </p>
+                  )}
                   {contact.sourceRef && (
                     <a href={contact.sourceRef} target="_blank" rel="noopener noreferrer" className="text-xs text-cyan-400 hover:text-cyan-300">
                       {isPt ? "Fonte" : "Source"}
@@ -167,7 +183,10 @@ export default function ContactsPage() {
                   )}
                 </div>
                 <div className="text-xs text-zinc-500">
-                  {isPt ? "Atualizado" : "Updated"}: {new Date(contact.updatedAt).toLocaleDateString(isPt ? "pt-BR" : "en-US")}
+                  {isPt ? "Visto por ultimo" : "Last seen"}: {contact.lastSeenAt ? new Date(contact.lastSeenAt).toLocaleDateString(isPt ? "pt-BR" : "en-US") : "-"}
+                  <div>
+                    {isPt ? "Primeiro contato" : "First seen"}: {contact.firstSeenAt ? new Date(contact.firstSeenAt).toLocaleDateString(isPt ? "pt-BR" : "en-US") : "-"}
+                  </div>
                   <div>
                     <a
                       href={`/app/compose?to=${encodeURIComponent(contact.email)}&subject=${encodeURIComponent(isPt ? "Conversa sobre oportunidades" : "Quick intro for opportunities")}`}

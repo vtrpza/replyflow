@@ -66,6 +66,9 @@ export async function POST(request: NextRequest) {
         company: job.company,
         position: job.role,
         sourceRef: job.issueUrl,
+        sourceType: job.sourceType || "github_repo",
+        jobId: job.id,
+        jobTitle: job.title,
       });
     }
 

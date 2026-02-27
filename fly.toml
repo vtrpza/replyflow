@@ -1,27 +1,43 @@
-# fly.toml app configuration file generated for replyflow-vhnpouza on 2026-02-26T23:54:51-03:00
+# fly.toml app configuration file generated for replyflow on 2026-02-27T01:29:49-03:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
+app = "replyflow"
+primary_region = "gru"
+kill_signal = "SIGTERM"
+kill_timeout = 30
+swap_size_mb = 512
 
-app = 'replyflow-vhnpouza'
-primary_region = 'gru'
-
-[build]
+[env]
+  DATABASE_PATH = "/data/gitjobs.db"
+  NODE_ENV = "production"
 
 [http_service]
   internal_port = 3000
   force_https = true
-  auto_stop_machines = 'stop'
-  auto_start_machines = true
-  min_machines_running = 0
-  processes = ['app']
+  auto_stop_machines = "off"
+  auto_start_machines = false
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 25
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "60s"
+    method = "GET"
+    path = "/api/health"
+    headers = { X-Forwarded-Proto = "https" }
 
 [[vm]]
-  memory = '1gb'
-  cpu_kind = 'shared'
+  cpu_kind = "shared"
   cpus = 1
-  memory_mb = 1024
+  memory = "1gb"
 
 [[mounts]]
-  source = 'replyflow_data'
-  destination = '/app/data'
+  source = "replyflow_data"
+  destination = "/data"
