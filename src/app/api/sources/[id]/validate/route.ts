@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import {
   assertWithinSourceDailyQuota,
   ensureUserExists,
+  getEffectivePlan,
   upgradeRequiredResponse,
 } from "@/lib/plan";
+import { recordPlanIntentEvent } from "@/lib/plan/intent-events";
 import { getSourceConnector } from "@/lib/sources/connectors";
 import { computeSourceHealth } from "@/lib/sources/health";
 import type { SourceType } from "@/lib/types";
@@ -22,6 +24,7 @@ export async function POST(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const { id } = await context.params;
     const source = db
@@ -71,6 +74,18 @@ export async function POST(_request: Request, context: RouteContext) {
       latencyMs: result.latencyMs,
       minutesSinceSuccess: 0,
       consecutiveFailures: 0,
+    });
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_validate",
+      route: "/api/sources/[id]/validate",
+      metadata: {
+        sourceId: source.id,
+        sourceType: source.sourceType,
+        fetched: result.jobs.length,
+      },
     });
 
     return NextResponse.json({

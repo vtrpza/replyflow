@@ -22,6 +22,13 @@
       "when": 1772180400000,
       "tag": "0002_sources_per_user_plan_quotas",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1772184000000,
+      "tag": "0003_plan_intent_events",
+      "breakpoints": true
     }
   ]
 }

@@ -23,11 +23,7 @@ export function MobileTopBar() {
         setTimeout(() => window.location.reload(), 1500);
       } else {
         setSyncStatus("error");
-        if (res.status === 402 && data?.feature === "syncs_daily") {
-          setSyncError(t("sidebar.syncLimitReached"));
-        } else {
-          setSyncError(data?.error || t("sidebar.syncFailed"));
-        }
+        setSyncError(data?.error || t("sidebar.syncFailed"));
       }
     } catch {
       setSyncStatus("error");

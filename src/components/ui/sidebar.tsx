@@ -93,9 +93,6 @@ export function Sidebar() {
     if (data?.error !== "upgrade_required") {
       return t("sidebar.syncFailed");
     }
-    if (data.feature === "syncs_daily") {
-      return t("sidebar.syncLimitReached");
-    }
     return t("sidebar.syncFailed");
   };
 

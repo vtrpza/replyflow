@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
 import { getEmailProvider } from "@/lib/providers/email";
-import { assertWithinPlan, ensureUserExists, upgradeRequiredResponse } from "@/lib/plan";
+import { assertWithinPlan, ensureUserExists, getEffectivePlan, upgradeRequiredResponse } from "@/lib/plan";
+import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const body = await request.json();
     const { to, subject, bodyHtml, bodyText, accountId, replyTo } = body;
@@ -56,6 +58,14 @@ export async function POST(request: NextRequest) {
 
     const sendCheck = assertWithinPlan(userId, "sends");
     if (!sendCheck.ok) {
+      recordUpgradeBlockedIntent({
+        userId,
+        plan,
+        feature: sendCheck.feature,
+        route: "/api/emails/send",
+        limit: sendCheck.limit,
+        period: sendCheck.period,
+      });
       return NextResponse.json(
         upgradeRequiredResponse(sendCheck.feature, sendCheck.limit),
         { status: 402 }
@@ -155,6 +165,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (sendResult.success) {
+      recordPlanIntentEvent({
+        userId,
+        plan,
+        eventType: "core_action_send",
+        route: "/api/emails/send",
+        metadata: {
+          accountId: account.id,
+        },
+      });
       return NextResponse.json({
         success: true,
         messageId: sendResult.messageId,

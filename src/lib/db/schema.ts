@@ -342,6 +342,18 @@ export const jobMatchScores = sqliteTable("job_match_scores", {
   unique("match_user_job").on(table.userId, table.jobId),
 ]);
 
+/** Plan intent telemetry events for free vs pro validation */
+export const planIntentEvents = sqliteTable("plan_intent_events", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  plan: text("plan").notNull(),
+  eventType: text("event_type").notNull(),
+  feature: text("feature"),
+  route: text("route").notNull(),
+  metadataJson: text("metadata_json").notNull().default("{}"),
+  createdAt: text("created_at").notNull(),
+});
+
 export const emailTemplates = sqliteTable("email_templates", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => users.id),

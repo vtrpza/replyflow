@@ -81,8 +81,10 @@ npm run dev
 Optionally, seed demo data:
 
 ```bash
-npm run db:seed            # seed jobs and sources
-npm run db:seed-profile    # seed a sample profile
+npm run db:seed              # seed source ecosystem/bootstrap data
+npm run db:seed-profile      # seed a sample profile
+npm run db:seed-templates    # seed default outreach templates
+npm run db:backfill-contacts # optional: backfill contacts from existing jobs
 ```
 
 ## Project Structure
@@ -168,23 +170,24 @@ Sources support auto-discovery from a curated BR/LATAM ecosystem list. Each sour
 | GET | `/api/profile` | Get profile with scoring |
 | PUT | `/api/profile` | Update profile and recalculate scores |
 | GET | `/api/sources` | List sources (filterable by type/status) |
-| POST | `/api/sources` | Add new source with quota check |
+| POST | `/api/sources` | Add new source |
 | PATCH | `/api/sources/[id]` | Update source settings |
 | POST | `/api/sources/[id]/validate` | Validate source connectivity |
+| POST | `/api/telemetry/plan-intent` | Record plan-intent telemetry events |
 | GET | `/api/templates` | List email templates |
 | POST | `/api/templates` | Create email template |
 | GET | `/api/templates/[id]` | Get template by ID |
 | PUT | `/api/templates/[id]` | Update template |
 | DELETE | `/api/templates/[id]` | Delete template |
 | GET | `/api/stats` | Dashboard analytics |
-| POST | `/api/sync` | Manual sync (daily quota enforced) |
+| POST | `/api/sync` | Manual sync |
 | POST | `/api/sync/system` | System-level sync (token-protected) |
 
 </details>
 
 ## Deployment
 
-ReplyFlow runs on **Fly.io** with a persistent SQLite volume, Docker-based builds, CI/CD quality gates (typecheck + lint), scheduled source sync, and automated backups. Migrations execute automatically on container startup.
+ReplyFlow runs on **Fly.io** with a persistent SQLite volume, Docker-based builds, CI/CD quality gates (typecheck + build), scheduled source sync, and automated backups. Migrations execute automatically on container startup.
 
 ```bash
 flyctl deploy -a replyflow
@@ -192,16 +195,39 @@ flyctl deploy -a replyflow
 
 See the full operational runbook, secrets reference, and post-deploy checklist in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
+## Build Troubleshooting
+
+### JavaScript heap out of memory during `next build`
+
+If your logs show errors like:
+
+- `Ineffective mark-compacts near heap limit`
+- `Allocation failed - JavaScript heap out of memory`
+- `Next.js build worker exited ... SIGABRT`
+
+the build hit Node.js heap limits during the production bundle step.
+
+Run the build with a larger heap locally:
+
+```bash
+NODE_OPTIONS="--max-old-space-size=4096" npm run build
+```
+
+Deploy note: Fly remote Docker builds in this project already set `NODE_OPTIONS=--max-old-space-size=4096` in the Docker build stage.
+
 ## Plans
 
 | | Free (R$ 0) | Pro (R$ 49/mo) |
 |---|---|---|
-| Enabled sources | 5 | Unlimited |
-| ATS sources | 1 | Unlimited |
-| Manual syncs/day | 3 | Unlimited |
-| Source validations/day | 5 | Unlimited |
-| Contact reveals | Limited | Unlimited |
-| Email history | Limited | Full |
+| Enabled sources | Unlimited | Unlimited |
+| ATS sources | Unlimited | Unlimited |
+| Manual syncs/day | Unlimited | Unlimited |
+| Source validations/day | Unlimited | Unlimited |
+| Contact reveals | 50/month | Unlimited |
+| Draft generations | 30/month | Unlimited |
+| Sends | 10/month | Unlimited |
+| Connected accounts | 1 | Unlimited |
+| Email history | 30 items | Full |
 
 ## Contributing
 

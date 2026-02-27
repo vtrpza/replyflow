@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import {
   assertWithinSourceEnableQuota,
   ensureUserExists,
+  getEffectivePlan,
   upgradeRequiredResponse,
 } from "@/lib/plan";
+import { recordPlanIntentEvent } from "@/lib/plan/intent-events";
 import { SOURCE_POLICY } from "@/lib/sources/policy";
 import type { SourceType } from "@/lib/types";
 
@@ -154,6 +156,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const body = (await request.json()) as Record<string, unknown>;
     const normalized = normalizeSourceInput(body);
@@ -217,6 +220,17 @@ export async function POST(request: NextRequest) {
         totalJobsFetched: 0,
       })
       .run();
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_source_add",
+      route: "/api/sources",
+      metadata: {
+        sourceType: normalized.sourceType,
+        enabled: normalized.enabled,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

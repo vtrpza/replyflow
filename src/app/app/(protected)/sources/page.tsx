@@ -84,30 +84,9 @@ export default function SourcesPage() {
 
   const getUpgradeMessage = (data: UpgradePayload): string => {
     if (!data || data.error !== "upgrade_required") {
-      return isPt ? "Limite do plano atingido" : "Plan limit reached";
+      return isPt ? "Acao indisponivel no plano atual" : "Action unavailable on current plan";
     }
-    const limitText = typeof data.limit === "number" ? String(data.limit) : "?";
-    if (data.feature === "sources_enabled") {
-      return isPt
-        ? `Plano Free suporta ate ${limitText} fontes ativas.`
-        : `Free plan supports up to ${limitText} enabled sources.`;
-    }
-    if (data.feature === "ats_sources_enabled") {
-      return isPt
-        ? `Plano Free suporta ate ${limitText} fonte ATS ativa.`
-        : `Free plan supports up to ${limitText} enabled ATS source.`;
-    }
-    if (data.feature === "syncs_daily") {
-      return isPt
-        ? `Voce atingiu ${limitText} sincronizacoes hoje.`
-        : `You reached ${limitText} syncs today.`;
-    }
-    if (data.feature === "source_validations_daily") {
-      return isPt
-        ? `Voce atingiu ${limitText} validacoes hoje.`
-        : `You reached ${limitText} validations today.`;
-    }
-    return isPt ? "Limite do plano atingido" : "Plan limit reached";
+    return isPt ? "Acao indisponivel no plano atual" : "Action unavailable on current plan";
   };
 
   const toggleSource = async (source: Source) => {

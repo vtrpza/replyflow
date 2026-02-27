@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { and, desc, eq } from "drizzle-orm";
 import { generateColdEmail } from "@/lib/outreach/email-generator";
 import { assertWithinPlan, ensureUserExists, getEffectivePlan, getOrCreateProfile, upgradeRequiredResponse } from "@/lib/plan";
+import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
 import type { UserProfile } from "@/lib/types";
 import path from "path";
 import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
@@ -128,6 +129,14 @@ export async function POST(request: Request) {
 
     const draftCheck = assertWithinPlan(userId, "drafts");
     if (!draftCheck.ok) {
+      recordUpgradeBlockedIntent({
+        userId,
+        plan: getEffectivePlan(userId),
+        feature: draftCheck.feature,
+        route: "/api/outreach",
+        limit: draftCheck.limit,
+        period: draftCheck.period,
+      });
       return NextResponse.json(upgradeRequiredResponse(draftCheck.feature, draftCheck.limit), { status: 402 });
     }
 
@@ -187,6 +196,17 @@ export async function POST(request: Request) {
         updatedAt: now,
       })
       .run();
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_draft",
+      route: "/api/outreach",
+      metadata: {
+        jobId: job.id,
+        language,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -259,6 +279,7 @@ export async function PUT(request: Request) {
     }
 
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const body = await request.json();
     const { id, attachCV, toEmailOverride, accountId, emailSubject, emailBody } = body;
@@ -290,7 +311,6 @@ export async function PUT(request: Request) {
     let toEmail = toEmailOverride || null;
 
     if (!toEmail) {
-      const plan = getEffectivePlan(userId);
       if (plan === "free" && record.job.contactEmail) {
         const reveal = db
           .select()
@@ -338,6 +358,14 @@ export async function PUT(request: Request) {
 
     const sendCheck = assertWithinPlan(userId, "sends");
     if (!sendCheck.ok) {
+      recordUpgradeBlockedIntent({
+        userId,
+        plan,
+        feature: sendCheck.feature,
+        route: "/api/outreach",
+        limit: sendCheck.limit,
+        period: sendCheck.period,
+      });
       return NextResponse.json(upgradeRequiredResponse(sendCheck.feature, sendCheck.limit), { status: 402 });
     }
 
@@ -432,6 +460,17 @@ export async function PUT(request: Request) {
         createdAt: now,
       })
       .run();
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_send",
+      route: "/api/outreach",
+      metadata: {
+        outreachId: id,
+        accountId: account.id,
+      },
+    });
 
     return NextResponse.json({
       success: true,

@@ -273,6 +273,19 @@ function SettingsPageContent() {
     }
   };
 
+  const trackUpgradeCtaClick = (): void => {
+    void fetch("/api/telemetry/plan-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "upgrade_cta_click",
+        route: "/app/settings",
+        feature: "upgrade_cta",
+      }),
+      keepalive: true,
+    }).catch(() => undefined);
+  };
+
   const disconnectAccount = async (accountId: string) => {
     try {
       const res = await fetch("/api/accounts", {
@@ -437,6 +450,7 @@ function SettingsPageContent() {
             </div>
             <a
               href="/app/settings"
+              onClick={trackUpgradeCtaClick}
               className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
             >
               {isPt ? "Upgrade para Pro" : "Upgrade to Pro"}

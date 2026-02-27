@@ -77,10 +77,10 @@ const PRO_LIMITS: PlanLimits = {
 };
 
 const FREE_SOURCE_LIMITS: SourcePlanLimits = {
-  enabledSources: 5,
-  enabledAtsSources: 1,
-  manualSyncPerDay: 3,
-  sourceValidationsPerDay: 5,
+  enabledSources: -1,
+  enabledAtsSources: -1,
+  manualSyncPerDay: -1,
+  sourceValidationsPerDay: -1,
 };
 
 const PRO_SOURCE_LIMITS: SourcePlanLimits = {
@@ -112,6 +112,10 @@ function getCurrentPeriodStart(): string {
 function getCurrentDayStart(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function isUnlimitedLimit(limit: number): boolean {
+  return limit < 0;
 }
 
 /**
@@ -408,18 +412,17 @@ export function assertWithinSourceDailyQuota(
   feature: SourceDailyFeature,
   cost: number = 1
 ): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
-  const plan = getEffectivePlan(userId);
-  const limits = getSourceLimitsForPlan(plan);
-
-  if (plan === "pro") {
-    incrementSourceDailyUsage(userId, feature, cost);
-    return { ok: true };
-  }
+  const limits = getSourceLimitsForPlan(getEffectivePlan(userId));
 
   const used = getOrCreateSourceDailyUsage(userId, feature);
   const limit = feature === "manual_sync" ? limits.manualSyncPerDay : limits.sourceValidationsPerDay;
   const responseFeature: UpgradeFeatureKey =
     feature === "manual_sync" ? "syncs_daily" : "source_validations_daily";
+
+  if (isUnlimitedLimit(limit)) {
+    incrementSourceDailyUsage(userId, feature, cost);
+    return { ok: true };
+  }
 
   if (used + cost > limit) {
     return {
@@ -440,16 +443,11 @@ export function assertWithinSourceEnableQuota(
   sourceType: string,
   enablingCount = 1
 ): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
-  const plan = getEffectivePlan(userId);
-  if (plan === "pro") {
-    return { ok: true };
-  }
-
-  const limits = getSourceLimitsForPlan(plan);
+  const limits = getSourceLimitsForPlan(getEffectivePlan(userId));
   const counts = getSourceCounts(userId);
   const isAtsSource = sourceType === "greenhouse_board" || sourceType === "lever_postings";
 
-  if (counts.enabledSources + enablingCount > limits.enabledSources) {
+  if (!isUnlimitedLimit(limits.enabledSources) && counts.enabledSources + enablingCount > limits.enabledSources) {
     return {
       ok: false,
       error: "upgrade_required",
@@ -459,7 +457,11 @@ export function assertWithinSourceEnableQuota(
     };
   }
 
-  if (isAtsSource && counts.enabledAtsSources + enablingCount > limits.enabledAtsSources) {
+  if (
+    isAtsSource &&
+    !isUnlimitedLimit(limits.enabledAtsSources) &&
+    counts.enabledAtsSources + enablingCount > limits.enabledAtsSources
+  ) {
     return {
       ok: false,
       error: "upgrade_required",

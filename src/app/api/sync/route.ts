@@ -3,8 +3,10 @@ import { auth } from "@/lib/auth";
 import {
   assertWithinSourceDailyQuota,
   ensureUserExists,
+  getEffectivePlan,
   upgradeRequiredResponse,
 } from "@/lib/plan";
+import { recordPlanIntentEvent } from "@/lib/plan/intent-events";
 import { runSourceSync } from "@/lib/sources/sync";
 
 /**
@@ -20,6 +22,7 @@ export async function POST(request: Request) {
     }
 
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
     if (!body.reparseExisting) {
@@ -39,6 +42,17 @@ export async function POST(request: Request) {
       runDiscovery: body.runDiscovery === undefined ? true : !!body.runDiscovery,
       userId,
       enforceSchedule: false,
+    });
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_sync",
+      route: "/api/sync",
+      metadata: {
+        totalNewJobs: result.totalNewJobs,
+        sourceCount: result.results.length,
+      },
     });
 
     return NextResponse.json(result);

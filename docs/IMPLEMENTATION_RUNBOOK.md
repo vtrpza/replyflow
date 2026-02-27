@@ -38,6 +38,9 @@ This codebase now includes the following product capabilities:
   - per-user daily counters for source-related quotas (`manual_sync`, `source_validate`)
 - `job_match_scores`
   - `reasons_json`, `missing_skills_json`, `breakdown_json`
+- `plan_intent_events`
+  - plan-intent telemetry events used to validate premium demand behavior
+  - fields: `user_id`, `plan`, `event_type`, `feature`, `route`, `metadata_json`, `created_at`
 - `contacts`
   - `first_seen_at`, `last_seen_at`, `jobs_count`
   - `last_job_id`, `last_job_title`, `last_company`, `last_source_type`
@@ -50,7 +53,8 @@ This codebase now includes the following product capabilities:
 
 - `drizzle/0001_sources_connectors_explainability.sql`
 - `drizzle/0002_sources_per_user_plan_quotas.sql`
-- `drizzle/meta/_journal.json` updated with `0001` and `0002`
+- `drizzle/0003_plan_intent_events.sql`
+- `drizzle/meta/_journal.json` updated with `0001`, `0002`, and `0003`
 
 ## Source Connectors and Discovery
 
@@ -115,24 +119,21 @@ This codebase now includes the following product capabilities:
 ### Source-related limits
 
 - Free:
-  - enabled sources: `5`
-  - enabled ATS sources (Greenhouse/Lever): `1`
-  - manual syncs per day: `3`
-  - source validations per day: `5`
+  - unlimited (`-1`) for all source-related limits
 - Pro:
   - unlimited (`-1`) for all source-related limits
 
 ### Enforcement points
 
 - `POST /api/sources` and `PATCH /api/sources/[id]`
-  - blocks enable actions that exceed enabled source/ATS quotas
+  - source enable checks still run, but current free/pro limits are both unlimited
 - `POST /api/sources/[id]/validate`
-  - enforces daily validation quota
+  - validation checks still run, but current free/pro limits are both unlimited
 - `POST /api/sync`
-  - enforces daily manual-sync quota
+  - sync checks still run, but current free/pro limits are both unlimited
 - Standardized `402` payload:
   - `error: "upgrade_required"`
-  - `feature`: one of `sources_enabled`, `ats_sources_enabled`, `syncs_daily`, `source_validations_daily`
+  - source-related features are currently not expected to block with active limits
   - `limit`
   - `period`: `total|day|month`
 
@@ -153,6 +154,7 @@ This codebase now includes the following product capabilities:
 - `POST /api/sources`
 - `PATCH /api/sources/[id]`
 - `POST /api/sources/[id]/validate`
+- `POST /api/telemetry/plan-intent` (upgrade CTA telemetry)
 
 ### UI
 
@@ -242,6 +244,18 @@ This codebase now includes the following product capabilities:
 - Build: `npm run build`
 - Migrate: `npm run db:migrate`
 - Contact backfill: `npm run db:backfill-contacts`
+
+## Plan-Intent Telemetry
+
+- `src/lib/plan/intent-events.ts`
+  - typed plan-intent events and persistence helper
+  - records both core actions and upgrade-block signals
+- `src/lib/plan/intent-metrics.ts`
+  - computes free-plan active users and upgrade intent rate for pre/post analysis
+- Instrumented routes:
+  - core actions: `/api/sync`, `/api/sources`, `/api/sources/[id]`, `/api/sources/[id]/validate`, `/api/jobs/reveal`, `/api/outreach`, `/api/emails/send`
+  - upgrade blocked: `/api/jobs/reveal`, `/api/outreach`, `/api/emails/send`, `/api/accounts`, `/api/accounts/callback`
+  - CTA click: `/api/telemetry/plan-intent` from settings upgrade button
 
 ## Known Functional Notes
 

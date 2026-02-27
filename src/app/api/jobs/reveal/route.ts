@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
-import { assertWithinPlan, ensureUserExists, upgradeRequiredResponse } from "@/lib/plan";
+import { assertWithinPlan, ensureUserExists, getEffectivePlan, upgradeRequiredResponse } from "@/lib/plan";
 import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
+import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const body = await request.json();
     const { jobId } = body;
@@ -44,6 +46,14 @@ export async function POST(request: NextRequest) {
     if (!existingReveal) {
       const revealCheck = assertWithinPlan(userId, "reveals");
       if (!revealCheck.ok) {
+        recordUpgradeBlockedIntent({
+          userId,
+          plan,
+          feature: revealCheck.feature,
+          route: "/api/jobs/reveal",
+          limit: revealCheck.limit,
+          period: revealCheck.period,
+        });
         return NextResponse.json(
           upgradeRequiredResponse(revealCheck.feature, revealCheck.limit),
           { status: 402 }
@@ -59,6 +69,16 @@ export async function POST(request: NextRequest) {
         })
         .run();
     }
+
+    recordPlanIntentEvent({
+      userId,
+      plan,
+      eventType: "core_action_reveal",
+      route: "/api/jobs/reveal",
+      metadata: {
+        jobId,
+      },
+    });
 
     if (job.contactEmail) {
       upsertContactFromJobForUser(userId, {

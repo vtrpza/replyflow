@@ -9,6 +9,7 @@ import {
   getLimitsForPlan,
   upgradeRequiredResponse,
 } from "@/lib/plan";
+import { recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
 
 export async function GET() {
   try {
@@ -65,6 +66,14 @@ export async function POST(request: NextRequest) {
 
     if (action === "initiate") {
       if (plan === "free" && existingAccounts.length >= limits.accounts) {
+        recordUpgradeBlockedIntent({
+          userId,
+          plan,
+          feature: "accounts",
+          route: "/api/accounts",
+          limit: limits.accounts,
+          period: "month",
+        });
         return NextResponse.json(upgradeRequiredResponse("accounts", limits.accounts), { status: 402 });
       }
 
@@ -79,6 +88,14 @@ export async function POST(request: NextRequest) {
       }
 
       if (plan === "free" && existingAccounts.length >= limits.accounts) {
+        recordUpgradeBlockedIntent({
+          userId,
+          plan,
+          feature: "accounts",
+          route: "/api/accounts",
+          limit: limits.accounts,
+          period: "month",
+        });
         return NextResponse.json(upgradeRequiredResponse("accounts", limits.accounts), { status: 402 });
       }
 

@@ -8,6 +8,11 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Added
 
+- Plan-intent telemetry pipeline:
+  - `plan_intent_events` table + migration `drizzle/0003_plan_intent_events.sql`
+  - telemetry endpoint `POST /api/telemetry/plan-intent`
+  - event tracking for core actions and `upgrade_required` blockers
+  - metrics helper for free-plan active-user and upgrade-intent-rate analysis
 - Email templates feature with database schema (`email_templates` table).
 - Email templates API endpoints (`GET/POST /api/templates`, `GET/PUT/DELETE /api/templates/[id]`).
 - Seeded default email templates (10 templates: 5 EN, 5 PT-BR) for outreach workflow.
@@ -19,6 +24,12 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Changed
 
+- Free-tier source access now matches Pro for source ingestion:
+  - unlimited enabled sources
+  - unlimited ATS sources
+  - unlimited manual syncs/day
+  - unlimited source validations/day
+- Source/sync UI messaging updated to remove stale free-tier source quota upgrade copy.
 - Landing page hero and CTA copy updated with benefit-driven messaging.
 - Landing page CTAs changed from "Open app" to "Start free".
 

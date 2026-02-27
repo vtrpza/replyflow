@@ -5,8 +5,10 @@ import { db, schema } from "@/lib/db";
 import {
   assertWithinSourceEnableQuota,
   ensureUserExists,
+  getEffectivePlan,
   upgradeRequiredResponse,
 } from "@/lib/plan";
+import { recordPlanIntentEvent } from "@/lib/plan/intent-events";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -19,6 +21,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const userId = ensureUserExists(session);
+    const plan = getEffectivePlan(userId);
 
     const { id } = await context.params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -62,6 +65,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       })
       .where(and(eq(schema.repoSources.id, id), eq(schema.repoSources.userId, userId)))
       .run();
+
+    if (!source.enabled && nextEnabled) {
+      recordPlanIntentEvent({
+        userId,
+        plan,
+        eventType: "core_action_source_enable",
+        route: "/api/sources/[id]",
+        metadata: {
+          sourceId: source.id,
+          sourceType: source.sourceType,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

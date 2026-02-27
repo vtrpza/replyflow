@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { gmailProvider } from "@/lib/providers/email";
 import { ensureUserExists, getEffectivePlan, getLimitsForPlan } from "@/lib/plan";
+import { recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
 
 const BASE_URL = process.env.NEXTAUTH_URL || process.env.AUTH_URL || "https://replyflow.fly.dev";
 const CONNECT_REDIRECT_URI =
@@ -52,6 +53,14 @@ export async function GET(request: NextRequest) {
     const limits = getLimitsForPlan(plan);
 
     if (plan === "free" && existingAccounts.length >= limits.accounts) {
+      recordUpgradeBlockedIntent({
+        userId,
+        plan,
+        feature: "accounts",
+        route: "/api/accounts/callback",
+        limit: limits.accounts,
+        period: "month",
+      });
       return NextResponse.redirect(
         buildUrl("/app/settings", { gmail: "upgrade_required", message: "Free plan allows 1 connected account" })
       );
