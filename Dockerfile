@@ -10,6 +10,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 # ---- Build ----
 FROM base AS build
+ARG SENTRY_AUTH_TOKEN
 
 # Needed for native modules (better-sqlite3) during install.
 RUN apt-get update -qq && \
@@ -25,7 +26,7 @@ COPY . .
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
 # Build Next.js (standalone) and a tiny prod CLI for migrations.
-RUN npm run build && npm run build:cli
+RUN SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" npm run build && npm run build:cli
 
 # Keep only runtime deps before copying node_modules into the final image.
 RUN npm prune --omit=dev

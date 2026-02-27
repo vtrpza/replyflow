@@ -20,6 +20,7 @@ jobs:
       - run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
   deploy:
     name: Deploy app
     needs: quality
@@ -28,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - run: flyctl deploy --remote-only --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
