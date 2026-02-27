@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast, Skeleton, EmptyState } from "@/components/ui";
 import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface EmailRecord {
   id: string;
@@ -23,21 +24,33 @@ interface EmailRecord {
   errorMessage: string | null;
 }
 
-const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle; color: string; label: string }> = {
-  queued: { icon: Clock, color: "text-yellow-400", label: "Queued" },
-  sent: { icon: CheckCircle, color: "text-green-400", label: "Sent" },
-  failed: { icon: XCircle, color: "text-red-400", label: "Failed" },
-};
-
 export default function HistoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const toast = useToast();
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
 
   const [emails, setEmails] = useState<EmailRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [filter, setFilter] = useState<string | null>(null);
+
+  const getStatusConfig = (
+    value: string
+  ): { icon: typeof CheckCircle; color: string; label: string } => {
+    const labels = isPt
+      ? { queued: "Na fila", sent: "Enviado", failed: "Falhou" }
+      : { queued: "Queued", sent: "Sent", failed: "Failed" };
+
+    const config: Record<string, { icon: typeof CheckCircle; color: string; label: string }> = {
+      queued: { icon: Clock, color: "text-yellow-400", label: labels.queued },
+      sent: { icon: CheckCircle, color: "text-green-400", label: labels.sent },
+      failed: { icon: XCircle, color: "text-red-400", label: labels.failed },
+    };
+
+    return config[value] || config.queued;
+  };
 
   const fetchEmails = useCallback(async () => {
     setLoading(true);
@@ -54,11 +67,17 @@ export default function HistoryPage() {
         setTotal(data.total || 0);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to fetch history");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isPt
+            ? "Falha ao buscar historico"
+            : "Failed to fetch history"
+      );
     } finally {
       setLoading(false);
     }
-  }, [filter, toast]);
+  }, [filter, toast, isPt]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -87,9 +106,11 @@ export default function HistoryPage() {
     <div className="p-8 max-w-5xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Email History</h1>
+          <h1 className="text-2xl font-bold text-white">{isPt ? "Historico de Emails" : "Email History"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {total} emails {filter ? `(${filter})` : ""}
+            {isPt
+              ? `${total} emails ${filter ? `(${filter})` : ""}`
+              : `${total} emails ${filter ? `(${filter})` : ""}`}
           </p>
         </div>
 
@@ -102,7 +123,7 @@ export default function HistoryPage() {
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
-            All
+            {isPt ? "Todos" : "All"}
           </button>
           <button
             onClick={() => setFilter("sent")}
@@ -112,7 +133,7 @@ export default function HistoryPage() {
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
-            Sent
+            {isPt ? "Enviados" : "Sent"}
           </button>
           <button
             onClick={() => setFilter("failed")}
@@ -122,24 +143,28 @@ export default function HistoryPage() {
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800"
             }`}
           >
-            Failed
+            {isPt ? "Falhos" : "Failed"}
           </button>
         </div>
       </div>
 
       {emails.length === 0 ? (
         <EmptyState
-          title="No emails sent yet"
-          message="Go to the Compose page to send your first email."
+          title={isPt ? "Nenhum email enviado ainda" : "No emails sent yet"}
+          message={
+            isPt
+              ? "Va para a pagina Escrever para enviar seu primeiro email."
+              : "Go to the Compose page to send your first email."
+          }
           action={{
-            label: "Compose Email",
+            label: isPt ? "Escrever Email" : "Compose Email",
             onClick: () => router.push("/app/compose"),
           }}
         />
       ) : (
         <div className="space-y-2">
           {emails.map((email) => {
-            const config = STATUS_CONFIG[email.status] || STATUS_CONFIG.queued;
+            const config = getStatusConfig(email.status);
             const StatusIcon = config.icon;
 
             return (
@@ -164,13 +189,13 @@ export default function HistoryPage() {
                     </h3>
 
                     <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
-                      <span>To: {email.recipientEmail}</span>
-                      <span>From: {email.senderEmail}</span>
+                      <span>{isPt ? "Para" : "To"}: {email.recipientEmail}</span>
+                      <span>{isPt ? "De" : "From"}: {email.senderEmail}</span>
                     </div>
 
                     {email.sentAt && (
                       <p className="text-xs text-zinc-600 mt-1">
-                        Sent: {new Date(email.sentAt).toLocaleString()}
+                        {isPt ? "Enviado" : "Sent"}: {new Date(email.sentAt).toLocaleString()}
                       </p>
                     )}
 

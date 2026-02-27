@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState, LoadingButton, SkeletonList, useToast } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 interface Job {
   id: string;
@@ -38,6 +39,8 @@ interface Pagination {
 export default function JobsPage() {
   const router = useRouter();
   const toast = useToast();
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const [jobs, setJobs] = useState<Job[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -63,6 +66,25 @@ export default function JobsPage() {
   const [revealingJob, setRevealingJob] = useState<string | null>(null);
   const [revealBlocked, setRevealBlocked] = useState(false);
 
+  const getOutreachStatusLabel = (status: string): string => {
+    if (!isPt) {
+      return status.replace("_", " ");
+    }
+
+    const labels: Record<string, string> = {
+      none: "sem contato",
+      email_drafted: "rascunho criado",
+      email_sent: "enviado",
+      followed_up: "follow-up",
+      replied: "respondeu",
+      interviewing: "entrevista",
+      accepted: "aceito",
+      rejected: "rejeitado",
+    };
+
+    return labels[status] || status.replace("_", " ");
+  };
+
   const fetchJobs = useCallback(
     async (page = 1) => {
       setLoading(true);
@@ -83,17 +105,17 @@ export default function JobsPage() {
 
       try {
         const res = await fetch(`/api/jobs?${params.toString()}`);
-        if (!res.ok) throw new Error("Failed to fetch jobs");
+        if (!res.ok) throw new Error(isPt ? "Falha ao buscar vagas" : "Failed to fetch jobs");
         const data = await res.json();
         setJobs(data.jobs || []);
         setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : isPt ? "Ocorreu um erro" : "An error occurred");
       } finally {
         setLoading(false);
       }
     },
-    [search, filters]
+    [search, filters, isPt]
   );
 
   useEffect(() => {
@@ -111,19 +133,27 @@ export default function JobsPage() {
 
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error("Draft limit reached. Upgrade to Pro in Settings.");
+        toast.error(
+          isPt
+            ? "Limite de rascunhos atingido. Faca upgrade para Pro em Configuracoes."
+            : "Draft limit reached. Upgrade to Pro in Settings."
+        );
         router.push("/app/settings");
         return;
       }
 
       if (data.success) {
-        toast.success("Email draft created! Check Outreach.");
+        toast.success(
+          isPt
+            ? "Rascunho criado! Veja em Outreach."
+            : "Email draft created! Check Outreach."
+        );
         fetchJobs(pagination.page);
       } else {
-        toast.error(`Error: ${data.error}`);
+        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
       }
     } catch {
-      toast.error("Failed to create draft");
+      toast.error(isPt ? "Falha ao criar rascunho" : "Failed to create draft");
     } finally {
       setDraftingJob(null);
     }
@@ -146,18 +176,22 @@ export default function JobsPage() {
 
       if (res.status === 402 && data?.error === "upgrade_required") {
         setRevealBlocked(true);
-        toast.error("Reveal limit reached. Upgrade to Pro in Settings.");
+        toast.error(
+          isPt
+            ? "Limite de reveal atingido. Faca upgrade para Pro em Configuracoes."
+            : "Reveal limit reached. Upgrade to Pro in Settings."
+        );
         return;
       }
 
       if (data.success) {
-        toast.success("Contact revealed");
+        toast.success(isPt ? "Contato revelado" : "Contact revealed");
         fetchJobs(pagination.page);
       } else {
-        toast.error(data.error || "Failed to reveal contact");
+        toast.error(data.error || (isPt ? "Falha ao revelar contato" : "Failed to reveal contact"));
       }
     } catch {
-      toast.error("Failed to reveal contact");
+      toast.error(isPt ? "Falha ao revelar contato" : "Failed to reveal contact");
     } finally {
       setRevealingJob(null);
     }
@@ -166,14 +200,18 @@ export default function JobsPage() {
   return (
     <div className="p-8 max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">Jobs</h1>
-        <p className="text-sm text-zinc-500 mt-1">{pagination.total} jobs found across all repos</p>
+        <h1 className="text-2xl font-bold text-white">{isPt ? "Vagas" : "Jobs"}</h1>
+        <p className="text-sm text-zinc-500 mt-1">
+          {isPt
+            ? `${pagination.total} vagas encontradas em todos os repos`
+            : `${pagination.total} jobs found across all repos`}
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
         <input
           type="text"
-          placeholder="Search jobs, companies, tech..."
+          placeholder={isPt ? "Buscar vagas, empresas, stack..." : "Search jobs, companies, tech..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && fetchJobs()}
@@ -184,15 +222,15 @@ export default function JobsPage() {
           onChange={(e) => setFilters({ ...filters, remote: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="">All Locations</option>
-          <option value="true">Remote Only</option>
+          <option value="">{isPt ? "Todas localizacoes" : "All Locations"}</option>
+          <option value="true">{isPt ? "Apenas remoto" : "Remote Only"}</option>
         </select>
         <select
           value={filters.contractType}
           onChange={(e) => setFilters({ ...filters, contractType: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="">All Contracts</option>
+          <option value="">{isPt ? "Todos contratos" : "All Contracts"}</option>
           <option value="CLT">CLT</option>
           <option value="PJ">PJ</option>
           <option value="Freela">Freela</option>
@@ -202,8 +240,8 @@ export default function JobsPage() {
           onChange={(e) => setFilters({ ...filters, level: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="">All Levels</option>
-          <option value="Junior">Junior</option>
+          <option value="">{isPt ? "Todos niveis" : "All Levels"}</option>
+          <option value="Junior">{isPt ? "Junior" : "Junior"}</option>
           <option value="Pleno">Pleno</option>
           <option value="Senior">Senior</option>
           <option value="Lead">Lead</option>
@@ -213,23 +251,23 @@ export default function JobsPage() {
           onChange={(e) => setFilters({ ...filters, outreachStatus: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="">All Outreach</option>
-          <option value="none">Not Contacted</option>
-          <option value="email_drafted">Drafted</option>
-          <option value="email_sent">Sent</option>
-          <option value="followed_up">Followed Up</option>
-          <option value="replied">Replied</option>
-          <option value="interviewing">Interviewing</option>
+          <option value="">{isPt ? "Todo outreach" : "All Outreach"}</option>
+          <option value="none">{isPt ? "Sem contato" : "Not Contacted"}</option>
+          <option value="email_drafted">{isPt ? "Rascunhado" : "Drafted"}</option>
+          <option value="email_sent">{isPt ? "Enviado" : "Sent"}</option>
+          <option value="followed_up">{isPt ? "Follow-up" : "Followed Up"}</option>
+          <option value="replied">{isPt ? "Respondeu" : "Replied"}</option>
+          <option value="interviewing">{isPt ? "Entrevista" : "Interviewing"}</option>
         </select>
         <select
           value={filters.sort}
           onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="matchScore">Best Match</option>
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-          <option value="comments">Most Comments</option>
+          <option value="matchScore">{isPt ? "Melhor match" : "Best Match"}</option>
+          <option value="newest">{isPt ? "Mais recentes" : "Newest First"}</option>
+          <option value="oldest">{isPt ? "Mais antigas" : "Oldest First"}</option>
+          <option value="comments">{isPt ? "Mais comentarios" : "Most Comments"}</option>
         </select>
       </div>
 
@@ -239,11 +277,18 @@ export default function JobsPage() {
         <div className="bg-zinc-900 border border-red-500/30 rounded-lg p-4">
           <p className="text-red-400 text-sm mb-3">{error}</p>
           <LoadingButton onClick={() => fetchJobs()} loading={false}>
-            Try Again
+            {isPt ? "Tentar novamente" : "Try Again"}
           </LoadingButton>
         </div>
       ) : jobs.length === 0 ? (
-        <EmptyState title="No jobs found" message="Try scraping repos first or adjust your filters." />
+        <EmptyState
+          title={isPt ? "Nenhuma vaga encontrada" : "No jobs found"}
+          message={
+            isPt
+              ? "Tente sincronizar repos primeiro ou ajuste os filtros."
+              : "Try scraping repos first or adjust your filters."
+          }
+        />
       ) : (
         <div className="space-y-3">
           {jobs.map((job) => (
@@ -262,12 +307,12 @@ export default function JobsPage() {
                       </a>
                       {job.isRemote && (
                         <span className="shrink-0 px-2 py-0.5 text-xs bg-cyan-500/10 text-cyan-400 rounded-full">
-                          Remote
+                          {isPt ? "Remoto" : "Remote"}
                         </span>
                       )}
                       {!job.hasContact && job.applyUrl && (
                         <span className="shrink-0 px-2 py-0.5 text-xs bg-amber-500/10 text-amber-400 rounded-full">
-                          ATS Only
+                          {isPt ? "Somente ATS" : "ATS Only"}
                         </span>
                       )}
                     </div>
@@ -308,7 +353,7 @@ export default function JobsPage() {
                     <button
                       onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
                       className="p-2 text-zinc-500 hover:text-zinc-300 transition-colors"
-                      title="Expand"
+                      title={isPt ? "Expandir" : "Expand"}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -330,7 +375,15 @@ export default function JobsPage() {
                             : "bg-cyan-600 hover:bg-cyan-700 text-white"
                         }`}
                       >
-                        {revealingJob === job.id ? "..." : revealBlocked ? "Upgrade to reveal" : "Reveal contact"}
+                        {revealingJob === job.id
+                          ? "..."
+                          : revealBlocked
+                            ? isPt
+                              ? "Upgrade para revelar"
+                              : "Upgrade to reveal"
+                            : isPt
+                              ? "Revelar contato"
+                              : "Reveal contact"}
                       </button>
                     )}
 
@@ -340,7 +393,7 @@ export default function JobsPage() {
                         disabled={draftingJob === job.id}
                         className="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                       >
-                        {draftingJob === job.id ? "..." : "Draft Email"}
+                        {draftingJob === job.id ? "..." : isPt ? "Criar rascunho" : "Draft Email"}
                       </button>
                     )}
 
@@ -351,13 +404,13 @@ export default function JobsPage() {
                         rel="noopener noreferrer"
                         className="px-3 py-1.5 text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
                       >
-                        Apply via ATS
+                        {isPt ? "Candidatar via ATS" : "Apply via ATS"}
                       </a>
                     )}
 
                     {job.outreachStatus !== "none" && (
                       <span className="px-2 py-1 text-xs bg-blue-500/10 text-blue-400 rounded">
-                        {job.outreachStatus.replace("_", " ")}
+                        {getOutreachStatusLabel(job.outreachStatus)}
                       </span>
                     )}
                   </div>
@@ -400,17 +453,19 @@ export default function JobsPage() {
             disabled={pagination.page <= 1}
             className="px-3 py-1.5 text-sm bg-zinc-800 text-zinc-300 rounded-lg disabled:opacity-50 hover:bg-zinc-700"
           >
-            Previous
+            {isPt ? "Anterior" : "Previous"}
           </button>
           <span className="text-sm text-zinc-500">
-            Page {pagination.page} of {pagination.totalPages}
+            {isPt
+              ? `Pagina ${pagination.page} de ${pagination.totalPages}`
+              : `Page ${pagination.page} of ${pagination.totalPages}`}
           </span>
           <button
             onClick={() => fetchJobs(pagination.page + 1)}
             disabled={pagination.page >= pagination.totalPages}
             className="px-3 py-1.5 text-sm bg-zinc-800 text-zinc-300 rounded-lg disabled:opacity-50 hover:bg-zinc-700"
           >
-            Next
+            {isPt ? "Proxima" : "Next"}
           </button>
         </div>
       )}

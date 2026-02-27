@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 /* ───────────────────────── data ───────────────────────── */
 
@@ -73,6 +74,9 @@ export default function LandingPage() {
 /* ─── Nav ─── */
 
 function Nav() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
@@ -94,13 +98,13 @@ function Nav() {
             href="/app/signin"
             className="text-sm text-[var(--rf-muted)] hover:text-white transition-colors"
           >
-            Sign in
+            {isPt ? "Entrar" : "Sign in"}
           </Link>
           <Link
             href="/app"
             className="text-sm font-medium px-4 py-1.5 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors"
           >
-            Open app
+            {isPt ? "Abrir app" : "Open app"}
           </Link>
         </div>
       </div>
@@ -111,6 +115,9 @@ function Nav() {
 /* ─── Hero ─── */
 
 function Hero() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
   return (
     <section className="rf-grid-bg relative pt-32 pb-24 px-6">
       {/* Gradient glow behind hero */}
@@ -123,19 +130,26 @@ function Hero() {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
           <span className="text-xs font-mono text-[var(--rf-muted)]">
-            v1.0 — now open
+            {isPt ? "v1.0 - ja disponivel" : "v1.0 - now open"}
           </span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-          <span className="text-white">Outreach pipeline</span>
+          <span className="text-white">{isPt ? "Pipeline de outreach" : "Outreach pipeline"}</span>
           <br />
-          <span className="rf-gradient-text">for devs who take ownership.</span>
+          <span className="rf-gradient-text">
+            {isPt ? "para devs que assumem responsabilidade." : "for devs who take ownership."}
+          </span>
         </h1>
 
         <p className="text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
-          Track leads, draft emails, send, follow up, and measure replies — in one place.
-          Treat applications like a pipeline, not a vibe.
+          {isPt
+            ? "Acompanhe leads, escreva emails, envie, faca follow-up e meca respostas em um unico lugar."
+            : "Track leads, draft emails, send, follow up, and measure replies - in one place."}
+          {" "}
+          {isPt
+            ? "Trate candidaturas como pipeline, nao como sorte."
+            : "Treat applications like a pipeline, not a vibe."}
         </p>
 
         <div className="flex items-center justify-center gap-4">
@@ -145,18 +159,18 @@ function Hero() {
             style={{ background: "var(--rf-gradient)" }}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
-            Open app
+            {isPt ? "Abrir app" : "Open app"}
           </Link>
           <Link
             href="/app/signin"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all"
           >
-            Sign in
+            {isPt ? "Entrar" : "Sign in"}
           </Link>
         </div>
 
         <p className="mt-6 text-xs text-zinc-600 font-mono">
-          free tier available — no credit card
+          {isPt ? "plano gratis disponivel - sem cartao" : "free tier available - no credit card"}
         </p>
       </div>
     </section>
@@ -166,6 +180,18 @@ function Hero() {
 /* ─── Pipeline (How it works) ─── */
 
 function Pipeline() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
+  const pipelinePt = [
+    { label: "Lead", desc: "Encontre vagas com contato direto" },
+    { label: "Rascunho", desc: "Geracao de email em um clique" },
+    { label: "Enviar", desc: "Envie pela sua conta Gmail" },
+    { label: "Follow-up", desc: "Lembretes automatizados" },
+    { label: "Resposta", desc: "Acompanhe retornos" },
+    { label: "Entrevista", desc: "Avance para a proxima etapa" },
+  ];
+
   return (
     <section className="relative py-24 px-6 border-t border-[var(--rf-border)] overflow-hidden">
       <div
@@ -177,14 +203,14 @@ function Pipeline() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-14">
           <div>
             <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-              How it works
+              {isPt ? "Como funciona" : "How it works"}
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-              Six steps. One pipeline.
+              {isPt ? "Seis etapas. Um pipeline." : "Six steps. One pipeline."}
             </h2>
           </div>
           <p className="text-xs font-mono text-[var(--rf-muted)] rounded-full border border-[var(--rf-border)] px-3 py-1.5 w-fit">
-            deterministic flow · no ATS theater
+            {isPt ? "fluxo deterministico · sem teatro de ATS" : "deterministic flow · no ATS theater"}
           </p>
         </div>
 
@@ -213,10 +239,10 @@ function Pipeline() {
               </div>
 
               <h3 className="text-sm font-semibold text-white mb-1">
-                {step.label}
+                {isPt ? pipelinePt[i].label : step.label}
               </h3>
               <p className="text-xs text-[var(--rf-muted)] leading-relaxed">
-                {step.desc}
+                {isPt ? pipelinePt[i].desc : step.desc}
               </p>
 
               {i < PIPELINE_STEPS.length - 1 && (
@@ -236,20 +262,42 @@ function Pipeline() {
 /* ─── Features ─── */
 
 function Features() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
+  const featurePt = [
+    {
+      title: "Contato direto primeiro",
+      desc: "Mostramos vagas com emails reais e perfis no LinkedIn. Sem buraco negro de formularios ATS.",
+    },
+    {
+      title: "Rascunhos em um clique",
+      desc: "Gere cold emails em PT-BR ou EN, adaptados ao seu perfil e a vaga.",
+    },
+    {
+      title: "Pipeline + follow-ups",
+      desc: "Acompanhe cada candidatura do rascunho ate a entrevista. Follow-up e onde as entrevistas acontecem.",
+    },
+    {
+      title: "Historico e logs",
+      desc: "Historico completo de envios e status por outreach. Saiba o que funciona.",
+    },
+  ];
+
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)] bg-[var(--rf-surface)]/50">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            Features
+            {isPt ? "Recursos" : "Features"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Built for real-world dev outreach.
+            {isPt ? "Feito para outreach real de dev." : "Built for real-world dev outreach."}
           </h2>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {FEATURES.map((f) => (
+          {FEATURES.map((f, i) => (
             <div
               key={f.title}
               className="p-6 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-bg)] hover:border-zinc-600 transition-all group"
@@ -262,10 +310,10 @@ function Features() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-white mb-1">
-                    {f.title}
+                    {isPt ? featurePt[i].title : f.title}
                   </h3>
                   <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                    {f.desc}
+                    {isPt ? featurePt[i].desc : f.desc}
                   </p>
                 </div>
               </div>
@@ -275,7 +323,9 @@ function Features() {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-zinc-600 font-mono">
-            &quot;You don&apos;t need more jobs. You need more replies.&quot;
+            {isPt
+              ? '"Voce nao precisa de mais vagas. Voce precisa de mais respostas."'
+              : "\"You don't need more jobs. You need more replies.\""}
           </p>
         </div>
       </div>
@@ -286,6 +336,9 @@ function Features() {
 /* ─── Banner / Visual ─── */
 
 function Banner() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)]">
       <div className="max-w-5xl mx-auto">
@@ -302,7 +355,8 @@ function Banner() {
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--rf-bg)] via-transparent to-transparent" />
           <div className="absolute bottom-6 left-6 right-6">
             <p className="text-sm font-mono text-[var(--rf-muted)]">
-              <span className="text-[var(--rf-cyan)]">$</span> replyflow --status pipeline
+              <span className="text-[var(--rf-cyan)]">$</span>{" "}
+              {isPt ? "replyflow --status funil" : "replyflow --status pipeline"}
             </p>
           </div>
         </div>
@@ -314,35 +368,40 @@ function Banner() {
 /* ─── Pricing ─── */
 
 function Pricing() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
   const plans = [
     {
       name: "Free",
       price: "R$ 0",
-      period: "forever",
-      desc: "Get started. No credit card.",
+      period: isPt ? "para sempre" : "forever",
+      desc: isPt ? "Comece agora. Sem cartao." : "Get started. No credit card.",
       features: [
-        "Up to 50 leads/month",
-        "Email drafts (PT-BR / EN)",
-        "Basic pipeline tracking",
-        "Send via your Gmail",
+        isPt ? "Ate 50 leads/mes" : "Up to 50 leads/month",
+        isPt ? "Rascunhos de email (PT-BR / EN)" : "Email drafts (PT-BR / EN)",
+        isPt ? "Acompanhamento basico do pipeline" : "Basic pipeline tracking",
+        isPt ? "Envio pela sua conta Gmail" : "Send via your Gmail",
       ],
-      cta: "Start free",
+      cta: isPt ? "Comecar gratis" : "Start free",
       href: "/app",
       primary: false,
     },
     {
       name: "Pro",
       price: "R$ 49",
-      period: "/month",
-      desc: "For active job seekers who want more replies.",
+      period: isPt ? "/mes" : "/month",
+      desc: isPt
+        ? "Para quem esta em busca ativa e quer mais respostas."
+        : "For active job seekers who want more replies.",
       features: [
-        "Unlimited leads",
-        "Priority draft generation",
-        "Follow-up automation",
-        "Full history & analytics",
-        "Match score ranking",
+        isPt ? "Leads ilimitados" : "Unlimited leads",
+        isPt ? "Geracao de rascunho prioritaria" : "Priority draft generation",
+        isPt ? "Automacao de follow-up" : "Follow-up automation",
+        isPt ? "Historico completo e analytics" : "Full history & analytics",
+        isPt ? "Ranking por score de match" : "Match score ranking",
       ],
-      cta: "Upgrade to Pro",
+      cta: isPt ? "Upgrade para Pro" : "Upgrade to Pro",
       href: "/app/settings",
       primary: true,
     },
@@ -353,10 +412,10 @@ function Pricing() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            Pricing
+            {isPt ? "Precos" : "Pricing"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Simple. No surprises.
+            {isPt ? "Simples. Sem surpresa." : "Simple. No surprises."}
           </h2>
         </div>
 
@@ -372,7 +431,7 @@ function Pricing() {
             >
               {plan.primary && (
                 <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-medium text-[var(--rf-bg)] bg-[var(--rf-green)]">
-                  recommended
+                  {isPt ? "recomendado" : "recommended"}
                 </div>
               )}
 
@@ -431,7 +490,24 @@ function Pricing() {
 /* ─── FAQ ─── */
 
 function Faq() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const [open, setOpen] = useState<number | null>(null);
+
+  const faqPt = [
+    {
+      q: "A ReplyFlow e um job board?",
+      a: "Nao. A ReplyFlow e um pipeline de outreach. Ela conecta fontes de vagas, mas o valor central esta no fluxo: rascunhar, enviar, fazer follow-up e acompanhar respostas.",
+    },
+    {
+      q: "Ela garante entrevistas?",
+      a: "Nenhuma ferramenta garante isso. A ReplyFlow reduz friccao e aumenta consistencia no outreach. Mais envios e follow-ups melhores resultam em mais respostas.",
+    },
+    {
+      q: "Preciso usar plataformas ATS?",
+      a: "Nem sempre. A ReplyFlow prioriza contato direto quando disponivel (email, LinkedIn). Quando for ATS-only, voce decide como seguir.",
+    },
+  ];
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)]">
@@ -441,7 +517,7 @@ function Faq() {
             FAQ
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Common questions
+            {isPt ? "Perguntas comuns" : "Common questions"}
           </h2>
         </div>
 
@@ -456,7 +532,7 @@ function Faq() {
                 className="w-full flex items-center justify-between px-6 py-4 text-left"
               >
                 <span className="text-sm font-medium text-white">
-                  {item.q}
+                  {isPt ? faqPt[i].q : item.q}
                 </span>
                 <span
                   className={`text-[var(--rf-muted)] font-mono text-lg transition-transform ${
@@ -469,7 +545,7 @@ function Faq() {
               {open === i && (
                 <div className="px-6 pb-5">
                   <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                    {item.a}
+                    {isPt ? faqPt[i].a : item.a}
                   </p>
                 </div>
               )}
@@ -484,6 +560,9 @@ function Faq() {
 /* ─── Footer ─── */
 
 function Footer() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+
   return (
     <footer className="border-t border-[var(--rf-border)] py-10 px-6">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -501,7 +580,9 @@ function Footer() {
         </div>
 
         <p className="text-xs text-zinc-600 font-mono">
-          The follow-up is where the interview happens.
+          {isPt
+            ? "E no follow-up que a entrevista acontece."
+            : "The follow-up is where the interview happens."}
         </p>
       </div>
     </footer>

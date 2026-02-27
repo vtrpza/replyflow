@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider, ModalProvider } from "@/components/ui";
 import { Providers } from "@/components/providers";
+import { LanguageSwitch } from "@/components/ui/language-switch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,13 +58,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="pt-BR" className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
           <ToastProvider>
-            <ModalProvider>{children}</ModalProvider>
+            <ModalProvider>
+              <LanguageSwitch />
+              {children}
+            </ModalProvider>
           </ToastProvider>
         </Providers>
       </body>

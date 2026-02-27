@@ -9,6 +9,7 @@ import {
   Skeleton,
   useToast,
 } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 interface Stats {
   totalJobs: number;
@@ -50,21 +51,28 @@ function toPercent(part: number, total: number): number {
   return Math.round((part / total) * 100);
 }
 
-function formatTimestamp(value: string | null): string {
+function formatTimestamp(
+  value: string | null,
+  locale: string,
+  neverLabel: string,
+  invalidLabel: string
+): string {
   if (!value) {
-    return "never";
+    return neverLabel;
   }
 
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return "invalid";
+    return invalidLabel;
   }
 
-  return date.toLocaleString();
+  return date.toLocaleString(locale);
 }
 
 export default function Dashboard() {
   const toast = useToast();
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [calculating, setCalculating] = useState<boolean>(false);
@@ -73,9 +81,11 @@ export default function Dashboard() {
     fetch("/api/stats")
       .then((r) => r.json())
       .then(setStats)
-      .catch(() => toast.error("Failed to fetch dashboard stats"))
+      .catch(() =>
+        toast.error(isPt ? "Falha ao buscar estatisticas do dashboard" : "Failed to fetch dashboard stats")
+      )
       .finally(() => setLoading(false));
-  }, [toast]);
+  }, [toast, isPt]);
 
   const handleCalculateScores = async (): Promise<void> => {
     setCalculating(true);
@@ -83,15 +93,19 @@ export default function Dashboard() {
       const res = await fetch("/api/jobs/match", { method: "POST" });
       const result = await res.json();
       if (result.success) {
-        toast.success(`Calculated match scores for ${result.updatedCount} jobs`);
+        toast.success(
+          isPt
+            ? `Scores de match calculados para ${result.updatedCount} vagas`
+            : `Calculated match scores for ${result.updatedCount} jobs`
+        );
         const statsRes = await fetch("/api/stats");
         const statsData = await statsRes.json();
         setStats(statsData);
       } else {
-        toast.error(`Error: ${result.error}`);
+        toast.error(`${isPt ? "Erro" : "Error"}: ${result.error}`);
       }
     } catch {
-      toast.error("Failed to calculate match scores");
+      toast.error(isPt ? "Falha ao calcular score de match" : "Failed to calculate match scores");
     } finally {
       setCalculating(false);
     }
@@ -124,8 +138,12 @@ export default function Dashboard() {
     return (
       <div className="p-8">
         <EmptyState
-          title="No pipeline data yet"
-          message='Run "Scrape Jobs" in the sidebar to bootstrap your first batch of leads.'
+          title={isPt ? "Ainda nao ha dados no pipeline" : "No pipeline data yet"}
+          message={
+            isPt
+              ? 'Rode "Sincronizar Vagas" na barra lateral para gerar seu primeiro lote de leads.'
+              : 'Run "Scrape Jobs" in the sidebar to bootstrap your first batch of leads.'
+          }
           icon={<span className="text-2xl font-mono text-[var(--rf-cyan)]">$</span>}
         />
       </div>
@@ -141,42 +159,42 @@ export default function Dashboard() {
   const pipelineStages: PipelineStage[] = [
     {
       id: "lead",
-      label: "Lead",
+      label: isPt ? "Lead" : "Lead",
       glyph: ">",
       value: stats.totalJobs,
       toneClass: "text-cyan-300",
     },
     {
       id: "draft",
-      label: "Draft",
+      label: isPt ? "Rascunho" : "Draft",
       glyph: "~",
       value: stats.outreachDrafted,
       toneClass: "text-sky-300",
     },
     {
       id: "send",
-      label: "Send",
+      label: isPt ? "Enviar" : "Send",
       glyph: "->",
       value: stats.outreachSentOnly,
       toneClass: "text-cyan-200",
     },
     {
       id: "followup",
-      label: "Follow up",
+      label: isPt ? "Follow-up" : "Follow up",
       glyph: ">>",
       value: stats.outreachFollowedUp,
       toneClass: "text-emerald-300",
     },
     {
       id: "reply",
-      label: "Reply",
+      label: isPt ? "Resposta" : "Reply",
       glyph: "<",
       value: stats.outreachReplied,
       toneClass: "text-green-300",
     },
     {
       id: "interview",
-      label: "Interview",
+      label: isPt ? "Entrevista" : "Interview",
       glyph: "#",
       value: interviewStageCount,
       toneClass: "text-emerald-200",
@@ -201,7 +219,14 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
-      <LoadingOverlay show={calculating} message="Recalculating match score signals..." />
+      <LoadingOverlay
+        show={calculating}
+        message={
+          isPt
+            ? "Recalculando sinais de score de match..."
+            : "Recalculating match score signals..."
+        }
+      />
 
       <section
         className="rf-animate-in rounded-2xl border p-5 sm:p-6"
@@ -214,30 +239,37 @@ export default function Dashboard() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--rf-muted)] font-mono mb-2">
-              command center
+              {isPt ? "centro de comando" : "command center"}
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Outreach Pipeline
+              {isPt ? "Pipeline de Outreach" : "Outreach Pipeline"}
             </h1>
             <p className="text-sm text-[var(--rf-muted)] mt-2">
-              Leads, sends, replies, and interviews in one operator view.
+              {isPt
+                ? "Leads, envios, respostas e entrevistas em uma unica visao."
+                : "Leads, sends, replies, and interviews in one operator view."}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-mono text-[var(--rf-muted)]"
                 style={{ borderColor: "var(--rf-border)" }}>
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
-                live tracking
+                {isPt ? "monitoramento ao vivo" : "live tracking"}
               </span>
               <span className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-mono text-[var(--rf-muted)]"
                 style={{ borderColor: "var(--rf-border)" }}>
-                last score calc: {formatTimestamp(stats.matchScoreLastCalculated)}
+                {isPt ? "ultimo calculo" : "last score calc"}: {formatTimestamp(
+                  stats.matchScoreLastCalculated,
+                  isPt ? "pt-BR" : "en-US",
+                  isPt ? "nunca" : "never",
+                  isPt ? "invalido" : "invalid"
+                )}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col items-start sm:items-end gap-3">
             <div className="text-xs font-mono text-[var(--rf-muted)]">
-              <span className="rf-gradient-text">{stats.totalJobs.toLocaleString()}</span> leads / {stats.totalOutreachSent.toLocaleString()} sent / {stats.totalReplies.toLocaleString()} replies
+              <span className="rf-gradient-text">{stats.totalJobs.toLocaleString()}</span> {isPt ? "leads" : "leads"} / {stats.totalOutreachSent.toLocaleString()} {isPt ? "enviados" : "sent"} / {stats.totalReplies.toLocaleString()} {isPt ? "respostas" : "replies"}
             </div>
             {stats.totalJobs > 0 && (
               <LoadingButton
@@ -246,7 +278,7 @@ export default function Dashboard() {
                 className="rounded-lg text-[var(--rf-bg)] hover:opacity-90"
                 style={{ background: "var(--rf-gradient)" }}
               >
-                Recalculate Match Scores
+                {isPt ? "Recalcular Score de Match" : "Recalculate Match Scores"}
               </LoadingButton>
             )}
           </div>
@@ -263,19 +295,20 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-2">
-            direct contact signal
+            {isPt ? "sinal de contato direto" : "direct contact signal"}
           </p>
           <div className="flex items-end justify-between">
             <div>
-              <p className="text-xs text-[var(--rf-muted)]">Direct rate</p>
+              <p className="text-xs text-[var(--rf-muted)]">{isPt ? "Taxa direta" : "Direct rate"}</p>
               <p className="rf-number text-5xl font-bold rf-gradient-text leading-none mt-1">
                 {hasLeads ? `${directRate}%` : "--"}
               </p>
             </div>
             <div className="text-right text-xs text-[var(--rf-muted)] font-mono space-y-1">
               <p>{stats.jobsWithEmail.toLocaleString()} direct</p>
+              <p>{stats.jobsWithEmail.toLocaleString()} {isPt ? "diretos" : "direct"}</p>
               <p>{stats.jobsAtsOnly.toLocaleString()} ats-only</p>
-              <p>{stats.jobsWithMatchScore.toLocaleString()} scored</p>
+              <p>{stats.jobsWithMatchScore.toLocaleString()} {isPt ? "com score" : "scored"}</p>
             </div>
           </div>
           <div className="mt-5">
@@ -292,7 +325,7 @@ export default function Dashboard() {
               />
             </div>
             <div className="mt-2 text-[11px] font-mono text-[var(--rf-muted)] flex items-center justify-between">
-              <span>{hasLeads ? "contact-first" : "waiting for leads"}</span>
+              <span>{hasLeads ? (isPt ? "contato primeiro" : "contact-first") : isPt ? "aguardando leads" : "waiting for leads"}</span>
               <span>{hasLeads ? `${100 - directRate}% ats pressure` : "n/a"}</span>
             </div>
           </div>
@@ -307,14 +340,14 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-4">
-            pipeline snapshot
+            {isPt ? "resumo do pipeline" : "pipeline snapshot"}
           </p>
           <div className="space-y-3">
-            <MiniRow label="Drafted" value={stats.outreachDrafted} tone="text-sky-300" />
-            <MiniRow label="Sent" value={stats.outreachSentOnly} tone="text-cyan-300" />
-            <MiniRow label="Follow-up" value={stats.outreachFollowedUp} tone="text-emerald-300" />
-            <MiniRow label="Replied" value={stats.outreachReplied} tone="text-green-300" />
-            <MiniRow label="Interview" value={interviewStageCount} tone="text-emerald-200" />
+            <MiniRow label={isPt ? "Rascunhado" : "Drafted"} value={stats.outreachDrafted} tone="text-sky-300" />
+            <MiniRow label={isPt ? "Enviado" : "Sent"} value={stats.outreachSentOnly} tone="text-cyan-300" />
+            <MiniRow label={isPt ? "Follow-up" : "Follow-up"} value={stats.outreachFollowedUp} tone="text-emerald-300" />
+            <MiniRow label={isPt ? "Respondeu" : "Replied"} value={stats.outreachReplied} tone="text-green-300" />
+            <MiniRow label={isPt ? "Entrevista" : "Interview"} value={interviewStageCount} tone="text-emerald-200" />
           </div>
         </article>
 
@@ -327,14 +360,14 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-4">
-            market stats
+            {isPt ? "estatisticas de mercado" : "market stats"}
           </p>
           <div className="space-y-4">
-            <MetricLine label="Total jobs" value={stats.totalJobs} />
-            <MetricLine label="New this week" value={stats.newJobsThisWeek} />
-            <MetricLine label="New today" value={stats.newJobsToday} />
-            <MetricLine label="Remote jobs" value={stats.remoteJobs} />
-            <MetricLine label="Repos monitored" value={stats.totalReposMonitored} />
+            <MetricLine label={isPt ? "Total de vagas" : "Total jobs"} value={stats.totalJobs} />
+            <MetricLine label={isPt ? "Novas na semana" : "New this week"} value={stats.newJobsThisWeek} />
+            <MetricLine label={isPt ? "Novas hoje" : "New today"} value={stats.newJobsToday} />
+            <MetricLine label={isPt ? "Vagas remotas" : "Remote jobs"} value={stats.remoteJobs} />
+            <MetricLine label={isPt ? "Repos monitorados" : "Repos monitored"} value={stats.totalReposMonitored} />
           </div>
         </article>
       </section>
@@ -350,14 +383,16 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono">
-              flow map
+              {isPt ? "mapa de fluxo" : "flow map"}
             </p>
             <h2 className="text-lg font-semibold text-white mt-1">
-              Lead {"->"} Draft {"->"} Send {"->"} Follow up {"->"} Reply {"->"} Interview
+              {isPt
+                ? `Lead -> Rascunho -> Enviar -> Follow-up -> Resposta -> Entrevista`
+                : `Lead -> Draft -> Send -> Follow up -> Reply -> Interview`}
             </h2>
           </div>
           <p className="text-xs font-mono text-[var(--rf-muted)]">
-            accepted: <span className="text-[var(--rf-green)] rf-number">{stats.outreachAccepted}</span>
+            {isPt ? "aceitos" : "accepted"}: <span className="text-[var(--rf-green)] rf-number">{stats.outreachAccepted}</span>
           </p>
         </div>
 
@@ -400,22 +435,22 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-4">
-            outreach performance
+            {isPt ? "performance de outreach" : "outreach performance"}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <MetricBlock label="Sent" value={stats.totalOutreachSent} helper="total outbound" tone="text-cyan-300" />
-            <MetricBlock label="Replies" value={stats.totalReplies} helper={`${replyRate}% from sent`} tone="text-emerald-300" />
-            <MetricBlock label="Interviews" value={stats.totalInterviews} helper={`${interviewRate}% from replies`} tone="text-green-300" />
+            <MetricBlock label={isPt ? "Enviados" : "Sent"} value={stats.totalOutreachSent} helper={isPt ? "total enviado" : "total outbound"} tone="text-cyan-300" />
+            <MetricBlock label={isPt ? "Respostas" : "Replies"} value={stats.totalReplies} helper={isPt ? `${replyRate}% dos envios` : `${replyRate}% from sent`} tone="text-emerald-300" />
+            <MetricBlock label={isPt ? "Entrevistas" : "Interviews"} value={stats.totalInterviews} helper={isPt ? `${interviewRate}% das respostas` : `${interviewRate}% from replies`} tone="text-green-300" />
           </div>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono text-[var(--rf-muted)]">
             <p className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
-              reply rate: <span className="rf-number text-cyan-300">{replyRate}%</span>
+              {isPt ? "taxa de resposta" : "reply rate"}: <span className="rf-number text-cyan-300">{replyRate}%</span>
             </p>
             <p className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
-              interview rate: <span className="rf-number text-emerald-300">{interviewRate}%</span>
+              {isPt ? "taxa de entrevista" : "interview rate"}: <span className="rf-number text-emerald-300">{interviewRate}%</span>
             </p>
             <p className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
-              accepted: <span className="rf-number text-green-300">{stats.outreachAccepted}</span>
+              {isPt ? "aceitos" : "accepted"}: <span className="rf-number text-green-300">{stats.outreachAccepted}</span>
             </p>
           </div>
         </article>
@@ -429,7 +464,7 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-4">
-            contact distribution
+            {isPt ? "distribuicao de contato" : "contact distribution"}
           </p>
 
           <div className="w-44 h-44 mx-auto rf-donut" style={donutStyle} />
@@ -439,13 +474,13 @@ export default function Dashboard() {
               {hasLeads ? `${directRate}%` : "--"}
             </p>
             <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--rf-muted)] font-mono mt-1">
-              {hasLeads ? "direct signal" : "no leads yet"}
+              {hasLeads ? (isPt ? "sinal direto" : "direct signal") : isPt ? "sem leads ainda" : "no leads yet"}
             </p>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
-              <p className="text-[var(--rf-muted)] font-mono">direct</p>
+              <p className="text-[var(--rf-muted)] font-mono">{isPt ? "direto" : "direct"}</p>
               <p className="rf-number text-white mt-1">{stats.jobsWithEmail.toLocaleString()}</p>
             </div>
             <div className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
@@ -457,7 +492,7 @@ export default function Dashboard() {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <DataCard title="Jobs by Repository" delay="300ms">
+        <DataCard title={isPt ? "Vagas por repositorio" : "Jobs by Repository"} delay="300ms">
           {stats.jobsByRepo.length > 0 ? (
             <div className="space-y-3">
               {stats.jobsByRepo.map((item) => {
@@ -479,11 +514,11 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-[var(--rf-muted)]">No repository data yet.</p>
+            <p className="text-sm text-[var(--rf-muted)]">{isPt ? "Ainda sem dados por repositorio." : "No repository data yet."}</p>
           )}
         </DataCard>
 
-        <DataCard title="Contract Types" delay="340ms">
+        <DataCard title={isPt ? "Tipos de contrato" : "Contract Types"} delay="340ms">
           {stats.jobsByContractType.length > 0 ? (
             <div className="space-y-3">
               {stats.jobsByContractType.map((item) => {
@@ -505,11 +540,11 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-[var(--rf-muted)]">No contract data yet.</p>
+            <p className="text-sm text-[var(--rf-muted)]">{isPt ? "Ainda sem dados de contrato." : "No contract data yet."}</p>
           )}
         </DataCard>
 
-        <DataCard title="Experience Levels" delay="380ms">
+        <DataCard title={isPt ? "Niveis de experiencia" : "Experience Levels"} delay="380ms">
           {stats.jobsByExperienceLevel.length > 0 ? (
             <div className="space-y-3">
               {stats.jobsByExperienceLevel.map((item) => {
@@ -531,7 +566,7 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <p className="text-sm text-[var(--rf-muted)]">No experience data yet.</p>
+            <p className="text-sm text-[var(--rf-muted)]">{isPt ? "Ainda sem dados de experiencia." : "No experience data yet."}</p>
           )}
         </DataCard>
       </section>

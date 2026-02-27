@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast, LoadingButton } from "@/components/ui";
 import { Send, Mail, AlertCircle } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface ConnectedAccount {
   id: string;
@@ -17,6 +18,7 @@ export default function ComposePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const toast = useToast();
+  const { t } = useI18n();
 
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
@@ -56,12 +58,12 @@ export default function ComposePage() {
 
   const handleSend = async () => {
     if (!to || !subject) {
-      toast.error("Please fill in recipient and subject");
+      toast.error(t("compose.fillRecipientSubject"));
       return;
     }
 
     if (!accountId) {
-      toast.error("Please connect an email account first");
+      toast.error(t("compose.connectAccountFirst"));
       return;
     }
 
@@ -81,22 +83,22 @@ export default function ComposePage() {
       const data = await res.json();
 
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error("Send limit reached. Upgrade to Pro in Settings.");
+        toast.error(t("compose.sendLimitReached"));
         router.push("/app/settings");
         return;
       }
 
       if (data.success) {
-        toast.success("Email sent successfully!");
+        toast.success(t("compose.emailSent"));
         setTo("");
         setSubject("");
         setBodyHtml("");
         setBodyText("");
       } else {
-        toast.error(`Failed: ${data.error}`);
+        toast.error(t("compose.sendFailed", { error: data.error }));
       }
     } catch {
-      toast.error("Failed to send email");
+      toast.error(t("compose.sendFailedGeneric"));
     } finally {
       setSending(false);
     }
@@ -119,16 +121,16 @@ export default function ComposePage() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
           <Mail className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-200 mb-2">
-            No Email Account Connected
+            {t("compose.noAccountTitle")}
           </h2>
           <p className="text-sm text-zinc-500 mb-6">
-            Connect your Gmail account in Settings to start sending emails.
+            {t("compose.noAccountDescription")}
           </p>
           <button
             onClick={() => router.push("/app/settings")}
             className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
           >
-            Go to Settings
+            {t("compose.goToSettings")}
           </button>
         </div>
       </div>
@@ -138,15 +140,15 @@ export default function ComposePage() {
   return (
     <div className="p-8 max-w-3xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Compose Email</h1>
+        <h1 className="text-2xl font-bold text-white">{t("compose.title")}</h1>
         <p className="text-sm text-zinc-500 mt-1">
-          Send an email from your connected Gmail account
+          {t("compose.subtitle")}
         </p>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">From</label>
+          <label className="block text-xs text-zinc-500 mb-1">{t("compose.from")}</label>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
@@ -155,14 +157,14 @@ export default function ComposePage() {
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.emailAddress}
-                {account.isDefault ? " (Default)" : ""}
+                {account.isDefault ? t("compose.default") : ""}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">To</label>
+          <label className="block text-xs text-zinc-500 mb-1">{t("compose.to")}</label>
           <input
             type="email"
             value={to}
@@ -173,19 +175,19 @@ export default function ComposePage() {
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">Subject</label>
+          <label className="block text-xs text-zinc-500 mb-1">{t("compose.subject")}</label>
           <input
             type="text"
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="Email subject"
+            placeholder={t("compose.emailSubject")}
             className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
           />
         </div>
 
         <div>
           <label className="block text-xs text-zinc-500 mb-1">
-            Body (HTML)
+            {t("compose.bodyHtml")}
           </label>
           <textarea
             value={bodyHtml}
@@ -198,12 +200,12 @@ export default function ComposePage() {
 
         <div>
           <label className="block text-xs text-zinc-500 mb-1">
-            Plain Text (optional - auto-generated from HTML if empty)
+            {t("compose.plainText")}
           </label>
           <textarea
             value={bodyText}
             onChange={(e) => setBodyText(e.target.value)}
-            placeholder="Plain text version..."
+            placeholder={t("compose.plainTextPlaceholder")}
             rows={4}
             className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
           />
@@ -216,7 +218,7 @@ export default function ComposePage() {
             className="bg-emerald-600 hover:bg-emerald-500"
           >
             <Send className="w-4 h-4 mr-2" />
-            Send Email
+            {t("compose.sendEmail")}
           </LoadingButton>
         </div>
       </div>
@@ -225,8 +227,7 @@ export default function ComposePage() {
         <div className="flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
           <p className="text-xs text-zinc-500">
-            Emails will be sent through your connected Gmail account. Make sure you
-            have granted the necessary permissions in Settings.
+            {t("compose.permissionsHint")}
           </p>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { useToast, Skeleton, LoadingButton } from "@/components/ui";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Mail, Trash2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface Profile {
   name: string;
@@ -55,6 +56,8 @@ function SettingsPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const toast = useToast();
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
@@ -86,7 +89,7 @@ function SettingsPageContent() {
 
   const formatLimit = (value: number | undefined, fallback: number): string => {
     const current = value ?? fallback;
-    return current < 0 ? "Unlimited" : String(current);
+    return current < 0 ? (isPt ? "Ilimitado" : "Unlimited") : String(current);
   };
 
   useEffect(() => {
@@ -129,16 +132,27 @@ function SettingsPageContent() {
     const gmailStatus = searchParams.get("gmail");
     const gmailMessage = searchParams.get("message");
     if (gmailStatus === "connected") {
-      toast.success("Gmail account connected successfully!");
+      toast.success(isPt ? "Conta Gmail conectada com sucesso!" : "Gmail account connected successfully!");
       window.history.replaceState(null, "", "/app/settings");
     } else if (gmailStatus === "error") {
-      toast.error(gmailMessage ? `Failed to connect Gmail: ${gmailMessage}` : "Failed to connect Gmail");
+      toast.error(
+        gmailMessage
+          ? `${isPt ? "Falha ao conectar Gmail" : "Failed to connect Gmail"}: ${gmailMessage}`
+          : isPt
+            ? "Falha ao conectar Gmail"
+            : "Failed to connect Gmail"
+      );
       window.history.replaceState(null, "", "/app/settings");
     } else if (gmailStatus === "upgrade_required") {
-      toast.error(gmailMessage || "Free plan supports 1 connected account. Upgrade to Pro.");
+      toast.error(
+        gmailMessage
+          || (isPt
+            ? "Plano Free suporta 1 conta conectada. Faca upgrade para Pro."
+            : "Free plan supports 1 connected account. Upgrade to Pro.")
+      );
       window.history.replaceState(null, "", "/app/settings");
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, isPt]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -150,12 +164,12 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Profile saved!");
+        toast.success(isPt ? "Perfil salvo!" : "Profile saved!");
       } else {
-        toast.error(`Error: ${data.error}`);
+        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
       }
     } catch {
-      toast.error("Failed to save profile");
+      toast.error(isPt ? "Falha ao salvar perfil" : "Failed to save profile");
     } finally {
       setSaving(false);
     }
@@ -205,16 +219,20 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error("Free plan supports 1 connected account. Upgrade to Pro.");
+        toast.error(
+          isPt
+            ? "Plano Free suporta 1 conta conectada. Faca upgrade para Pro."
+            : "Free plan supports 1 connected account. Upgrade to Pro."
+        );
         return;
       }
       if (data.authUrl) {
         window.location.href = data.authUrl;
       } else {
-        toast.error("Failed to initiate OAuth");
+        toast.error(isPt ? "Falha ao iniciar OAuth" : "Failed to initiate OAuth");
       }
     } catch {
-      toast.error("Failed to connect Gmail");
+      toast.error(isPt ? "Falha ao conectar Gmail" : "Failed to connect Gmail");
     } finally {
       setConnecting(false);
     }
@@ -230,12 +248,12 @@ function SettingsPageContent() {
       const data = await res.json();
       if (data.success) {
         setAccounts(accounts.filter((a) => a.id !== accountId));
-        toast.success("Account disconnected");
+        toast.success(isPt ? "Conta desconectada" : "Account disconnected");
       } else {
-        toast.error(`Error: ${data.error}`);
+        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
       }
     } catch {
-      toast.error("Failed to disconnect account");
+      toast.error(isPt ? "Falha ao desconectar conta" : "Failed to disconnect account");
     }
   };
 
@@ -254,12 +272,12 @@ function SettingsPageContent() {
             isDefault: a.id === accountId,
           }))
         );
-        toast.success("Default account updated");
+        toast.success(isPt ? "Conta padrao atualizada" : "Default account updated");
       } else {
-        toast.error(`Error: ${data.error}`);
+        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
       }
     } catch {
-      toast.error("Failed to set default account");
+      toast.error(isPt ? "Falha ao definir conta padrao" : "Failed to set default account");
     }
   };
 
@@ -296,17 +314,18 @@ function SettingsPageContent() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
           <Mail className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-200 mb-2">
-            Connect Your Email
+            {isPt ? "Conecte seu email" : "Connect Your Email"}
           </h2>
           <p className="text-sm text-zinc-500 mb-6">
-            Sign in to connect your Gmail account and start sending emails directly
-            from the app.
+            {isPt
+              ? "Entre para conectar sua conta Gmail e comecar a enviar emails direto pelo app."
+              : "Sign in to connect your Gmail account and start sending emails directly from the app."}
           </p>
           <button
             onClick={() => signIn("google")}
             className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors"
           >
-            Sign in with Google
+            {isPt ? "Entrar com Google" : "Sign in with Google"}
           </button>
         </div>
       </div>
@@ -317,9 +336,11 @@ function SettingsPageContent() {
     <div className="p-8 max-w-3xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Settings</h1>
+          <h1 className="text-2xl font-bold text-white">{isPt ? "Configuracoes" : "Settings"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            Configure your profile for job matching and email generation
+            {isPt
+              ? "Configure seu perfil para match de vagas e geracao de emails"
+              : "Configure your profile for job matching and email generation"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -328,7 +349,7 @@ function SettingsPageContent() {
             onClick={() => signOut()}
             className="text-sm text-zinc-500 hover:text-zinc-300"
           >
-            Sign out
+            {isPt ? "Sair" : "Sign out"}
           </button>
         </div>
       </div>
@@ -337,42 +358,44 @@ function SettingsPageContent() {
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
-              <h2 className="text-lg font-semibold text-zinc-200">Plan & Usage</h2>
-              <p className="text-xs text-zinc-500 mt-1">Current month usage and plan limits</p>
+              <h2 className="text-lg font-semibold text-zinc-200">{isPt ? "Plano e uso" : "Plan & Usage"}</h2>
+              <p className="text-xs text-zinc-500 mt-1">
+                {isPt ? "Uso do mes atual e limites do plano" : "Current month usage and plan limits"}
+              </p>
             </div>
             <a
               href="/app/settings"
               className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
             >
-              Upgrade to Pro
+              {isPt ? "Upgrade para Pro" : "Upgrade to Pro"}
             </a>
           </div>
 
           <div className="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-sm text-zinc-200">
-            Plan: <span className="font-semibold uppercase">{planSnapshot?.plan || "free"}</span>
+            {isPt ? "Plano" : "Plan"}: <span className="font-semibold uppercase">{planSnapshot?.plan || "free"}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
-              <p className="text-zinc-400">Reveals</p>
+              <p className="text-zinc-400">{isPt ? "Reveals" : "Reveals"}</p>
               <p className="text-zinc-100 font-medium">
                 {planSnapshot?.usage.revealsUsed ?? 0} / {formatLimit(planSnapshot?.limits.reveals, 50)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
-              <p className="text-zinc-400">Drafts</p>
+              <p className="text-zinc-400">{isPt ? "Rascunhos" : "Drafts"}</p>
               <p className="text-zinc-100 font-medium">
                 {planSnapshot?.usage.draftsUsed ?? 0} / {formatLimit(planSnapshot?.limits.drafts, 30)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
-              <p className="text-zinc-400">Sends</p>
+              <p className="text-zinc-400">{isPt ? "Envios" : "Sends"}</p>
               <p className="text-zinc-100 font-medium">
                 {planSnapshot?.usage.sendsUsed ?? 0} / {formatLimit(planSnapshot?.limits.sends, 10)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
-              <p className="text-zinc-400">Connected accounts</p>
+              <p className="text-zinc-400">{isPt ? "Contas conectadas" : "Connected accounts"}</p>
               <p className="text-zinc-100 font-medium">
                 {accounts.length} / {formatLimit(planSnapshot?.limits.accounts, 1)}
               </p>
@@ -381,7 +404,7 @@ function SettingsPageContent() {
 
           <div className="mt-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-sm">
             <p className="text-zinc-300">
-              Follow-up automation: {planSnapshot?.plan === "pro" ? "enabled (soon)" : "locked on Free"}
+              {isPt ? "Automacao de follow-up" : "Follow-up automation"}: {planSnapshot?.plan === "pro" ? (isPt ? "habilitado (em breve)" : "enabled (soon)") : (isPt ? "bloqueado no Free" : "locked on Free")}
             </p>
           </div>
         </section>
@@ -389,10 +412,12 @@ function SettingsPageContent() {
         {/* Connected Email Accounts */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
-            Connected Email Accounts
+            {isPt ? "Contas de email conectadas" : "Connected Email Accounts"}
           </h2>
           <p className="text-xs text-zinc-500 mb-4">
-            Connect your Gmail account to send emails directly from the app.
+            {isPt
+              ? "Conecte sua conta Gmail para enviar emails direto pelo app."
+              : "Connect your Gmail account to send emails directly from the app."}
           </p>
 
           {loadingAccounts ? (
@@ -416,7 +441,7 @@ function SettingsPageContent() {
                         </span>
                         {account.isDefault && (
                           <span className="px-2 py-0.5 text-xs bg-emerald-600/20 text-emerald-400 rounded">
-                            Default
+                            {isPt ? "Padrao" : "Default"}
                           </span>
                         )}
                       </div>
@@ -431,7 +456,7 @@ function SettingsPageContent() {
                         onClick={() => setDefaultAccount(account.id)}
                         className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700 rounded"
                       >
-                        Set as default
+                        {isPt ? "Definir como padrao" : "Set as default"}
                       </button>
                     )}
                     <button
@@ -448,14 +473,14 @@ function SettingsPageContent() {
             <div className="text-center py-6">
               <Mail className="w-8 h-8 mx-auto mb-2 text-zinc-600" />
               <p className="text-sm text-zinc-500 mb-4">
-                No email accounts connected
+                {isPt ? "Nenhuma conta de email conectada" : "No email accounts connected"}
               </p>
               <LoadingButton
                 onClick={connectGmail}
                 loading={connecting}
                 className="bg-emerald-600 hover:bg-emerald-500"
               >
-                Connect Gmail
+                {isPt ? "Conectar Gmail" : "Connect Gmail"}
               </LoadingButton>
             </div>
           )}
@@ -466,7 +491,7 @@ function SettingsPageContent() {
                 onClick={connectGmail}
                 loading={connecting}
               >
-                Add Another Account
+                {isPt ? "Adicionar outra conta" : "Add Another Account"}
               </LoadingButton>
             </div>
           )}
@@ -474,11 +499,11 @@ function SettingsPageContent() {
         {/* Personal Info */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
-            Personal Information
+            {isPt ? "Informacoes pessoais" : "Personal Information"}
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-zinc-500 mb-1">Name</label>
+              <label className="block text-xs text-zinc-500 mb-1">{isPt ? "Nome" : "Name"}</label>
               <input
                 type="text"
                 value={profile.name}
@@ -503,7 +528,7 @@ function SettingsPageContent() {
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                LinkedIn URL
+                {isPt ? "URL do LinkedIn" : "LinkedIn URL"}
               </label>
               <input
                 type="url"
@@ -519,7 +544,7 @@ function SettingsPageContent() {
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                GitHub URL
+                {isPt ? "URL do GitHub" : "GitHub URL"}
               </label>
               <input
                 type="url"
@@ -535,7 +560,7 @@ function SettingsPageContent() {
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Portfolio URL
+                {isPt ? "URL do Portfolio" : "Portfolio URL"}
               </label>
               <input
                 type="url"
@@ -551,7 +576,7 @@ function SettingsPageContent() {
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Bio
+                {isPt ? "Bio" : "Bio"}
               </label>
               <input
                 type="text"
@@ -568,12 +593,12 @@ function SettingsPageContent() {
         {/* Experience */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
-            Experience
+            {isPt ? "Experiencia" : "Experience"}
           </h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Years of Experience
+                {isPt ? "Anos de experiencia" : "Years of Experience"}
               </label>
               <input
                 type="number"
@@ -591,7 +616,7 @@ function SettingsPageContent() {
             </div>
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Experience Level
+                {isPt ? "Nivel de experiencia" : "Experience Level"}
               </label>
               <select
                 value={profile.experienceLevel}
@@ -616,7 +641,7 @@ function SettingsPageContent() {
         {/* Skills */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
-            Skills / Tech Stack
+            {isPt ? "Skills / Tech Stack" : "Skills / Tech Stack"}
           </h2>
           <div className="flex gap-2 mb-3">
             <input
@@ -624,14 +649,18 @@ function SettingsPageContent() {
               value={skillInput}
               onChange={(e) => setSkillInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addSkill()}
-              placeholder="Add a skill (e.g., React, Python, AWS)"
+              placeholder={
+                isPt
+                  ? "Adicionar skill (ex.: React, Python, AWS)"
+                  : "Add a skill (e.g., React, Python, AWS)"
+              }
               className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
             />
             <button
               onClick={addSkill}
               className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm rounded-lg"
             >
-              Add
+              {isPt ? "Adicionar" : "Add"}
             </button>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -655,7 +684,7 @@ function SettingsPageContent() {
         {/* Preferences */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-4">
-            Preferences
+            {isPt ? "Preferencias" : "Preferences"}
           </h2>
           <div className="space-y-4">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -671,13 +700,13 @@ function SettingsPageContent() {
                 className="w-4 h-4 rounded border-zinc-700 text-emerald-500 focus:ring-emerald-500"
               />
               <span className="text-sm text-zinc-300">
-                Prefer remote positions
+                {isPt ? "Preferir vagas remotas" : "Prefer remote positions"}
               </span>
             </label>
 
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Preferred Contract Types
+                {isPt ? "Tipos de contrato preferidos" : "Preferred Contract Types"}
               </label>
               <div className="flex gap-3">
                 {["CLT", "PJ", "Freela"].map((ct) => (
@@ -706,7 +735,7 @@ function SettingsPageContent() {
 
             <div>
               <label className="block text-xs text-zinc-500 mb-1">
-                Preferred Locations
+                {isPt ? "Localizacoes preferidas" : "Preferred Locations"}
               </label>
               <div className="flex gap-2 mb-2">
                 <input
@@ -714,14 +743,14 @@ function SettingsPageContent() {
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && addLocation()}
-                  placeholder="e.g., Sao Paulo, Rio de Janeiro"
+                  placeholder={isPt ? "ex.: Sao Paulo, Rio de Janeiro" : "e.g., Sao Paulo, Rio de Janeiro"}
                   className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
                 />
                 <button
                   onClick={addLocation}
                   className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm rounded-lg"
                 >
-                  Add
+                  {isPt ? "Adicionar" : "Add"}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -755,10 +784,12 @@ function SettingsPageContent() {
         {/* Highlights (for email generation) */}
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-zinc-200 mb-2">
-            Profile Highlights
+            {isPt ? "Destaques do perfil" : "Profile Highlights"}
           </h2>
           <p className="text-xs text-zinc-500 mb-4">
-            These will be included in auto-generated cold emails.
+            {isPt
+              ? "Esses pontos serao incluidos em emails frios gerados automaticamente."
+              : "These will be included in auto-generated cold emails."}
           </p>
           <div className="flex gap-2 mb-3">
             <input
@@ -766,14 +797,18 @@ function SettingsPageContent() {
               value={highlightInput}
               onChange={(e) => setHighlightInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addHighlight()}
-              placeholder='e.g., "Led migration to microservices serving 1M+ users"'
+              placeholder={
+                isPt
+                  ? 'ex.: "Liderei migracao para microservicos atendendo 1M+ usuarios"'
+                  : 'e.g., "Led migration to microservices serving 1M+ users"'
+              }
               className="flex-1 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
             />
             <button
               onClick={addHighlight}
               className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm rounded-lg"
             >
-              Add
+              {isPt ? "Adicionar" : "Add"}
             </button>
           </div>
           <div className="space-y-2">
@@ -787,7 +822,7 @@ function SettingsPageContent() {
                   onClick={() => removeHighlight(idx)}
                   className="text-zinc-500 hover:text-red-400 text-xs"
                 >
-                  remove
+                  {isPt ? "remover" : "remove"}
                 </button>
               </div>
             ))}
@@ -796,7 +831,7 @@ function SettingsPageContent() {
 
         <div className="flex justify-end">
           <LoadingButton onClick={handleSave} loading={saving} size="lg">
-            Save Profile
+            {isPt ? "Salvar perfil" : "Save Profile"}
           </LoadingButton>
         </div>
       </div>

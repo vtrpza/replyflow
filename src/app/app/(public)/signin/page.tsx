@@ -4,10 +4,12 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
+import { useI18n } from "@/lib/i18n";
 
 export default function SignInPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { t } = useI18n();
 
   useEffect(() => {
     if (session) {
@@ -38,16 +40,16 @@ export default function SignInPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">ReplyFlow</h1>
           <p className="text-zinc-500 mt-2">
-            Outreach pipeline for devs who take ownership
+            {t("signin.tagline")}
           </p>
         </div>
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8">
           <h2 className="text-lg font-semibold text-zinc-200 mb-2 text-center">
-            Welcome back
+            {t("signin.welcomeBack")}
           </h2>
           <p className="text-sm text-zinc-500 mb-6 text-center">
-            Sign in to manage your email accounts and send outreach emails
+            {t("signin.description")}
           </p>
 
           <button
@@ -72,12 +74,12 @@ export default function SignInPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            Continue with Google
+            {t("signin.continueGoogle")}
           </button>
         </div>
 
         <p className="text-center text-xs text-zinc-600 mt-6">
-          By signing in, you agree to connect your Gmail account for sending emails
+          {t("signin.disclaimer")}
         </p>
       </div>
     </div>

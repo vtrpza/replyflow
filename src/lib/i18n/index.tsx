@@ -1,0 +1,187 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+export type Locale = "pt-BR" | "en";
+
+type TranslationValues = Record<string, string | number>;
+
+interface I18nContextValue {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: (key: string, values?: TranslationValues) => string;
+}
+
+const STORAGE_KEY = "replyflow.locale";
+const DEFAULT_LOCALE: Locale = "pt-BR";
+
+const messages: Record<Locale, Record<string, string>> = {
+  "pt-BR": {
+    "language.switch": "Idioma",
+    "language.pt": "PT-BR",
+    "language.en": "EN",
+
+    "sidebar.operatorPanel": "painel operador",
+    "sidebar.outreachPipeline": "pipeline de outreach",
+    "sidebar.navigation": "navegacao",
+    "sidebar.quickAction": "acao rapida",
+    "sidebar.syncJobs": "Sincronizar Vagas",
+    "sidebar.syncing": "Sincronizando...",
+    "sidebar.syncFailed": "Falha na sincronizacao",
+    "sidebar.unknownError": "Erro desconhecido",
+    "sidebar.alreadyUpToDate": "Ja esta atualizado",
+    "sidebar.newJobsFound": "{count} vagas novas encontradas",
+    "sidebar.nav.dashboard": "Dashboard",
+    "sidebar.nav.jobs": "Vagas",
+    "sidebar.nav.compose": "Escrever",
+    "sidebar.nav.history": "Historico",
+    "sidebar.nav.outreach": "Outreach",
+    "sidebar.nav.settings": "Configuracoes",
+
+    "signin.tagline": "Pipeline de outreach para devs que assumem responsabilidade",
+    "signin.welcomeBack": "Bem-vindo de volta",
+    "signin.description": "Entre para gerenciar contas de email e enviar outreach",
+    "signin.continueGoogle": "Continuar com Google",
+    "signin.disclaimer": "Ao entrar, voce concorda em conectar sua conta Gmail para envio de emails",
+
+    "compose.fillRecipientSubject": "Preencha destinatario e assunto",
+    "compose.connectAccountFirst": "Conecte uma conta de email primeiro",
+    "compose.sendLimitReached": "Limite de envios atingido. Faca upgrade para Pro em Configuracoes.",
+    "compose.emailSent": "Email enviado com sucesso!",
+    "compose.sendFailed": "Falha ao enviar: {error}",
+    "compose.sendFailedGeneric": "Falha ao enviar email",
+    "compose.noAccountTitle": "Nenhuma conta de email conectada",
+    "compose.noAccountDescription": "Conecte sua conta Gmail em Configuracoes para comecar a enviar emails.",
+    "compose.goToSettings": "Ir para Configuracoes",
+    "compose.title": "Escrever Email",
+    "compose.subtitle": "Envie email pela sua conta Gmail conectada",
+    "compose.from": "De",
+    "compose.to": "Para",
+    "compose.subject": "Assunto",
+    "compose.emailSubject": "Assunto do email",
+    "compose.bodyHtml": "Corpo (HTML)",
+    "compose.plainText": "Texto puro (opcional - gerado automaticamente do HTML se vazio)",
+    "compose.plainTextPlaceholder": "Versao em texto puro...",
+    "compose.sendEmail": "Enviar Email",
+    "compose.default": " (Padrao)",
+    "compose.permissionsHint": "Os emails serao enviados pela sua conta Gmail conectada. Garanta que as permissoes necessarias foram concedidas em Configuracoes.",
+  },
+  en: {
+    "language.switch": "Language",
+    "language.pt": "PT-BR",
+    "language.en": "EN",
+
+    "sidebar.operatorPanel": "operator panel",
+    "sidebar.outreachPipeline": "outreach pipeline",
+    "sidebar.navigation": "navigation",
+    "sidebar.quickAction": "quick action",
+    "sidebar.syncJobs": "Sync Jobs",
+    "sidebar.syncing": "Syncing...",
+    "sidebar.syncFailed": "Sync failed",
+    "sidebar.unknownError": "Unknown error",
+    "sidebar.alreadyUpToDate": "Already up to date",
+    "sidebar.newJobsFound": "{count} new jobs found",
+    "sidebar.nav.dashboard": "Dashboard",
+    "sidebar.nav.jobs": "Jobs",
+    "sidebar.nav.compose": "Compose",
+    "sidebar.nav.history": "History",
+    "sidebar.nav.outreach": "Outreach",
+    "sidebar.nav.settings": "Settings",
+
+    "signin.tagline": "Outreach pipeline for devs who take ownership",
+    "signin.welcomeBack": "Welcome back",
+    "signin.description": "Sign in to manage your email accounts and send outreach emails",
+    "signin.continueGoogle": "Continue with Google",
+    "signin.disclaimer": "By signing in, you agree to connect your Gmail account for sending emails",
+
+    "compose.fillRecipientSubject": "Please fill in recipient and subject",
+    "compose.connectAccountFirst": "Please connect an email account first",
+    "compose.sendLimitReached": "Send limit reached. Upgrade to Pro in Settings.",
+    "compose.emailSent": "Email sent successfully!",
+    "compose.sendFailed": "Failed: {error}",
+    "compose.sendFailedGeneric": "Failed to send email",
+    "compose.noAccountTitle": "No Email Account Connected",
+    "compose.noAccountDescription": "Connect your Gmail account in Settings to start sending emails.",
+    "compose.goToSettings": "Go to Settings",
+    "compose.title": "Compose Email",
+    "compose.subtitle": "Send an email from your connected Gmail account",
+    "compose.from": "From",
+    "compose.to": "To",
+    "compose.subject": "Subject",
+    "compose.emailSubject": "Email subject",
+    "compose.bodyHtml": "Body (HTML)",
+    "compose.plainText": "Plain Text (optional - auto-generated from HTML if empty)",
+    "compose.plainTextPlaceholder": "Plain text version...",
+    "compose.sendEmail": "Send Email",
+    "compose.default": " (Default)",
+    "compose.permissionsHint": "Emails will be sent through your connected Gmail account. Make sure you have granted the necessary permissions in Settings.",
+  },
+};
+
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+function formatMessage(message: string, values?: TranslationValues): string {
+  if (!values) {
+    return message;
+  }
+
+  return message.replace(/\{(\w+)\}/g, (_, key: string) => {
+    const value = values[key];
+    return value === undefined ? `{${key}}` : String(value);
+  });
+}
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_LOCALE;
+    }
+
+    const storedLocale = window.localStorage.getItem(STORAGE_KEY);
+    return storedLocale === "pt-BR" || storedLocale === "en"
+      ? storedLocale
+      : DEFAULT_LOCALE;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, locale);
+    document.documentElement.lang = locale;
+  }, [locale]);
+
+  const t = useCallback(
+    (key: string, values?: TranslationValues): string => {
+      const localeMessage = messages[locale][key];
+      const defaultMessage = messages[DEFAULT_LOCALE][key];
+      const finalMessage = localeMessage ?? defaultMessage ?? key;
+      return formatMessage(finalMessage, values);
+    },
+    [locale]
+  );
+
+  const value = useMemo(
+    () => ({
+      locale,
+      setLocale,
+      t,
+    }),
+    [locale, t]
+  );
+
+  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+export function useI18n(): I18nContextValue {
+  const context = useContext(I18nContext);
+  if (!context) {
+    throw new Error("useI18n must be used within I18nProvider");
+  }
+
+  return context;
+}

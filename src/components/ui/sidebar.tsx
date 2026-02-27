@@ -4,11 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 
 const navItems = [
   {
     href: "/app",
-    label: "Dashboard",
+    labelKey: "sidebar.nav.dashboard",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -17,7 +18,7 @@ const navItems = [
   },
   {
     href: "/app/jobs",
-    label: "Jobs",
+    labelKey: "sidebar.nav.jobs",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -26,7 +27,7 @@ const navItems = [
   },
   {
     href: "/app/compose",
-    label: "Compose",
+    labelKey: "sidebar.nav.compose",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -35,7 +36,7 @@ const navItems = [
   },
   {
     href: "/app/history",
-    label: "History",
+    labelKey: "sidebar.nav.history",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -44,7 +45,7 @@ const navItems = [
   },
   {
     href: "/app/outreach",
-    label: "Outreach",
+    labelKey: "sidebar.nav.outreach",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -53,7 +54,7 @@ const navItems = [
   },
   {
     href: "/app/settings",
-    label: "Settings",
+    labelKey: "sidebar.nav.settings",
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -64,6 +65,7 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
@@ -79,7 +81,7 @@ export function Sidebar() {
     >
       <div className="p-6 border-b" style={{ borderColor: "var(--rf-border)" }}>
         <p className="text-[10px] uppercase tracking-[0.22em] text-[var(--rf-muted)] font-mono mb-3">
-          operator panel
+          {t("sidebar.operatorPanel")}
         </p>
         <Link href="/app" className="flex items-center gap-3">
           <div className="relative">
@@ -97,7 +99,7 @@ export function Sidebar() {
               Reply<span style={{ color: "var(--rf-green)" }}>Flow</span>
             </p>
             <p className="text-[11px] text-[var(--rf-muted)] font-mono mt-1">
-              outreach pipeline
+              {t("sidebar.outreachPipeline")}
             </p>
           </div>
         </Link>
@@ -105,7 +107,7 @@ export function Sidebar() {
 
       <nav className="flex-1 p-4 space-y-1.5">
         <p className="px-3 mb-2 text-[10px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono">
-          navigation
+          {t("sidebar.navigation")}
         </p>
         {navItems.map((item) => {
           const isActive =
@@ -136,7 +138,7 @@ export function Sidebar() {
                 <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r-sm bg-[var(--rf-cyan)]" />
               )}
               {item.icon}
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -144,7 +146,7 @@ export function Sidebar() {
 
       <div className="p-4 border-t" style={{ borderColor: "var(--rf-border)" }}>
         <p className="px-1 mb-2 text-[10px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono">
-          quick action
+          {t("sidebar.quickAction")}
         </p>
         <button
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -163,23 +165,29 @@ export function Sidebar() {
             try {
               const res = await fetch("/api/sync", { method: "POST" });
               const data = await res.json();
-              if (res.ok) {
-                setSyncStatus("success");
-                const count = data.totalNewJobs || 0;
-                setSyncMessage(count > 0 ? `${count} new jobs found` : "Already up to date");
-                setTimeout(() => {
-                  window.location.reload();
-                }, 1500);
-              } else {
+                if (res.ok) {
+                  setSyncStatus("success");
+                  const count = data.totalNewJobs || 0;
+                  setSyncMessage(
+                    count > 0
+                      ? t("sidebar.newJobsFound", { count })
+                      : t("sidebar.alreadyUpToDate")
+                  );
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1500);
+                } else {
+                  setSyncStatus("error");
+                  setSyncMessage(data.error || t("sidebar.syncFailed"));
+                }
+              } catch (err) {
                 setSyncStatus("error");
-                setSyncMessage(data.error || "Sync failed");
+                setSyncMessage(
+                  err instanceof Error ? err.message : t("sidebar.unknownError")
+                );
+              } finally {
+                setSyncing(false);
               }
-            } catch (err) {
-              setSyncStatus("error");
-              setSyncMessage(err instanceof Error ? err.message : "Unknown error");
-            } finally {
-              setSyncing(false);
-            }
           }}
         >
           {syncing ? (
@@ -200,7 +208,7 @@ export function Sidebar() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           )}
-          {syncMessage || (syncing ? "Syncing..." : "Sync Jobs")}
+          {syncMessage || (syncing ? t("sidebar.syncing") : t("sidebar.syncJobs"))}
         </button>
       </div>
     </aside>

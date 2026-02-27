@@ -6,6 +6,7 @@ import {
   SkeletonList,
   EmptyState,
 } from "@/components/ui";
+import { useI18n } from "@/lib/i18n";
 
 interface ConnectedAccount {
   id: string;
@@ -57,6 +58,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function OutreachPage() {
   const toast = useToast();
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const [records, setRecords] = useState<OutreachRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
@@ -72,15 +75,35 @@ export default function OutreachPage() {
     attachCV: "" as "" | "en" | "br",
   });
   
+  const getStatusLabel = (status: string): string => {
+    const labelsPt: Record<string, string> = {
+      email_drafted: "rascunhado",
+      email_sent: "enviado",
+      followed_up: "follow-up",
+      replied: "respondeu",
+      interviewing: "entrevista",
+      accepted: "aceito",
+      rejected: "rejeitado",
+    };
+
+    return isPt ? labelsPt[status] || status.replace(/_/g, " ") : status.replace(/_/g, " ");
+  };
+
   const fetchRecords = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/outreach");
-      if (!res.ok) throw new Error("Failed to fetch records");
+      if (!res.ok) throw new Error(isPt ? "Falha ao buscar registros" : "Failed to fetch records");
       const data = await res.json();
       setRecords(data.records || []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to fetch records");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isPt
+            ? "Falha ao buscar registros"
+            : "Failed to fetch records"
+      );
     } finally {
       setLoading(false);
     }
@@ -120,11 +143,11 @@ export default function OutreachPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
-      toast.success("Status updated");
+      if (!res.ok) throw new Error(isPt ? "Falha ao atualizar status" : "Failed to update status");
+      toast.success(isPt ? "Status atualizado" : "Status updated");
       fetchRecords();
     } catch {
-      toast.error("Failed to update status");
+      toast.error(isPt ? "Falha ao atualizar status" : "Failed to update status");
     }
   };
 
@@ -157,11 +180,11 @@ export default function OutreachPage() {
           emailBody: sheetForm.body,
         }),
       });
-      if (!res.ok) throw new Error("Failed to save draft");
-      toast.success("Draft saved");
+      if (!res.ok) throw new Error(isPt ? "Falha ao salvar rascunho" : "Failed to save draft");
+      toast.success(isPt ? "Rascunho salvo" : "Draft saved");
       fetchRecords();
     } catch {
-      toast.error("Failed to save draft");
+      toast.error(isPt ? "Falha ao salvar rascunho" : "Failed to save draft");
     } finally {
       setSheetLoading(false);
     }
@@ -185,19 +208,27 @@ export default function OutreachPage() {
       });
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error("Send limit reached. Upgrade to Pro in Settings.");
+        toast.error(
+          isPt
+            ? "Limite de envios atingido. Faca upgrade para Pro em Configuracoes."
+            : "Send limit reached. Upgrade to Pro in Settings."
+        );
         window.location.href = "/app/settings";
         return;
       }
       if (data.success) {
-        toast.success(`Email sent!${data.attachedCV ? ` Attached: ${data.attachedCV} CV` : ""}`);
+        toast.success(
+          isPt
+            ? `Email enviado!${data.attachedCV ? ` Anexo: CV ${data.attachedCV.toUpperCase()}` : ""}`
+            : `Email sent!${data.attachedCV ? ` Attached: ${data.attachedCV} CV` : ""}`
+        );
         fetchRecords();
         closeSheet();
       } else {
-        toast.error(`Failed to send: ${data.error}`);
+        toast.error(`${isPt ? "Falha ao enviar" : "Failed to send"}: ${data.error}`);
       }
     } catch {
-      toast.error("Failed to send email");
+      toast.error(isPt ? "Falha ao enviar email" : "Failed to send email");
     } finally {
       setSheetLoading(false);
     }
@@ -224,9 +255,9 @@ export default function OutreachPage() {
     <div className="p-8 max-w-7xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Outreach Pipeline</h1>
+          <h1 className="text-2xl font-bold text-white">{isPt ? "Pipeline de Outreach" : "Outreach Pipeline"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
-            {records.length} outreach records
+            {isPt ? `${records.length} registros de outreach` : `${records.length} outreach records`}
           </p>
         </div>
       </div>
@@ -238,7 +269,7 @@ export default function OutreachPage() {
             key={status}
             className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium ${STATUS_COLORS[status] || "bg-zinc-800 text-zinc-400"}`}
           >
-            {status.replace(/_/g, " ")}
+            {getStatusLabel(status)}
             <span className="ml-2 font-bold">
               {grouped[status]?.length || 0}
             </span>
@@ -250,8 +281,12 @@ export default function OutreachPage() {
         <SkeletonList count={3} />
       ) : records.length === 0 ? (
         <EmptyState
-          title="No outreach records yet"
-          message='Go to the Jobs page and click "Draft Email" on a job to get started.'
+          title={isPt ? "Nenhum registro de outreach" : "No outreach records yet"}
+          message={
+            isPt
+              ? 'Va para a pagina de Vagas e clique em "Criar rascunho" para comecar.'
+              : 'Go to the Jobs page and click "Draft Email" on a job to get started.'
+          }
         />
       ) : (
         <div className="space-y-3">
@@ -267,7 +302,7 @@ export default function OutreachPage() {
                       <span
                         className={`px-2 py-0.5 text-xs rounded-full ${STATUS_COLORS[record.status] || "bg-zinc-800 text-zinc-400"}`}
                       >
-                        {record.status.replace(/_/g, " ")}
+                        {getStatusLabel(record.status)}
                       </span>
                       <a
                         href={record.job.issueUrl}
@@ -289,11 +324,11 @@ export default function OutreachPage() {
                         </span>
                       )}
                       <span>
-                        Created: {new Date(record.createdAt).toLocaleDateString()}
+                        {isPt ? "Criado" : "Created"}: {new Date(record.createdAt).toLocaleDateString()}
                       </span>
                       {record.sentAt && (
                         <span>
-                          Sent: {new Date(record.sentAt).toLocaleDateString()}
+                          {isPt ? "Enviado" : "Sent"}: {new Date(record.sentAt).toLocaleDateString()}
                         </span>
                       )}
                     </div>
@@ -322,8 +357,8 @@ export default function OutreachPage() {
                         }
                         className="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors"
                       >
-                        Mark as{" "}
-                        {getNextStatus(record.status)!.replace(/_/g, " ")}
+                        {isPt ? "Marcar como" : "Mark as"}{" "}
+                        {getStatusLabel(getNextStatus(record.status)!)}
                       </button>
                     )}
                     {record.status !== "rejected" && (
@@ -331,7 +366,7 @@ export default function OutreachPage() {
                         onClick={() => updateStatus(record.id, "rejected")}
                         className="px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                       >
-                        Reject
+                        {isPt ? "Rejeitar" : "Reject"}
                       </button>
                     )}
                   </div>
@@ -343,7 +378,7 @@ export default function OutreachPage() {
                 <div className="border-t border-zinc-800 p-4">
                   {record.emailSubject && (
                     <div className="mb-3">
-                      <span className="text-xs text-zinc-500">Subject:</span>
+                      <span className="text-xs text-zinc-500">{isPt ? "Assunto" : "Subject"}:</span>
                       <p className="text-sm text-zinc-200 font-medium">
                         {record.emailSubject}
                       </p>
@@ -365,7 +400,7 @@ export default function OutreachPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        Edit & Send
+                        {isPt ? "Editar e enviar" : "Edit & Send"}
                       </button>
                       <a
                         href={`mailto:${record.job.contactEmail}?subject=${encodeURIComponent(record.emailSubject || "")}&body=${encodeURIComponent(record.emailBody || "")}`}
@@ -374,13 +409,13 @@ export default function OutreachPage() {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                        Open in mail client
+                        {isPt ? "Abrir no cliente de email" : "Open in mail client"}
                       </a>
                     </div>
                   )}
                   {record.notes && (
                     <div className="mt-3 p-3 bg-zinc-800 rounded text-sm text-zinc-400">
-                      <span className="text-xs text-zinc-500">Notes:</span>
+                      <span className="text-xs text-zinc-500">{isPt ? "Notas" : "Notes"}:</span>
                       <p>{record.notes}</p>
                     </div>
                   )}
@@ -402,6 +437,7 @@ export default function OutreachPage() {
           onSend={sendNow}
           loading={sheetLoading}
           accounts={accounts}
+          isPt={isPt}
         />
       )}
     </div>
@@ -429,6 +465,7 @@ interface OperatorSheetProps {
   onSend: () => void;
   loading: boolean;
   accounts: ConnectedAccount[];
+  isPt: boolean;
 }
 
 function OperatorSheet({
@@ -440,6 +477,7 @@ function OperatorSheet({
   onSend,
   loading,
   accounts,
+  isPt,
 }: OperatorSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -467,7 +505,7 @@ function OperatorSheet({
         className="relative w-full max-w-xl h-full bg-[var(--rf-surface)] border-l border-[var(--rf-border)] shadow-2xl overflow-y-auto rf-animate-in"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-[var(--rf-border)] bg-[var(--rf-surface)]">
-          <h2 className="text-lg font-semibold text-[var(--rf-text)]">Edit & Send</h2>
+          <h2 className="text-lg font-semibold text-[var(--rf-text)]">{isPt ? "Editar e enviar" : "Edit & Send"}</h2>
           <button
             onClick={onClose}
             className="p-2 text-[var(--rf-muted)] hover:text-[var(--rf-text)] transition-colors rounded-lg hover:bg-[var(--rf-border)]"
@@ -480,7 +518,7 @@ function OperatorSheet({
 
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">To</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "Para" : "To"}</label>
             <input
               type="email"
               value={form.to}
@@ -490,24 +528,26 @@ function OperatorSheet({
             />
             {isGenericEmail && (
               <p className="mt-1 text-xs text-amber-400">
-                Warning: This looks like a generic recruitment inbox
+                {isPt
+                  ? "Aviso: isso parece uma caixa de recrutamento generica"
+                  : "Warning: This looks like a generic recruitment inbox"}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">From</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "De" : "From"}</label>
             <select
               value={form.from}
               onChange={(e) => setForm((f: typeof form) => ({ ...f, from: e.target.value }))}
               className="w-full px-3 py-2 bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg text-[var(--rf-text)] focus:outline-none focus:border-emerald-500"
             >
               {accounts.length === 0 ? (
-                <option value="">No accounts connected</option>
+                <option value="">{isPt ? "Nenhuma conta conectada" : "No accounts connected"}</option>
               ) : (
                 accounts.map((acc) => (
                   <option key={acc.id} value={acc.id}>
-                    {acc.emailAddress} {acc.isDefault ? "(default)" : ""}
+                    {acc.emailAddress} {acc.isDefault ? (isPt ? "(padrao)" : "(default)") : ""}
                   </option>
                 ))
               )}
@@ -515,21 +555,21 @@ function OperatorSheet({
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">Subject</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "Assunto" : "Subject"}</label>
             <input
               type="text"
               value={form.subject}
               onChange={(e) => setForm((f: typeof form) => ({ ...f, subject: e.target.value }))}
               className="w-full px-3 py-2 bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg text-[var(--rf-text)] focus:outline-none focus:border-emerald-500"
-              placeholder="Email subject"
+              placeholder={isPt ? "Assunto do email" : "Email subject"}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">Attachment</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "Anexo" : "Attachment"}</label>
             <div className="flex gap-2">
               {([
-                { value: "", label: "None" },
+                { value: "", label: isPt ? "Nenhum" : "None" },
                 { value: "en", label: "EN CV" },
                 { value: "br", label: "BR CV" },
               ] as const).map((opt) => (
@@ -549,23 +589,23 @@ function OperatorSheet({
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">Body</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "Corpo" : "Body"}</label>
             <textarea
               value={form.body}
               onChange={(e) => setForm((f: typeof form) => ({ ...f, body: e.target.value }))}
               rows={10}
               className="w-full px-3 py-2 bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg text-[var(--rf-text)] focus:outline-none focus:border-emerald-500 resize-none font-sans"
-              placeholder="Email body..."
+              placeholder={isPt ? "Corpo do email..." : "Email body..."}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">Preview</label>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">{isPt ? "Previa" : "Preview"}</label>
             <div className="bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg p-4">
               {form.body ? (
                 <pre className="text-sm text-[var(--rf-text)] whitespace-pre-wrap font-sans">{form.body}</pre>
               ) : (
-                <p className="text-sm text-[var(--rf-muted)] italic">No content</p>
+                <p className="text-sm text-[var(--rf-muted)] italic">{isPt ? "Sem conteudo" : "No content"}</p>
               )}
             </div>
           </div>
@@ -577,14 +617,14 @@ function OperatorSheet({
             disabled={loading || !form.subject}
             className="px-4 py-2 text-sm font-medium text-[var(--rf-muted)] hover:text-[var(--rf-text)] hover:bg-[var(--rf-border)] rounded-lg transition-colors disabled:opacity-50"
           >
-            Save Draft
+            {isPt ? "Salvar rascunho" : "Save Draft"}
           </button>
           <button
             onClick={onSend}
             disabled={loading || !form.to || !form.subject}
             className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg transition-colors"
           >
-            {loading ? "Sending..." : "Send Now"}
+            {loading ? (isPt ? "Enviando..." : "Sending...") : isPt ? "Enviar agora" : "Send Now"}
           </button>
         </div>
       </div>
