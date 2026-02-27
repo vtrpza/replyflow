@@ -1,14 +1,16 @@
-# Agent Guidelines for gitjobs-v2
+# Agent Guidelines for ReplyFlow
 
 ## Project Overview
 
-This is a Next.js 16 application for email outreach/CRM functionality. It uses:
+This is a Next.js 16 application — a job-search workflow product for Brazilian developers. It uses:
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Database**: SQLite with Drizzle ORM
 - **Authentication**: NextAuth v5 with Google OAuth (JWT sessions)
 - **Styling**: Tailwind CSS v4
 - **Email Provider**: Gmail API (extensible to others)
+- **Billing**: Asaas payment gateway
+- **Monitoring**: Sentry
 
 ---
 
@@ -199,8 +201,8 @@ src/lib/providers/email/
 ├── index.ts          # Provider factory
 ├── types.ts          # Type definitions
 ├── gmail/
-│   ├── provider.ts   # Gmail implementation
-│   └── ...
+│   └── provider.ts   # Gmail implementation
+└── resend/           # Resend provider (placeholder)
 ```
 
 When adding new providers, implement the interface in `types.ts`.
@@ -254,18 +256,89 @@ src/
 │   ├── api/               # API routes
 │   │   ├── accounts/      # Email account management
 │   │   ├── auth/          # NextAuth routes
-│   │   └── emails/        # Email sending/history
-│   ├── settings/          # Settings page
-│   ├── compose/           # Email composer
-│   └── ...
+│   │   ├── billing/       # Checkout, subscription, webhooks
+│   │   ├── contacts/      # Contact bank CRUD
+│   │   ├── emails/        # Email sending/history
+│   │   ├── health/        # Health check
+│   │   ├── jobs/          # Jobs, match, reveal
+│   │   ├── outreach/      # Outreach workflow
+│   │   ├── profile/       # User profile
+│   │   ├── sources/       # Source management + validation
+│   │   ├── stats/         # Dashboard stats
+│   │   ├── sync/          # Manual + system sync
+│   │   ├── telemetry/     # Plan-intent telemetry
+│   │   └── templates/     # Email template CRUD
+│   ├── app/               # Authenticated app routes
+│   │   ├── (protected)/   # Auth-gated pages
+│   │   └── (public)/      # Public pages
+│   └── (marketing)/       # Landing page
 ├── components/            # Reusable React components
 ├── lib/                   # Core utilities
 │   ├── auth/              # NextAuth config
+│   ├── billing/           # Asaas billing provider + entitlements
+│   ├── contacts/          # Contact upsert + enrichment
 │   ├── db/                # Database schema & connection
-│   ├── providers/        # Email provider abstractions
-│   └── ...
-└── types/                 # Shared TypeScript types
+│   ├── i18n/              # Internationalization (EN/PT-BR)
+│   ├── matcher/           # Job match scoring + explainability
+│   ├── outreach/          # Outreach workflow logic
+│   ├── parser/            # Job parsing utilities
+│   ├── plan/              # Plan enforcement + intent telemetry
+│   ├── profile/           # Profile scoring engine
+│   ├── providers/         # Email provider abstractions
+│   ├── scraper/           # Job scraping utilities
+│   ├── sources/           # Source connectors + health + sync
+│   └── types/             # Shared TypeScript types
+└── types/                 # Global type definitions
 ```
+
+### Billing (Asaas)
+
+The billing system uses the Asaas payment gateway for subscription management:
+
+```
+src/lib/billing/
+├── providers/
+│   ├── asaas/             # Asaas provider implementation
+│   └── index.ts           # Provider factory
+├── config.ts              # Plan definitions and pricing
+├── entitlements.ts        # Plan entitlement projection
+├── reconciliation.ts      # Subscription reconciliation
+├── service.ts             # Billing service layer
+└── types.ts               # Billing type definitions
+```
+
+**API Endpoints:**
+- `POST /api/billing/checkout` - Create checkout session
+- `GET /api/billing/state` - Get current billing state
+- `GET /api/billing/subscription/cancel` - Cancel subscription
+- `POST /api/billing/reconcile/system` - System reconciliation
+- `POST /api/billing/webhooks/asaas` - Asaas webhook handler
+
+### Sources and Connectors
+
+The sources system manages job discovery from multiple platforms:
+
+```
+src/lib/sources/
+├── connectors/
+│   ├── github-issues.ts    # GitHub Issues connector
+│   ├── greenhouse-board.ts # Greenhouse Job Board connector
+│   ├── lever-postings.ts   # Lever Postings connector
+│   └── index.ts            # Connector registry
+├── discovery.ts            # Auto-discovery for BR/LATAM sources
+├── health.ts               # Source health scoring
+├── policy.ts               # Attribution/terms policy
+├── sync.ts                 # Sync orchestrator
+└── types.ts                # Source type definitions
+```
+
+**API Endpoints:**
+- `GET /api/sources` - List user sources
+- `POST /api/sources` - Create source
+- `PATCH /api/sources/[id]` - Update source (enable/disable)
+- `POST /api/sources/[id]/validate` - Validate connector
+- `POST /api/sync` - Manual sync
+- `POST /api/sync/system` - System scheduled sync
 
 ---
 
@@ -313,7 +386,7 @@ useEffect(() => {
 
 ## Important Notes
 
-1. **NextAuth v5 is in beta**: May have breaking changes; check documentation
+1. **NextAuth v5**: Check documentation for any updates
 2. **Gmail OAuth tokens stored in SQLite**: Separate from NextAuth user login
 3. **No tests exist yet**: Consider adding Jest or Vitest for critical paths
 4. **Tailwind v4**: Uses CSS-based configuration, not tailwind.config.js

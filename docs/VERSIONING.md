@@ -30,7 +30,7 @@ git push origin vX.Y.Z
 
 ## Changelog
 
-Every release must update `CHANGELOG.md` using Keep a Changelog style sections:
+Every release must update [`CHANGELOG.md`](../CHANGELOG.md) using Keep a Changelog style sections:
 
 - Added
 - Changed

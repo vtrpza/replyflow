@@ -224,7 +224,7 @@ This codebase now includes the following product capabilities:
 
 ### Deploy docs
 
-- `DEPLOYMENT.md`
+- `docs/DEPLOYMENT.md`
   - includes system-sync token flow
 
 ### Repo docs

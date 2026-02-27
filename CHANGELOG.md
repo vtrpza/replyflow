@@ -52,7 +52,7 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Protected/public app route groups for server-side auth gating.
 - Plan/usage UI blocks in settings with upgrade CTA.
 - Fly.io deployment infrastructure (`fly.toml`, `Dockerfile`, entrypoint, deploy workflow).
-- Deployment runbook for SQLite persistence on Fly (`DEPLOYMENT.md`).
+- Deployment runbook for SQLite persistence on Fly (`docs/DEPLOYMENT.md`).
 
 ### Changed
 

@@ -186,6 +186,17 @@ Areas currently being worked on include:
 
 ---
 
+## Documentation
+
+See [`docs/`](./docs/) for detailed documentation:
+
+- [Deployment runbook](./docs/DEPLOYMENT.md)
+- [Sentry setup](./docs/SENTRY.md)
+- [Versioning policy](./docs/VERSIONING.md)
+- [Implementation runbook](./docs/IMPLEMENTATION_RUNBOOK.md)
+
+---
+
 ## Commercial model
 
 ReplyFlow is being built as a product.

@@ -34,13 +34,13 @@ npm run build
 npm run lint
 ```
 
-- Update docs when behavior changes (`README.md`, `CHANGELOG.md`, `VERSIONING.md`).
+- Update docs when behavior changes (`README.md`, `CHANGELOG.md`, `docs/VERSIONING.md`).
 
 ## Deployment
 
-- Production deploy target is Fly.io (`replyflow-vhnpouza`).
+- Production deploy target is Fly.io (`replyflow`).
 - Deployment config is tracked in `fly.toml` + `Dockerfile`.
-- If deployment behavior changes, update `DEPLOYMENT.md` in the same PR.
+- If deployment behavior changes, update `docs/DEPLOYMENT.md` in the same PR.
 
 ## Security & Data Safety
 
