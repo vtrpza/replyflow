@@ -122,8 +122,8 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
 
 const STATS = [
   { value: 1, suffix: "", enLabel: "Unified pipeline", ptLabel: "Pipeline único" },
-  { value: 3, suffix: "+", enLabel: "Connected sources", ptLabel: "Fontes conectadas" },
-  { value: 10, suffix: "+", enLabel: "Outreach templates", ptLabel: "Templates prontos" },
+  { value: 71, suffix: "+", enLabel: "Connectors", ptLabel: "Conectores" },
+  { value: 10, suffix: "+", enLabel: "Templates", ptLabel: "Templates" },
   { value: 2, suffix: "", enLabel: "Outreach languages", ptLabel: "Idiomas de outreach" },
 ];
 
@@ -406,7 +406,7 @@ function Nav() {
           <LanguageSwitch variant="inline" />
           <Link
             href="/app"
-            className="text-sm font-medium px-4 py-1.5 rounded-full text-[var(--rf-bg)] transition-all hover:opacity-90"
+            className="inline-flex items-center justify-center text-center whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full text-[var(--rf-bg)] transition-all hover:opacity-90"
             style={{ background: "var(--rf-gradient)" }}
           >
             {isPt ? "Começar grátis" : "Get started"}

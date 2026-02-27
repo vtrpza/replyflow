@@ -25,7 +25,7 @@ const DEFAULT_LOCALE: Locale = "pt-BR";
 const messages: Record<Locale, Record<string, string>> = {
   "pt-BR": {
     "language.switch": "Idioma",
-    "language.pt": "PT-BR",
+    "language.pt": "PT",
     "language.en": "EN",
 
     "sidebar.operatorPanel": "painel operador",
@@ -78,7 +78,7 @@ const messages: Record<Locale, Record<string, string>> = {
   },
   en: {
     "language.switch": "Language",
-    "language.pt": "PT-BR",
+    "language.pt": "PT",
     "language.en": "EN",
 
     "sidebar.operatorPanel": "operator panel",
