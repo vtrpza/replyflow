@@ -1,0 +1,76 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db, schema } from "@/lib/db";
+import { and, eq } from "drizzle-orm";
+import { assertWithinPlan, ensureUserExists, upgradeRequiredResponse } from "@/lib/plan";
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    ensureUserExists(session);
+    const userId = session.user.id;
+
+    const body = await request.json();
+    const { jobId } = body;
+
+    if (!jobId) {
+      return NextResponse.json({ error: "jobId required" }, { status: 400 });
+    }
+
+    const job = db
+      .select()
+      .from(schema.jobs)
+      .where(eq(schema.jobs.id, jobId))
+      .get();
+
+    if (!job) {
+      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    }
+
+    const existingReveal = db
+      .select()
+      .from(schema.jobReveals)
+      .where(and(eq(schema.jobReveals.userId, userId), eq(schema.jobReveals.jobId, jobId)))
+      .get();
+
+    if (!existingReveal) {
+      const revealCheck = assertWithinPlan(userId, "reveals");
+      if (!revealCheck.ok) {
+        return NextResponse.json(
+          upgradeRequiredResponse(revealCheck.feature, revealCheck.limit),
+          { status: 402 }
+        );
+      }
+
+      db.insert(schema.jobReveals)
+        .values({
+          id: generateId(),
+          userId,
+          jobId,
+          createdAt: new Date().toISOString(),
+        })
+        .run();
+    }
+
+    return NextResponse.json({
+      success: true,
+      revealed: true,
+      contact: {
+        email: job.contactEmail,
+        linkedin: job.contactLinkedin,
+        whatsapp: job.contactWhatsapp,
+      },
+    });
+  } catch (error) {
+    console.error("Reveal error:", error);
+    return NextResponse.json({ error: "Failed to reveal contact" }, { status: 500 });
+  }
+}

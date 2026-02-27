@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1772133177460,
+      "tag": "0000_great_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1772159386394,
+      "tag": "0001_multi_tenant_plan_usage",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1772159599043,
+      "tag": "0002_multi_tenant_plan_usage_apply",
+      "breakpoints": true
+    }
+  ]
+}
