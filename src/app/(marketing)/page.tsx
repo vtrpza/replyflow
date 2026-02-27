@@ -4,38 +4,37 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
-import { LanguageSwitch } from "@/components/ui/language-switch";
 
 /* ───────────────────────── data ───────────────────────── */
 
 const PIPELINE_STEPS = [
-  { label: "Lead", desc: "Find jobs with direct contact", icon: ">", signal: "source" },
-  { label: "Draft", desc: "One-click email generation", icon: "~", signal: "compose" },
-  { label: "Send", desc: "Send via your Gmail", icon: "|", signal: "deliver" },
-  { label: "Follow up", desc: "Automated reminders", icon: ">>", signal: "ping" },
-  { label: "Reply", desc: "Track responses", icon: "<", signal: "feedback" },
-  { label: "Interview", desc: "Move to next stage", icon: "#", signal: "outcome" },
+  { label: "Collect", desc: "Gather jobs from multiple sources", icon: ">", signal: "intel" },
+  { label: "Score", desc: "Prioritize by freshness, fit, and contact", icon: "~", signal: "rank" },
+  { label: "Apply", desc: "Track ATS applications and deadlines", icon: "|", signal: "ats" },
+  { label: "Outreach", desc: "Generate and send direct emails", icon: ">>", signal: "direct" },
+  { label: "Follow up", desc: "Run reminders and next actions", icon: "<", signal: "cadence" },
+  { label: "Interview", desc: "Move opportunities to interview", icon: "#", signal: "result" },
 ];
 
 const FEATURES = [
   {
-    title: "Direct-contact first",
-    desc: "We surface jobs with real emails and LinkedIn profiles. No black-hole ATS forms.",
+    title: "Intel + data + CRM",
+    desc: "Collect opportunities, rank by real signals, and keep every recruiter touchpoint in one framework.",
     tag: "signal",
   },
   {
-    title: "One-click drafts",
-    desc: "Generate cold emails in PT-BR or EN, tailored to your profile and the job posting.",
+    title: "ATS reality mode",
+    desc: "Track ATS-only openings as first-class pipeline stages while still prioritizing direct contacts.",
     tag: "speed",
   },
   {
-    title: "Pipeline + follow-ups",
-    desc: "Track every application from draft to interview. Follow-ups are where interviews happen.",
+    title: "Direct outreach engine",
+    desc: "Generate PT-BR/EN drafts, send from Gmail, and run follow-ups with status tracking.",
     tag: "system",
   },
   {
-    title: "History & logs",
-    desc: "Full send history, open tracking, and status per outreach. Know what works.",
+    title: "Recruiter bank",
+    desc: "Turn old openings into actionable recruiter leads instead of losing those contacts.",
     tag: "data",
   },
 ];
@@ -43,7 +42,7 @@ const FEATURES = [
 const FAQ_ITEMS = [
   {
     q: "Is ReplyFlow a job board?",
-    a: "No. ReplyFlow is an outreach pipeline. It connects to job sources, but its core value is the workflow: draft, send, follow up, track replies. Think lightweight CRM for job applications.",
+    a: "Not only. ReplyFlow is a job search framework: jobs intel, ATS tracking, direct outreach, and CRM in one system.",
   },
   {
     q: "Does it guarantee interviews?",
@@ -51,7 +50,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Do I need to use ATS platforms?",
-    a: "Not necessarily. ReplyFlow focuses on direct contact when available (email, LinkedIn). For ATS-only positions, we flag them so you can decide. Direct outreach has higher response rates for senior roles.",
+    a: "Yes, often. ReplyFlow embraces ATS reality and tracks ATS stages while still highlighting direct recruiter contacts when available.",
   },
 ];
 
@@ -77,7 +76,6 @@ export default function LandingPage() {
 function Nav() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
@@ -95,77 +93,13 @@ function Nav() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/app/signin"
-            className="hidden sm:block text-sm text-[var(--rf-muted)] hover:text-white transition-colors"
-          >
-            {isPt ? "Entrar" : "Sign in"}
-          </Link>
-          <Link
-            href="/app"
-            className="text-sm font-medium px-4 py-1.5 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors"
-          >
-            {isPt ? "Abrir app" : "Open app"}
-          </Link>
-          <div className="hidden sm:block">
-            <LanguageSwitch variant="inline" />
-          </div>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="sm:hidden p-2 text-[var(--rf-muted)] hover:text-white transition-colors"
-            aria-label="Toggle menu"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {mobileMenuOpen ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
+        <Link
+          href="/app"
+          className="text-sm font-medium px-4 py-1.5 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors"
+        >
+          {isPt ? "Abrir app" : "Open app"}
+        </Link>
       </div>
-
-      {/* Mobile menu dropdown */}
-      {mobileMenuOpen && (
-        <div className="sm:hidden border-t border-[var(--rf-border)] bg-[var(--rf-bg)]">
-          <div className="px-4 py-4 flex flex-col gap-3">
-            <Link
-              href="/app/signin"
-              className="text-sm text-[var(--rf-muted)] hover:text-white transition-colors py-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {isPt ? "Entrar" : "Sign in"}
-            </Link>
-            <Link
-              href="/app"
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors text-center"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {isPt ? "Abrir app" : "Open app"}
-            </Link>
-            <div className="pt-2 border-t border-[var(--rf-border)]">
-              <LanguageSwitch variant="inline" />
-            </div>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }
@@ -193,21 +127,21 @@ function Hero() {
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-          <span className="text-white">{isPt ? "Pipeline de outreach" : "Outreach pipeline"}</span>
+          <span className="text-white">{isPt ? "Framework para conseguir emprego" : "Framework to land interviews"}</span>
           <br />
           <span className="rf-gradient-text">
-            {isPt ? "para devs que assumem responsabilidade." : "for devs who take ownership."}
+            {isPt ? "para devs brasileiros mid-senior." : "for Brazilian mid-senior devs."}
           </span>
         </h1>
 
         <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
           {isPt
-            ? "Encontre vagas com contato direto. Gere emails em um clique. Acompanhe do primeiro contato ate a entrevista."
-            : "Find jobs with direct contacts. Generate emails in one click. Track from first contact to interview."}
+            ? "Intel de vagas + CRM + ATS + outreach no mesmo fluxo. Priorize vagas novas, salve contatos de recrutadores e execute follow-ups com consistencia."
+            : "Jobs intel + CRM + ATS + outreach in one flow. Prioritize fresh roles, save recruiter contacts, and execute follow-ups consistently."}
           {" "}
           {isPt
-            ? "Mais respostas. Menos forms ATS."
-            : "More replies. Less ATS forms."}
+            ? "Mais controle. Mais respostas."
+            : "More control. More replies."}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -242,12 +176,12 @@ function Pipeline() {
   const isPt = locale === "pt-BR";
 
   const pipelinePt = [
-    { label: "Lead", desc: "Encontre vagas com contato direto" },
-    { label: "Rascunho", desc: "Geracao de email em um clique" },
-    { label: "Enviar", desc: "Envie pela sua conta Gmail" },
-    { label: "Follow-up", desc: "Lembretes automatizados" },
-    { label: "Resposta", desc: "Acompanhe retornos" },
-    { label: "Entrevista", desc: "Avance para a proxima etapa" },
+    { label: "Coletar", desc: "Reunir vagas de multiplas fontes" },
+    { label: "Priorizar", desc: "Rank por frescor, match e contato" },
+    { label: "ATS", desc: "Aplicar e marcar estagios" },
+    { label: "Outreach", desc: "Gerar e enviar emails diretos" },
+    { label: "Follow-up", desc: "Rodar proximas acoes" },
+    { label: "Entrevista", desc: "Avancar oportunidades quentes" },
   ];
 
   return (
@@ -268,7 +202,7 @@ function Pipeline() {
             </h2>
           </div>
           <p className="text-xs font-mono text-[var(--rf-muted)] rounded-full border border-[var(--rf-border)] px-3 py-1.5 w-fit">
-            {isPt ? "fluxo deterministico · sem teatro de ATS" : "deterministic flow · no ATS theater"}
+            {isPt ? "fluxo operacional · ATS + contato direto" : "operator flow · ATS + direct outreach"}
           </p>
         </div>
 
@@ -325,20 +259,20 @@ function Features() {
 
   const featurePt = [
     {
-      title: "Contato direto primeiro",
-      desc: "Mostramos vagas com emails reais e perfis no LinkedIn. Sem buraco negro de formularios ATS.",
+      title: "Intel + dados + CRM",
+      desc: "Colete oportunidades, priorize por sinais reais e mantenha cada contato de recrutador em um unico framework.",
     },
     {
-      title: "Rascunhos em um clique",
-      desc: "Gere cold emails em PT-BR ou EN, adaptados ao seu perfil e a vaga.",
+      title: "Modo realidade ATS",
+      desc: "Trate vagas ATS-only como etapas legitimas do pipeline sem abrir mao de contato direto.",
     },
     {
-      title: "Pipeline + follow-ups",
-      desc: "Acompanhe cada candidatura do rascunho ate a entrevista. Follow-up e onde as entrevistas acontecem.",
+      title: "Motor de outreach",
+      desc: "Gere rascunhos PT-BR/EN, envie pelo Gmail e rode follow-ups com rastreio de status.",
     },
     {
-      title: "Historico e logs",
-      desc: "Historico completo de envios e status por outreach. Saiba o que funciona.",
+      title: "Banco de recrutadores",
+      desc: "Converta vagas antigas em leads reaproveitaveis em vez de perder contatos valiosos.",
     },
   ];
 
@@ -347,10 +281,10 @@ function Features() {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "Recursos" : "Features"}
+            {isPt ? "Pilares" : "Core pillars"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            {isPt ? "Feito para outreach real de dev." : "Built for real-world dev outreach."}
+            {isPt ? "Feito para busca de emprego no mercado real." : "Built for real-world job search."}
           </h2>
         </div>
 
@@ -382,8 +316,8 @@ function Features() {
         <div className="mt-12 text-center">
           <p className="text-sm text-zinc-600 font-mono">
             {isPt
-              ? '"Voce nao precisa de mais vagas. Voce precisa de mais respostas."'
-              : "\"You don't need more jobs. You need more replies.\""}
+              ? '"Voce nao precisa de mais abas abertas. Precisa de um sistema."'
+              : "\"You don't need more tabs open. You need a system.\""}
           </p>
         </div>
       </div>
@@ -450,14 +384,14 @@ function Pricing() {
       price: "R$ 49",
       period: isPt ? "/mes" : "/month",
       desc: isPt
-        ? "Para quem esta em busca ativa e quer mais respostas."
-        : "For active job seekers who want more replies.",
+        ? "Para devs em busca ativa que querem operar com consistencia."
+        : "For active job seekers who want to run a consistent process.",
       features: [
-        isPt ? "Leads ilimitados" : "Unlimited leads",
+        isPt ? "Leads e contatos ilimitados" : "Unlimited leads and contacts",
         isPt ? "Geracao de rascunho prioritaria" : "Priority draft generation",
         isPt ? "Automacao de follow-up" : "Follow-up automation",
         isPt ? "Historico completo e analytics" : "Full history & analytics",
-        isPt ? "Ranking por score de match" : "Match score ranking",
+        isPt ? "Score por oportunidade (match + frescor + contato)" : "Opportunity scoring (match + freshness + contact)",
       ],
       cta: isPt ? "Upgrade para Pro" : "Upgrade to Pro",
       href: "/app/settings",
@@ -555,7 +489,7 @@ function Faq() {
   const faqPt = [
     {
       q: "A ReplyFlow e um job board?",
-      a: "Nao. A ReplyFlow e um pipeline de outreach. Ela conecta fontes de vagas, mas o valor central esta no fluxo: rascunhar, enviar, fazer follow-up e acompanhar respostas.",
+      a: "Nao somente. A ReplyFlow e um framework de busca de emprego: coleta, intel, ATS, CRM e outreach em um unico painel.",
     },
     {
       q: "Ela garante entrevistas?",
@@ -563,7 +497,7 @@ function Faq() {
     },
     {
       q: "Preciso usar plataformas ATS?",
-      a: "Nem sempre. A ReplyFlow prioriza contato direto quando disponivel (email, LinkedIn). Quando for ATS-only, voce decide como seguir.",
+      a: "Na maioria das vezes, sim. A ReplyFlow assume a realidade: ATS e parte do processo, mas contato direto continua sendo vantagem competitiva.",
     },
   ];
 
@@ -637,10 +571,25 @@ function Footer() {
           </span>
         </div>
 
+        <div className="flex items-center gap-6">
+          <Link
+            href="/termos"
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            {isPt ? "Termos de Uso" : "Terms of Service"}
+          </Link>
+          <Link
+            href="/privacidade"
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            {isPt ? "Privacidade" : "Privacy"}
+          </Link>
+        </div>
+
         <p className="text-xs text-zinc-600 font-mono">
           {isPt
-            ? "E no follow-up que a entrevista acontece."
-            : "The follow-up is where the interview happens."}
+            ? "Mercado real: ATS + relacionamento + consistencia."
+            : "Real market: ATS + relationships + consistency."}
         </p>
       </div>
     </footer>

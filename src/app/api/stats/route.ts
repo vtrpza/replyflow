@@ -120,6 +120,20 @@ export async function GET() {
       .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`)
       .get();
 
+    const uniqueRecruiterEmails = db
+      .select({ count: sql<number>`count(distinct lower(trim(${schema.jobs.contactEmail})))` })
+      .from(schema.jobs)
+      .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`)
+      .get();
+
+    const uniqueRecruiterDomains = db
+      .select({
+        count: sql<number>`count(distinct lower(substr(trim(${schema.jobs.contactEmail}), instr(trim(${schema.jobs.contactEmail}), '@') + 1)))`,
+      })
+      .from(schema.jobs)
+      .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') like '%@%'`)
+      .get();
+
     const jobsAtsOnly = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
@@ -220,6 +234,8 @@ export async function GET() {
       totalInterviews: interviews?.count || 0,
       remoteJobs: remoteCount?.count || 0,
       jobsWithEmail: jobsWithEmail?.count || 0,
+      uniqueRecruiterEmails: uniqueRecruiterEmails?.count || 0,
+      uniqueRecruiterDomains: uniqueRecruiterDomains?.count || 0,
       jobsAtsOnly: jobsAtsOnly?.count || 0,
       jobsWithMatchScore: jobsWithMatchScore?.count || 0,
       matchScoreLastCalculated: lastCalculated?.date || null,

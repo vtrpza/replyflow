@@ -3,9 +3,31 @@ import { db, schema } from "@/lib/db";
 import { GitHubScraper } from "@/lib/scraper/github";
 import { parseJobBody } from "@/lib/parser/job-parser";
 import { eq } from "drizzle-orm";
+import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+function syncContactEmailToAllUsers(input: {
+  email: string | null;
+  company?: string | null;
+  role?: string | null;
+  sourceRef?: string | null;
+}) {
+  if (!input.email) {
+    return;
+  }
+
+  const users = db.select({ id: schema.users.id }).from(schema.users).all();
+  for (const user of users) {
+    upsertContactFromJobForUser(user.id, {
+      email: input.email,
+      company: input.company,
+      position: input.role,
+      sourceRef: input.sourceRef,
+    });
+  }
 }
 
 /**
@@ -39,6 +61,13 @@ export async function POST(request: Request) {
             .run();
           updated++;
         }
+
+        syncContactEmailToAllUsers({
+          email: parsed.contactEmail,
+          company: parsed.company,
+          role: parsed.role,
+          sourceRef: job.issueUrl,
+        });
       }
       
       return NextResponse.json({
@@ -152,6 +181,13 @@ export async function POST(request: Request) {
                 parsedAt: now,
               })
               .run();
+
+            syncContactEmailToAllUsers({
+              email: parsed.contactEmail,
+              company: parsed.company,
+              role: parsed.role,
+              sourceRef: issue.issueUrl,
+            });
 
             newJobs++;
           } else {

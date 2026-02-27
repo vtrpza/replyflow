@@ -44,6 +44,15 @@ const navItems = [
     ),
   },
   {
+    href: "/app/contacts",
+    labelKey: "sidebar.nav.contacts",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5V4H2v16h5m10 0v-2a4 4 0 00-8 0v2m8 0H9m8-9a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+  },
+  {
     href: "/app/outreach",
     labelKey: "sidebar.nav.outreach",
     icon: (
@@ -73,7 +82,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="w-64 flex flex-col border-r backdrop-blur-md"
+      className="hidden md:flex w-64 flex-col border-r backdrop-blur-md"
       style={{
         background: "rgba(11, 15, 20, 0.92)",
         borderColor: "var(--rf-border)",

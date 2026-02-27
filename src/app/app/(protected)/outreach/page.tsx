@@ -49,6 +49,7 @@ interface OutreachRecord {
 }
 
 const STATUS_FLOW = [
+  "applied_ats",
   "email_drafted",
   "email_sent",
   "followed_up",
@@ -59,6 +60,7 @@ const STATUS_FLOW = [
 ];
 
 const STATUS_COLORS: Record<string, string> = {
+  applied_ats: "bg-amber-500/10 text-amber-400",
   email_drafted: "bg-yellow-500/10 text-yellow-400",
   email_sent: "bg-blue-500/10 text-blue-400",
   followed_up: "bg-cyan-500/10 text-cyan-400",
@@ -91,6 +93,7 @@ export default function OutreachPage() {
   
   const getStatusLabel = (status: string): string => {
     const labelsPt: Record<string, string> = {
+      applied_ats: "ats aplicado",
       email_drafted: "rascunhado",
       email_sent: "enviado",
       followed_up: "follow-up",
@@ -300,7 +303,7 @@ export default function OutreachPage() {
   );
 
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">{isPt ? "Pipeline de Outreach" : "Outreach Pipeline"}</h1>
@@ -344,9 +347,9 @@ export default function OutreachPage() {
               className="bg-zinc-900 border border-zinc-800 rounded-lg"
             >
               <div className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <span
                         className={`px-2 py-0.5 text-xs rounded-full ${STATUS_COLORS[record.status] || "bg-zinc-800 text-zinc-400"}`}
                       >
@@ -356,12 +359,12 @@ export default function OutreachPage() {
                         href={record.job.issueUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-zinc-200 hover:text-emerald-400 truncate"
+                        className="text-sm font-medium text-zinc-200 hover:text-emerald-400 break-words sm:truncate"
                       >
                         {record.job.title}
                       </a>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-zinc-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
                       {record.job.company && (
                         <span>{record.job.company}</span>
                       )}
@@ -382,7 +385,7 @@ export default function OutreachPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <button
                       onClick={() =>
                         setExpandedRecord(

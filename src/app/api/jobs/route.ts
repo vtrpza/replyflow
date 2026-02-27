@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     const contactType = searchParams.get("contactType");
     const minMatchScore = searchParams.get("minMatchScore");
     const roleFilter = searchParams.get("role");
+    const hideStale = (searchParams.get("hideStale") || "true") !== "false";
+    const staleDays = parseInt(searchParams.get("staleDays") || "45", 10);
 
     const offset = (page - 1) * limit;
 
@@ -46,10 +48,16 @@ export async function GET(request: NextRequest) {
     if (contractType) conditions.push(eq(schema.jobs.contractType, contractType));
     if (level) conditions.push(eq(schema.jobs.experienceLevel, level));
 
+    if (hideStale) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - staleDays);
+      conditions.push(sql`COALESCE(${schema.jobs.updatedAt}, ${schema.jobs.createdAt}) >= ${cutoffDate.toISOString()}`);
+    }
+
     if (contactType === "hasEmail") {
-      conditions.push(sql`${schema.jobs.contactEmail} IS NOT NULL`);
+      conditions.push(sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`);
     } else if (contactType === "atsOnly") {
-      conditions.push(sql`${schema.jobs.contactEmail} IS NULL AND ${schema.jobs.applyUrl} IS NOT NULL`);
+      conditions.push(sql`coalesce(trim(${schema.jobs.contactEmail}), '') = '' AND coalesce(trim(${schema.jobs.applyUrl}), '') <> ''`);
     }
 
     if (roleFilter) {
@@ -86,6 +94,9 @@ export async function GET(request: NextRequest) {
         break;
       case "comments":
         orderBy = desc(schema.jobs.commentsCount);
+        break;
+      case "updated":
+        orderBy = sql`${schema.jobs.updatedAt} DESC`;
         break;
       default:
         orderBy = desc(schema.jobs.createdAt);
@@ -145,6 +156,15 @@ export async function GET(request: NextRequest) {
         matchScore: score?.score ?? null,
         isRevealed: revealed,
         hasContact: !!(job.contactEmail || job.contactLinkedin || job.contactWhatsapp),
+        isStale:
+          (Date.now() - new Date(job.updatedAt || job.createdAt).getTime()) /
+            (1000 * 60 * 60 * 24) >
+          staleDays,
+        opportunityScore:
+          Math.max(0, Math.min(100, (score?.score ?? 0))) +
+          (job.contactEmail ? 20 : 0) +
+          (job.applyUrl && !job.contactEmail ? 8 : 0) +
+          ((Date.now() - new Date(job.updatedAt || job.createdAt).getTime()) / (1000 * 60 * 60 * 24) <= staleDays ? 12 : 0),
         contactEmail: revealed ? job.contactEmail : job.contactEmail ? "***" : null,
         contactLinkedin: revealed ? job.contactLinkedin : job.contactLinkedin ? "***" : null,
         contactWhatsapp: revealed ? job.contactWhatsapp : job.contactWhatsapp ? "***" : null,
@@ -166,6 +186,8 @@ export async function GET(request: NextRequest) {
 
     if (sort === "matchScore") {
       filtered = [...filtered].sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    } else if (sort === "opportunity") {
+      filtered = [...filtered].sort((a, b) => (b.opportunityScore || 0) - (a.opportunityScore || 0));
     }
 
     return NextResponse.json({

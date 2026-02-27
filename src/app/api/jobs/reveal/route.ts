@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
 import { assertWithinPlan, ensureUserExists, upgradeRequiredResponse } from "@/lib/plan";
+import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -57,6 +58,15 @@ export async function POST(request: NextRequest) {
           createdAt: new Date().toISOString(),
         })
         .run();
+    }
+
+    if (job.contactEmail) {
+      upsertContactFromJobForUser(userId, {
+        email: job.contactEmail,
+        company: job.company,
+        position: job.role,
+        sourceRef: job.issueUrl,
+      });
     }
 
     return NextResponse.json({

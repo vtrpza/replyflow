@@ -6,6 +6,7 @@ import { generateColdEmail } from "@/lib/outreach/email-generator";
 import { assertWithinPlan, ensureUserExists, getEffectivePlan, getOrCreateProfile, upgradeRequiredResponse } from "@/lib/plan";
 import type { UserProfile } from "@/lib/types";
 import path from "path";
+import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -110,6 +111,15 @@ export async function POST(request: Request) {
           },
         },
         existing: true,
+      });
+    }
+
+    if (job.contactEmail) {
+      upsertContactFromJobForUser(userId, {
+        email: job.contactEmail,
+        company: job.company,
+        position: job.role,
+        sourceRef: job.issueUrl,
       });
     }
 

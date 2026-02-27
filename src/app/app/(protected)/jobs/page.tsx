@@ -12,6 +12,7 @@ interface Job {
   body: string;
   labels: string[];
   createdAt: string;
+  updatedAt: string;
   repoFullName: string;
   company: string | null;
   salary: string | null;
@@ -24,9 +25,11 @@ interface Job {
   contactEmail: string | null;
   contactLinkedin: string | null;
   matchScore: number | null;
+  opportunityScore?: number;
   outreachStatus: string;
   isRevealed: boolean;
   hasContact: boolean;
+  isStale?: boolean;
 }
 
 interface Pagination {
@@ -59,7 +62,8 @@ export default function JobsPage() {
     outreachStatus: "",
     contactType: "",
     minMatchScore: "",
-    sort: "matchScore",
+    sort: "newest",
+    hideStale: "true",
   });
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const [draftingJob, setDraftingJob] = useState<string | null>(null);
@@ -78,6 +82,7 @@ export default function JobsPage() {
       followed_up: "follow-up",
       replied: "respondeu",
       interviewing: "entrevista",
+      applied_ats: "ats aplicado",
       accepted: "aceito",
       rejected: "rejeitado",
     };
@@ -102,6 +107,7 @@ export default function JobsPage() {
       if (filters.outreachStatus) params.set("outreachStatus", filters.outreachStatus);
       if (filters.contactType) params.set("contactType", filters.contactType);
       if (filters.minMatchScore) params.set("minMatchScore", filters.minMatchScore);
+      params.set("hideStale", filters.hideStale);
 
       try {
         const res = await fetch(`/api/jobs?${params.toString()}`);
@@ -197,8 +203,45 @@ export default function JobsPage() {
     }
   };
 
+  const handleSaveLead = async (jobId: string) => {
+    try {
+      const res = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobId }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isPt ? "Falha ao salvar lead" : "Failed to save lead"));
+        return;
+      }
+      toast.success(isPt ? "Lead salvo no banco de recrutadores" : "Lead saved to recruiter bank");
+    } catch {
+      toast.error(isPt ? "Falha ao salvar lead" : "Failed to save lead");
+    }
+  };
+
+  const handleAtsApplied = async (jobId: string) => {
+    try {
+      const res = await fetch("/api/jobs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: jobId, outreachStatus: "applied_ats" }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        toast.error(data.error || (isPt ? "Falha ao atualizar status" : "Failed to update status"));
+        return;
+      }
+      toast.success(isPt ? "Marcado como ATS aplicado" : "Marked as ATS applied");
+      fetchJobs(pagination.page);
+    } catch {
+      toast.error(isPt ? "Falha ao atualizar status" : "Failed to update status");
+    }
+  };
+
   return (
-    <div className="p-8 max-w-7xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">{isPt ? "Vagas" : "Jobs"}</h1>
         <p className="text-sm text-zinc-500 mt-1">
@@ -215,7 +258,7 @@ export default function JobsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && fetchJobs()}
-          className="flex-1 min-w-[240px] px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
+          className="flex-1 w-full sm:min-w-[240px] px-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-emerald-500"
         />
         <select
           value={filters.remote}
@@ -258,17 +301,29 @@ export default function JobsPage() {
           <option value="followed_up">{isPt ? "Follow-up" : "Followed Up"}</option>
           <option value="replied">{isPt ? "Respondeu" : "Replied"}</option>
           <option value="interviewing">{isPt ? "Entrevista" : "Interviewing"}</option>
+          <option value="applied_ats">{isPt ? "ATS aplicado" : "ATS Applied"}</option>
         </select>
         <select
           value={filters.sort}
           onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
           className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300"
         >
-          <option value="matchScore">{isPt ? "Melhor match" : "Best Match"}</option>
           <option value="newest">{isPt ? "Mais recentes" : "Newest First"}</option>
+          <option value="opportunity">{isPt ? "Melhor oportunidade" : "Best Opportunity"}</option>
+          <option value="updated">{isPt ? "Atividade recente" : "Recent Activity"}</option>
+          <option value="matchScore">{isPt ? "Melhor match" : "Best Match"}</option>
           <option value="oldest">{isPt ? "Mais antigas" : "Oldest First"}</option>
           <option value="comments">{isPt ? "Mais comentarios" : "Most Comments"}</option>
         </select>
+        <label className="inline-flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={filters.hideStale === "true"}
+            onChange={(e) => setFilters({ ...filters, hideStale: e.target.checked ? "true" : "false" })}
+            className="accent-emerald-500"
+          />
+          {isPt ? "Ocultar vagas antigas" : "Hide stale jobs"}
+        </label>
       </div>
 
       {loading ? (
@@ -294,17 +349,30 @@ export default function JobsPage() {
           {jobs.map((job) => (
             <div key={job.id} className="bg-zinc-900 border border-zinc-800 rounded-lg hover:border-zinc-700 transition-colors">
               <div className="p-4">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
                       <a
                         href={job.issueUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-base font-semibold text-zinc-100 hover:text-emerald-400 truncate"
+                        className="text-base font-semibold text-zinc-100 hover:text-emerald-400 break-words sm:truncate"
                       >
                         {job.title}
                       </a>
+                      {job.matchScore !== null && (
+                        <span
+                          className={`sm:hidden text-xs font-medium px-2 py-0.5 rounded ${
+                            job.matchScore >= 70
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : job.matchScore >= 40
+                                ? "bg-amber-500/10 text-amber-400"
+                                : "bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {job.matchScore}%
+                        </span>
+                      )}
                       {job.isRemote && (
                         <span className="shrink-0 px-2 py-0.5 text-xs bg-cyan-500/10 text-cyan-400 rounded-full">
                           {isPt ? "Remoto" : "Remote"}
@@ -313,6 +381,11 @@ export default function JobsPage() {
                       {!job.hasContact && job.applyUrl && (
                         <span className="shrink-0 px-2 py-0.5 text-xs bg-amber-500/10 text-amber-400 rounded-full">
                           {isPt ? "Somente ATS" : "ATS Only"}
+                        </span>
+                      )}
+                      {job.isStale && (
+                        <span className="shrink-0 px-2 py-0.5 text-xs bg-zinc-700/70 text-zinc-300 rounded-full">
+                          {isPt ? "Desatualizada" : "Stale"}
                         </span>
                       )}
                     </div>
@@ -336,10 +409,10 @@ export default function JobsPage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     {job.matchScore !== null && (
                       <span
-                        className={`text-xs font-medium px-2 py-1 rounded ${
+                        className={`hidden sm:inline-block text-xs font-medium px-2 py-1 rounded ${
                           job.matchScore >= 70
                             ? "bg-emerald-500/10 text-emerald-400"
                             : job.matchScore >= 40
@@ -348,6 +421,11 @@ export default function JobsPage() {
                         }`}
                       >
                         {job.matchScore}%
+                      </span>
+                    )}
+                    {job.opportunityScore !== undefined && (
+                      <span className="hidden sm:inline-block text-xs font-medium px-2 py-1 rounded bg-cyan-500/10 text-cyan-300">
+                        OPP {Math.round(job.opportunityScore)}
                       </span>
                     )}
                     <button
@@ -379,11 +457,11 @@ export default function JobsPage() {
                           ? "..."
                           : revealBlocked
                             ? isPt
-                              ? "Upgrade para revelar"
-                              : "Upgrade to reveal"
+                              ? "Upgrade"
+                              : "Upgrade"
                             : isPt
-                              ? "Revelar contato"
-                              : "Reveal contact"}
+                              ? "Revelar"
+                              : "Reveal"}
                       </button>
                     )}
 
@@ -393,19 +471,27 @@ export default function JobsPage() {
                         disabled={draftingJob === job.id}
                         className="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                       >
-                        {draftingJob === job.id ? "..." : isPt ? "Criar rascunho" : "Draft Email"}
+                        {draftingJob === job.id ? "..." : isPt ? "Rascunho" : "Draft"}
                       </button>
                     )}
 
                     {job.outreachStatus === "none" && !job.hasContact && job.applyUrl && (
-                      <a
-                        href={job.applyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
-                      >
-                        {isPt ? "Candidatar via ATS" : "Apply via ATS"}
-                      </a>
+                      <>
+                        <a
+                          href={job.applyUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+                        >
+                          {isPt ? "ATS" : "ATS"}
+                        </a>
+                        <button
+                          onClick={() => handleAtsApplied(job.id)}
+                          className="px-3 py-1.5 text-xs font-medium bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
+                        >
+                          {isPt ? "Marcar aplicado" : "Mark applied"}
+                        </button>
+                      </>
                     )}
 
                     {job.outreachStatus !== "none" && (
@@ -419,11 +505,19 @@ export default function JobsPage() {
 
               {expandedJob === job.id && (
                 <div className="border-t border-zinc-800 p-4">
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     {job.contactEmail && (
                       <div>
                         <span className="text-xs text-zinc-500">Email:</span>
                         <p className="text-sm text-zinc-300">{job.contactEmail}</p>
+                        {job.contactEmail !== "***" && (
+                          <button
+                            onClick={() => handleSaveLead(job.id)}
+                            className="mt-2 px-2.5 py-1 text-xs font-medium bg-cyan-600 hover:bg-cyan-700 text-white rounded"
+                          >
+                            {isPt ? "Salvar lead" : "Save lead"}
+                          </button>
+                        )}
                       </div>
                     )}
                     {job.contactLinkedin && (

@@ -29,7 +29,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "language.en": "EN",
 
     "sidebar.operatorPanel": "painel operador",
-    "sidebar.outreachPipeline": "pipeline de outreach",
+    "sidebar.outreachPipeline": "job search framework",
     "sidebar.navigation": "navegacao",
     "sidebar.quickAction": "acao rapida",
     "sidebar.syncJobs": "Sincronizar Vagas",
@@ -42,12 +42,13 @@ const messages: Record<Locale, Record<string, string>> = {
     "sidebar.nav.jobs": "Vagas",
     "sidebar.nav.compose": "Escrever",
     "sidebar.nav.history": "Historico",
+    "sidebar.nav.contacts": "Contatos",
     "sidebar.nav.outreach": "Outreach",
     "sidebar.nav.settings": "Configuracoes",
 
-    "signin.tagline": "Pipeline de outreach para devs que assumem responsabilidade",
+    "signin.tagline": "Framework para devs brasileiros conseguirem entrevistas mais rapido",
     "signin.welcomeBack": "Bem-vindo de volta",
-    "signin.description": "Entre para gerenciar contas de email e enviar outreach",
+    "signin.description": "Entre para organizar vagas, ATS e contatos diretos em um unico sistema",
     "signin.continueGoogle": "Continuar com Google",
     "signin.disclaimer": "Ao entrar, voce concorda em conectar sua conta Gmail para envio de emails",
 
@@ -79,7 +80,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "language.en": "EN",
 
     "sidebar.operatorPanel": "operator panel",
-    "sidebar.outreachPipeline": "outreach pipeline",
+    "sidebar.outreachPipeline": "job search framework",
     "sidebar.navigation": "navigation",
     "sidebar.quickAction": "quick action",
     "sidebar.syncJobs": "Sync Jobs",
@@ -92,12 +93,13 @@ const messages: Record<Locale, Record<string, string>> = {
     "sidebar.nav.jobs": "Jobs",
     "sidebar.nav.compose": "Compose",
     "sidebar.nav.history": "History",
+    "sidebar.nav.contacts": "Contacts",
     "sidebar.nav.outreach": "Outreach",
     "sidebar.nav.settings": "Settings",
 
-    "signin.tagline": "Outreach pipeline for devs who take ownership",
+    "signin.tagline": "Framework for Brazilian devs to land interviews faster",
     "signin.welcomeBack": "Welcome back",
-    "signin.description": "Sign in to manage your email accounts and send outreach emails",
+    "signin.description": "Sign in to run jobs intel, ATS tracking, and direct recruiter outreach in one system",
     "signin.continueGoogle": "Continue with Google",
     "signin.disclaimer": "By signing in, you agree to connect your Gmail account for sending emails",
 

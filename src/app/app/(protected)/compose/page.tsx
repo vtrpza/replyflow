@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast, LoadingButton } from "@/components/ui";
 import { Send, Mail, AlertCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -17,6 +17,7 @@ interface ConnectedAccount {
 export default function ComposePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const { t } = useI18n();
 
@@ -35,6 +36,13 @@ export default function ComposePage() {
       router.push("/app/signin");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    const toParam = searchParams.get("to");
+    const subjectParam = searchParams.get("subject");
+    if (toParam) setTo(toParam);
+    if (subjectParam) setSubject(subjectParam);
+  }, [searchParams]);
 
   useEffect(() => {
     if (session?.user) {
@@ -106,7 +114,7 @@ export default function ComposePage() {
 
   if (status === "loading" || loadingAccounts) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="animate-pulse space-y-4">
           <div className="h-8 w-32 bg-zinc-800 rounded" />
           <div className="h-64 bg-zinc-900 rounded-lg" />
@@ -117,7 +125,7 @@ export default function ComposePage() {
 
   if (accounts.length === 0) {
     return (
-      <div className="p-8 max-w-md">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-md">
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-8 text-center">
           <Mail className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
           <h2 className="text-xl font-semibold text-zinc-200 mb-2">
@@ -138,7 +146,7 @@ export default function ComposePage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">{t("compose.title")}</h1>
         <p className="text-sm text-zinc-500 mt-1">

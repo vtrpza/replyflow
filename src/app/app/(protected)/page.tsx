@@ -21,6 +21,8 @@ interface Stats {
   totalInterviews: number;
   remoteJobs: number;
   jobsWithEmail: number;
+  uniqueRecruiterEmails: number;
+  uniqueRecruiterDomains: number;
   jobsAtsOnly: number;
   jobsWithMatchScore: number;
   matchScoreLastCalculated: string | null;
@@ -136,7 +138,7 @@ export default function Dashboard() {
 
   if (!stats) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         <EmptyState
           title={isPt ? "Ainda nao ha dados no pipeline" : "No pipeline data yet"}
           message={
@@ -242,12 +244,12 @@ export default function Dashboard() {
               {isPt ? "centro de comando" : "command center"}
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              {isPt ? "Pipeline de Outreach" : "Outreach Pipeline"}
+              {isPt ? "Framework de Job Search" : "Job Search Framework"}
             </h1>
             <p className="text-sm text-[var(--rf-muted)] mt-2">
               {isPt
-                ? "Leads, envios, respostas e entrevistas em uma unica visao."
-                : "Leads, sends, replies, and interviews in one operator view."}
+                ? "Intel de vagas, CRM, ATS e outreach em uma unica visao."
+                : "Jobs intel, CRM, ATS, and outreach in one operator view."}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-mono text-[var(--rf-muted)]"
@@ -305,10 +307,10 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="text-right text-xs text-[var(--rf-muted)] font-mono space-y-1">
-              <p>{stats.jobsWithEmail.toLocaleString()} direct</p>
-              <p>{stats.jobsWithEmail.toLocaleString()} {isPt ? "diretos" : "direct"}</p>
-              <p>{stats.jobsAtsOnly.toLocaleString()} ats-only</p>
-              <p>{stats.jobsWithMatchScore.toLocaleString()} {isPt ? "com score" : "scored"}</p>
+               <p>{stats.uniqueRecruiterEmails.toLocaleString()} {isPt ? "emails unicos" : "unique emails"}</p>
+               <p>{stats.uniqueRecruiterDomains.toLocaleString()} {isPt ? "dominios" : "domains"}</p>
+               <p>{stats.jobsAtsOnly.toLocaleString()} ats-only</p>
+               <p>{stats.jobsWithMatchScore.toLocaleString()} {isPt ? "com score" : "scored"}</p>
             </div>
           </div>
           <div className="mt-5">
@@ -367,6 +369,7 @@ export default function Dashboard() {
             <MetricLine label={isPt ? "Novas na semana" : "New this week"} value={stats.newJobsThisWeek} />
             <MetricLine label={isPt ? "Novas hoje" : "New today"} value={stats.newJobsToday} />
             <MetricLine label={isPt ? "Vagas remotas" : "Remote jobs"} value={stats.remoteJobs} />
+            <MetricLine label={isPt ? "Emails de recrutador" : "Recruiter emails"} value={stats.uniqueRecruiterEmails} />
             <MetricLine label={isPt ? "Repos monitorados" : "Repos monitored"} value={stats.totalReposMonitored} />
           </div>
         </article>
@@ -387,8 +390,8 @@ export default function Dashboard() {
             </p>
             <h2 className="text-lg font-semibold text-white mt-1">
               {isPt
-                ? `Lead -> Rascunho -> Enviar -> Follow-up -> Resposta -> Entrevista`
-                : `Lead -> Draft -> Send -> Follow up -> Reply -> Interview`}
+                ? `Coletar -> Priorizar -> ATS/Outreach -> Follow-up -> Resposta -> Entrevista`
+                : `Collect -> Score -> ATS/Outreach -> Follow up -> Reply -> Interview`}
             </h2>
           </div>
           <p className="text-xs font-mono text-[var(--rf-muted)]">
@@ -435,7 +438,7 @@ export default function Dashboard() {
           }}
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--rf-muted)] font-mono mb-4">
-            {isPt ? "performance de outreach" : "outreach performance"}
+            {isPt ? "performance de execucao" : "execution performance"}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <MetricBlock label={isPt ? "Enviados" : "Sent"} value={stats.totalOutreachSent} helper={isPt ? "total enviado" : "total outbound"} tone="text-cyan-300" />
@@ -486,6 +489,10 @@ export default function Dashboard() {
             <div className="rounded-lg border px-3 py-2" style={{ borderColor: "var(--rf-border)" }}>
               <p className="text-[var(--rf-muted)] font-mono">ats-only</p>
               <p className="rf-number text-white mt-1">{stats.jobsAtsOnly.toLocaleString()}</p>
+            </div>
+            <div className="rounded-lg border px-3 py-2 col-span-2" style={{ borderColor: "var(--rf-border)" }}>
+              <p className="text-[var(--rf-muted)] font-mono">{isPt ? "emails de recrutador (unicos)" : "unique recruiter emails"}</p>
+              <p className="rf-number text-white mt-1">{stats.uniqueRecruiterEmails.toLocaleString()}</p>
             </div>
           </div>
         </article>

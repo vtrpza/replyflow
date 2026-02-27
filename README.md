@@ -1,8 +1,16 @@
 # ReplyFlow
 
-ReplyFlow is an outreach CRM for developers applying to jobs.
+ReplyFlow is a job-search framework for Brazilian mid-to-senior developers.
 
-It aggregates opportunities from GitHub issue-based job boards, helps generate targeted drafts, sends via connected Gmail accounts, and tracks the pipeline end-to-end.
+It combines sourcing/ATS intelligence, recruiter CRM, Gmail-powered outreach, and deterministic pipelines so you can treat outdated listings as recruiter leads and still track ATS submissions in the same system.
+
+The core workflow:
+
+- gather opportunities from GitHub repos (plus soon ATS connectors) with freshness and contact scoring;
+- prioritize by match/freshness/contact type (direct vs ATS) and mark stale ones to save recruiter leads;  
+- track ATS-only roles as pipeline stages while still generating drafts when direct contacts are available;  
+- sync recruiter emails into the built-in contacts table and export CSV/compose follow-ups directly from that bank;
+- monitor recruiter-email unique counts, ATS share, and outreach KPIs on the dashboard.
 
 ## Stack
 
@@ -59,6 +67,9 @@ npm run lint
 - Auth required on user-scoped APIs.
 - Free vs Pro enforcement server-side with standardized `402 upgrade_required` responses.
 - Route-group server gating for `/app/*`.
+- Job searchable data tracked in `/api/jobs`, `/api/stats`, and `/api/sync`, with opportunity scoring, freshness filters, and staleness awareness.
+- Recruiter CRM APIs under `/api/contacts` (GET/POST + CSV export) and `/api/contacts/[id]` for updates/deletes, plus automatic ingestion from job syncs and reveals.
+*- Compose draft and send flows leverage `/api/outreach` + `/api/emails/send`, and the new contacts bank can prefill recipients via `/app/compose?to=...`.
 
 ## Versioning & Release Policy
 
@@ -79,14 +90,15 @@ This repository follows Semantic Versioning and conventional commit guidelines.
 This project is configured to run on **Fly.io** with persistent volume storage for SQLite.
 
 - Config file: `fly.toml`
-- Volume mount path: `/app/data`
-- SQLite file path in app runtime: `/app/data/gitjobs.db`
+- Volume mount path: `/data`
+- SQLite file path in app runtime: `/data/gitjobs.db` (set via `DATABASE_PATH` env var)
 - Generated Docker files: `Dockerfile`, `docker-entrypoint.js`, `.dockerignore`
+- Migrations run automatically on container startup
 
 Quick deploy:
 
 ```bash
-"/home/vtrpza/.fly/bin/flyctl" deploy --app replyflow-vhnpouza --remote-only
+"/home/vtrpza/.fly/bin/flyctl" deploy -a replyflow
 ```
 
 Required secrets (Fly):
