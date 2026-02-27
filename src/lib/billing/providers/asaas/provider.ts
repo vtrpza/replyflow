@@ -115,8 +115,9 @@ export class AsaasBillingProvider implements BillingProvider {
     cancelUrl: string;
   }): Promise<CheckoutSessionResult> {
     const customer = await this.createOrGetCustomer(input.user);
+    const client = this.getClient();
 
-    const checkout = await this.client.createCheckout({
+    const checkout = await client.createCheckout({
       customer: customer.providerCustomerId,
       name: "ReplyFlow Pro",
       description: "ReplyFlow Pro mensal (R$ 39)",
