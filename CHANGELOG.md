@@ -69,3 +69,4 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Sign-in flow now reuses canonical user by email to prevent `UNIQUE(users.email)` failures for returning users.
 - Billing entitlement projection now selects the best valid subscription state instead of the latest updated row, preventing premature downgrade when newer `pending` checkouts exist.
 - Billing webhook auth is now fail-closed: `ASAAS_WEBHOOK_TOKEN` is required and unauthorized webhook requests are rejected.
+- Billing provider client is now initialized lazily, so missing Asaas billing env vars no longer fail `next build` while billing is not in use.

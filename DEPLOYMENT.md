@@ -154,6 +154,7 @@ curl -X POST https://replyflow.fly.dev/api/billing/reconcile/system \
 
 ## Billing Security Notes
 
+- Build-time note: missing Asaas billing secrets no longer block `next build`; validation happens when billing routes execute. Keep all billing secrets configured in production.
 - `ASAAS_WEBHOOK_TOKEN` is mandatory. If unset, billing config validation fails and the webhook route must not be considered safe/active.
 - The webhook route rejects invalid `asaas-access-token` values and does not process payloads from unauthorized requests.
 - Entitlement projection favors the best currently valid subscription state, preventing accidental downgrade from newer `pending` rows.

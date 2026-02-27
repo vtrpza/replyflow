@@ -206,6 +206,7 @@ Sources support auto-discovery from a curated BR/LATAM ecosystem list. Each sour
 - Billing provider is Asaas with hosted recurring checkout (credit card only for MVP).
 - Webhook endpoint is fail-closed: `ASAAS_WEBHOOK_TOKEN` is required and invalid requests are rejected.
 - Entitlement projection is based on the best valid subscription state (active/grace/cancel-at-period-end), not simply the newest row.
+- Billing provider initialization is lazy: missing Asaas billing env vars no longer break `next build`, but billing routes will fail at runtime until those vars are configured.
 
 ## Deployment
 

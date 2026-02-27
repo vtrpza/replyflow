@@ -70,17 +70,22 @@ function extractProviderEventId(payload: Record<string, unknown>): string | null
 export class AsaasBillingProvider implements BillingProvider {
   readonly name = "asaas" as const;
 
-  private readonly client: AsaasClient;
+  private client: AsaasClient | null = null;
 
-  constructor() {
-    this.client = new AsaasClient();
+  private getClient(): AsaasClient {
+    if (!this.client) {
+      this.client = new AsaasClient();
+    }
+
+    return this.client;
   }
 
   async createOrGetCustomer(user: BillingUserSnapshot): Promise<{
     providerCustomerId: string;
     rawPayload: Record<string, unknown>;
   }> {
-    const existing = await this.client.listCustomersByExternalReference(user.userId);
+    const client = this.getClient();
+    const existing = await client.listCustomersByExternalReference(user.userId);
     const matched = existing.find((customer) => customer.email?.toLowerCase() === user.email.toLowerCase()) || existing[0];
 
     if (matched) {
@@ -90,7 +95,7 @@ export class AsaasBillingProvider implements BillingProvider {
       };
     }
 
-    const created = await this.client.createCustomer({
+    const created = await client.createCustomer({
       name: user.name,
       email: user.email,
       externalReference: user.userId,
@@ -137,12 +142,14 @@ export class AsaasBillingProvider implements BillingProvider {
   }
 
   async getSubscription(providerSubscriptionId: string): Promise<BillingSubscriptionSnapshot | null> {
-    const data = await this.client.getSubscription(providerSubscriptionId);
+    const client = this.getClient();
+    const data = await client.getSubscription(providerSubscriptionId);
     return mapSubscription(data);
   }
 
   async cancelSubscription(input: { providerSubscriptionId: string }): Promise<{ success: boolean; rawPayload: Record<string, unknown> }> {
-    const result = await this.client.cancelSubscription(input.providerSubscriptionId);
+    const client = this.getClient();
+    const result = await client.cancelSubscription(input.providerSubscriptionId);
     return {
       success: true,
       rawPayload: result,
@@ -150,12 +157,14 @@ export class AsaasBillingProvider implements BillingProvider {
   }
 
   async syncSubscriptionStatus(input: { providerSubscriptionId: string }): Promise<BillingSubscriptionSnapshot | null> {
-    const subscription = await this.client.getSubscription(input.providerSubscriptionId);
+    const client = this.getClient();
+    const subscription = await client.getSubscription(input.providerSubscriptionId);
     return mapSubscription(subscription);
   }
 
   async listSubscriptionPayments(input: ListSubscriptionPaymentsInput): Promise<BillingPaymentSnapshot[]> {
-    const payments = await this.client.listSubscriptionPayments(input.providerSubscriptionId);
+    const client = this.getClient();
+    const payments = await client.listSubscriptionPayments(input.providerSubscriptionId);
     return payments.map(mapPayment);
   }
 
