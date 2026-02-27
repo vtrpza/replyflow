@@ -1,0 +1,43 @@
+{
+  "name": "gitjobs-v2",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:seed": "npx tsx src/lib/db/seed.ts",
+    "db:seed-profile": "npx tsx src/lib/db/seed-profile.ts",
+    "sync": "npx tsx src/lib/scraper/test-scrape.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.1",
+    "@libsql/client": "^0.17.0",
+    "better-sqlite3": "^12.6.2",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.1",
+    "fast-jwt": "^6.1.0",
+    "googleapis": "^171.4.0",
+    "lucide-react": "^0.575.0",
+    "next": "16.1.6",
+    "next-auth": "^5.0.0-beta.30",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "drizzle-kit": "^0.31.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
