@@ -1,177 +1,212 @@
 # ReplyFlow
 
-ReplyFlow is a job-search framework for Brazilian mid-to-senior developers.
+![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![TypeScript 5](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)
+![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss)
+![SQLite + Drizzle](https://img.shields.io/badge/SQLite-Drizzle-003B57?logo=sqlite)
+![Fly.io](https://img.shields.io/badge/Fly.io-deployed-8B5CF6?logo=flydotio)
 
-It combines sourcing/ATS intelligence, recruiter CRM, Gmail-powered outreach, and deterministic pipelines so you can treat outdated listings as recruiter leads and still track ATS submissions in the same system.
+> **Stop applying blindly. Start getting interviews.**
 
-The core workflow:
+ReplyFlow is a job-search framework for Brazilian mid-to-senior developers. It combines sourcing intelligence, recruiter CRM, ATS pipeline tracking, and Gmail-powered outreach into a single system — so you can treat outdated listings as recruiter leads and still track ATS submissions in the same workflow.
 
-- gather opportunities from GitHub repos plus ATS connectors (Greenhouse/Lever) with freshness and contact scoring;
-- prioritize by match/freshness/contact type (direct vs ATS) and mark stale ones to save recruiter leads;  
-- track ATS-only roles as pipeline stages while still generating drafts when direct contacts are available;  
-- sync recruiter emails into the built-in contacts table and export CSV/compose follow-ups directly from that bank;
-- monitor recruiter-email unique counts, ATS share, and outreach KPIs on the dashboard.
+> Jobs intelligence + CRM + ATS + outreach in one system.
 
-## Sources and Connectors
+## Screenshots
 
-- Sources UI: `/app/sources` (enable/disable/add/validate source connectors)
-- Supported source types:
-  - `github_repo`
-  - `greenhouse_board`
-  - `lever_postings`
-- Guardrails:
-  - Attribution metadata is stored per source.
-  - Terms URL is stored per source and `termsAcceptedAt` is tracked.
-  - Source health score/status (`healthy|warning|critical`) is computed from sync outcomes and drives throttling.
-- Automation:
-  - Scheduled/system sync endpoint: `POST /api/sync/system`
-  - Header required: `x-replyflow-sync-token: <REPLYFLOW_SYNC_TOKEN>`
-  - Discovery can auto-register curated BR/LATAM-friendly sources from `data/brazilian-job-ecosystem.json`.
+<!-- TODO: Add product screenshots here -->
 
-### Free vs Pro Limits (Source Features)
+_Screenshots coming soon._
 
-- Free plan:
-  - up to `5` enabled sources
-  - up to `1` enabled ATS source (Greenhouse/Lever)
-  - up to `3` manual syncs/day
-  - up to `5` source validations/day
-- Pro plan: unlimited source limits
-- Limit violations return HTTP `402` with `error: "upgrade_required"` and feature metadata.
+## Features
 
-## Explainability and Scoring
+### Jobs Intelligence
 
-- Job cards now expose matcher explainability:
-  - top reasons for match
-  - missing skills (skill gaps)
-  - weighted score breakdown
-- Contacts bank is dynamically enriched from gathered emails/jobs with:
-  - first/last seen timestamps
-  - jobs linked count
-  - last job/company/source context
-- Profile scoring is persisted and surfaced in Settings with:
-  - score band (`low|medium|high`)
-  - missing profile fields
-  - actionable suggestions
+Source opportunities from GitHub repos, Greenhouse boards, and Lever postings. Each job card surfaces a weighted match score with full explainability — top reasons for the match, missing skills, and a score breakdown — so you know exactly why a role fits (or doesn't) before spending time on it.
 
-## Stack
+### Recruiter CRM
 
-- Next.js 16 (App Router)
-- TypeScript
-- Tailwind CSS v4
-- Drizzle ORM + SQLite (`better-sqlite3`)
-- NextAuth v5 (JWT sessions)
-- Gmail API (provider abstraction)
+Contacts are automatically enriched from job syncs and email reveals with first/last seen timestamps, linked job count, and company context. Browse, filter, and export your contact bank as CSV, or compose follow-ups directly from any contact card.
 
-## Local Setup
+### ATS Pipeline Tracking
 
-1. Install dependencies
+ATS-only roles (Greenhouse, Lever) are first-class pipeline stages — track submission status alongside direct-outreach opportunities without switching tools or losing context.
+
+### Direct Outreach Engine
+
+Draft cold emails in PT-BR or EN using customizable templates, send via your connected Gmail account with CV attachment support, and track follow-ups with per-contact outreach history.
+
+### Profile Scoring
+
+A completeness score with band classification (`low` | `medium` | `high`) surfaces missing profile fields and actionable suggestions in Settings, ensuring your profile is ready before outreach begins.
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19 + Tailwind CSS 4 |
+| Language | TypeScript 5 |
+| Database | SQLite (better-sqlite3) + Drizzle ORM |
+| Auth | NextAuth v5 (JWT sessions) |
+| Email | Gmail API (provider abstraction) |
+| Monitoring | Sentry |
+| Deployment | Fly.io (Docker + persistent volume) |
+| i18n | PT-BR + EN |
+
+## Quick Start
+
+1. **Clone and install**
 
 ```bash
+git clone <repo-url> && cd gitjobs-v2
 npm install
 ```
 
-2. Configure env vars (copy `.env.example` to `.env` and fill required values)
+2. **Configure environment** — copy `.env.example` to `.env` and fill in required values
 
-3. Run migrations
+3. **Run migrations**
 
 ```bash
 npm run db:migrate
 ```
 
-4. Start the app
+4. **Start the dev server**
 
 ```bash
 npm run dev
 ```
 
-## Scripts
+Optionally, seed demo data:
 
 ```bash
-# app
-npm run dev
-npm run build
-npm run start
-
-# database
-npm run db:generate
-npm run db:migrate
-npm run db:seed
-npm run db:seed-profile
-
-# lint
-npm run lint
+npm run db:seed            # seed jobs and sources
+npm run db:seed-profile    # seed a sample profile
 ```
 
-Notes:
+## Project Structure
 
-- `npm run lint` currently includes generated files under `dist-cli/` and may fail on `require()` style imports there.
-- `npx tsc --noEmit` is the reliable gate for core typed source/app code.
+```
+src/
+├── app/
+│   ├── api/               # API route handlers
+│   │   ├── accounts/      # Gmail OAuth connection
+│   │   ├── contacts/      # Recruiter CRM endpoints
+│   │   ├── emails/        # Send + history
+│   │   ├── jobs/          # Listings, match, reveal
+│   │   ├── outreach/      # Draft, send, track
+│   │   ├── profile/       # User profile + scoring
+│   │   ├── sources/       # Source connectors CRUD
+│   │   ├── stats/         # Dashboard analytics
+│   │   ├── sync/          # Manual + system sync
+│   │   └── templates/     # Email templates
+│   ├── app/               # Authenticated app pages
+│   │   ├── compose/       # Email composer
+│   │   ├── history/       # Sent email history
+│   │   ├── jobs/          # Job board
+│   │   ├── outreach/      # Outreach pipeline
+│   │   └── settings/      # Profile & preferences
+│   └── (marketing)/       # Public landing + legal pages
+├── components/
+│   ├── dashboard/         # Dashboard widgets
+│   ├── jobs/              # Job card & list components
+│   ├── outreach/          # Outreach UI components
+│   └── ui/                # Shared UI primitives
+└── lib/
+    ├── auth/              # Auth helpers
+    ├── contacts/          # Contact enrichment logic
+    ├── db/                # Schema, migrations, seeds
+    ├── i18n/              # Internationalization
+    ├── matcher/           # Job-profile matching engine
+    ├── outreach/          # Outreach generation
+    ├── parser/            # Job description parser
+    ├── plan/              # Plan enforcement logic
+    ├── profile/           # Profile scoring
+    ├── providers/         # Email provider abstraction
+    ├── scraper/           # Job scraping utilities
+    ├── sources/           # Source connector implementations
+    └── types/             # Shared TypeScript types
+```
 
-## Product Rules Implemented
+## Source Connectors
 
-- Multi-tenant isolation for profile, outreach, match scores, reveals, usage counters.
-- Auth required on user-scoped APIs.
-- Free vs Pro enforcement server-side with standardized `402 upgrade_required` responses.
-- Route-group server gating for `/app/*`.
-- Job searchable data tracked in `/api/jobs`, `/api/stats`, and `/api/sync`, with opportunity scoring, freshness filters, and staleness awareness.
-- Recruiter CRM APIs under `/api/contacts` (GET/POST + CSV export) and `/api/contacts/[id]` for updates/deletes, plus automatic ingestion from job syncs and reveals.
-*- Compose draft and send flows leverage `/api/outreach` + `/api/emails/send`, and the new contacts bank can prefill recipients via `/app/compose?to=...`.
+| Type | Description | Example |
+|---|---|---|
+| `github_repo` | Scrapes job listings from GitHub repository issues/files | `frontendbr/vagas` |
+| `greenhouse_board` | Fetches open positions from a Greenhouse job board | `company.greenhouse.io` |
+| `lever_postings` | Fetches open positions from a Lever careers page | `jobs.lever.co/company` |
 
-## Versioning & Release Policy
+Sources support auto-discovery from a curated BR/LATAM ecosystem list. Each source tracks health status (`healthy` | `warning` | `critical`) computed from sync outcomes, which drives throttling and retry behavior.
 
-This repository follows Semantic Versioning and conventional commit guidelines.
+## API Reference
 
-- Versioning policy: `VERSIONING.md`
-- Contribution standards: `CONTRIBUTING.md`
-- Release history: `CHANGELOG.md`
+<details>
+<summary>Click to expand the full endpoint list</summary>
 
-## Implementation Documentation
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/health` | Database connectivity check |
+| GET, POST | `/api/auth/[...nextauth]` | NextAuth sign-in, sign-out, callbacks |
+| GET | `/api/accounts` | List connected email accounts |
+| POST | `/api/accounts` | Connect, disconnect, or set default account |
+| GET | `/api/accounts/callback` | Gmail OAuth2 callback |
+| GET | `/api/contacts` | List contacts (filterable, CSV export) |
+| POST | `/api/contacts` | Create contact or save from job reveal |
+| PATCH | `/api/contacts/[id]` | Update contact details |
+| DELETE | `/api/contacts/[id]` | Delete contact |
+| GET | `/api/jobs` | List jobs with filters, pagination, match scores |
+| PATCH | `/api/jobs` | Update job outreach status |
+| POST | `/api/jobs/match` | Recalculate match scores for all jobs |
+| POST | `/api/jobs/reveal` | Reveal recruiter contact for a job |
+| GET | `/api/emails/history` | Sent email history |
+| POST | `/api/emails/send` | Send email via connected account |
+| GET | `/api/outreach` | List outreach records |
+| POST | `/api/outreach` | Draft cold email for a job |
+| PATCH | `/api/outreach` | Update outreach record |
+| PUT | `/api/outreach` | Send outreach email with CV attachment |
+| GET | `/api/profile` | Get profile with scoring |
+| PUT | `/api/profile` | Update profile and recalculate scores |
+| GET | `/api/sources` | List sources (filterable by type/status) |
+| POST | `/api/sources` | Add new source with quota check |
+| PATCH | `/api/sources/[id]` | Update source settings |
+| POST | `/api/sources/[id]/validate` | Validate source connectivity |
+| GET | `/api/templates` | List email templates |
+| POST | `/api/templates` | Create email template |
+| GET | `/api/templates/[id]` | Get template by ID |
+| PUT | `/api/templates/[id]` | Update template |
+| DELETE | `/api/templates/[id]` | Delete template |
+| GET | `/api/stats` | Dashboard analytics |
+| POST | `/api/sync` | Manual sync (daily quota enforced) |
+| POST | `/api/sync/system` | System-level sync (token-protected) |
 
-- Full delivery runbook: `docs/IMPLEMENTATION_RUNBOOK.md`
+</details>
 
-## Security Notes
+## Deployment
 
-- Never commit `.env` files or real credentials.
-- OAuth tokens are user-scoped and persisted in the database.
-- Free-plan limits are enforced on the backend (not only in UI).
-
-## Deploy (SQLite without migration to external DB)
-
-This project is configured to run on **Fly.io** with persistent volume storage for SQLite.
-
-- Config file: `fly.toml`
-- Volume mount path: `/data`
-- SQLite file path in app runtime: `/data/gitjobs.db` (set via `DATABASE_PATH` env var)
-- Generated Docker files: `Dockerfile`, `docker-entrypoint.js`, `.dockerignore`
-- Migrations run automatically on container startup
-
-Quick deploy:
+ReplyFlow runs on **Fly.io** with a persistent SQLite volume, Docker-based builds, CI/CD quality gates (typecheck + lint), scheduled source sync, and automated backups. Migrations execute automatically on container startup.
 
 ```bash
 flyctl deploy -a replyflow
 ```
 
-Required secrets (Fly):
+See the full operational runbook, secrets reference, and post-deploy checklist in [`DEPLOYMENT.md`](DEPLOYMENT.md).
 
-- `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL`
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `GOOGLE_REDIRECT_URI`
-- `GOOGLE_CONNECT_REDIRECT_URI`
-- `REPLYFLOW_SYNC_TOKEN`
-- `SENTRY_DSN` (optional)
-- `RESEND_API_KEY` (optional)
+## Plans
 
-Google OAuth callback URLs must include:
+| | Free (R$ 0) | Pro (R$ 49/mo) |
+|---|---|---|
+| Enabled sources | 5 | Unlimited |
+| ATS sources | 1 | Unlimited |
+| Manual syncs/day | 3 | Unlimited |
+| Source validations/day | 5 | Unlimited |
+| Contact reveals | Limited | Unlimited |
+| Email history | Limited | Full |
 
-- `https://<your-app>.fly.dev/api/auth/callback/google`
-- `https://<your-app>.fly.dev/api/accounts/callback`
+## Contributing
 
-Post-deploy verification:
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution standards, versioning policy, and code conventions.
 
-```bash
-bash scripts/smoke-test.sh https://replyflow.fly.dev
-```
+## License
 
-See full operational runbook: `DEPLOYMENT.md`.
+Private. All rights reserved.
