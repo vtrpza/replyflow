@@ -1,11 +1,152 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { LanguageSwitch } from "@/components/ui/language-switch";
+
+/* ───────────────────────── hooks ───────────────────────── */
+
+function useScrollReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add("rf-visible");
+          observer.unobserve(el);
+        }
+      },
+      { threshold }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return ref;
+}
+
+function useAnimatedCounter(target: number, duration = 1800) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const start = performance.now();
+          const step = (now: number) => {
+            const elapsed = now - start;
+            const progress = Math.min(elapsed / duration, 1);
+            // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            setValue(Math.round(eased * target));
+            if (progress < 1) requestAnimationFrame(step);
+          };
+          requestAnimationFrame(step);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target, duration]);
+
+  return { ref, value };
+}
+
+function useTypewriter(lines: string[], speed = 40, delay = 600) {
+  const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  const [currentLine, setCurrentLine] = useState(0);
+  const [done, setDone] = useState(false);
+
+  const start = useCallback(() => {
+    setDisplayedLines([]);
+    setCurrentLine(0);
+    setDone(false);
+  }, []);
+
+  useEffect(() => {
+    start();
+  }, [lines.join(","), start]);
+
+  useEffect(() => {
+    if (done || currentLine >= lines.length) {
+      if (currentLine >= lines.length) setDone(true);
+      return;
+    }
+
+    const line = lines[currentLine];
+    let charIndex = 0;
+    let partial = "";
+
+    const initialTimeout = setTimeout(() => {
+      const interval = setInterval(() => {
+        if (charIndex < line.length) {
+          partial += line[charIndex];
+          charIndex++;
+          setDisplayedLines((prev) => {
+            const next = [...prev];
+            next[currentLine] = partial;
+            return next;
+          });
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setCurrentLine((c) => c + 1), delay / 2);
+        }
+      }, speed);
+
+      return () => clearInterval(interval);
+    }, currentLine === 0 ? delay : 100);
+
+    return () => clearTimeout(initialTimeout);
+  }, [currentLine, done, lines, speed, delay]);
+
+  return { displayedLines, currentLine, done };
+}
 
 /* ───────────────────────── data ───────────────────────── */
+
+const STATS = [
+  { value: 2400, suffix: "+", enLabel: "Jobs tracked", ptLabel: "Vagas rastreadas" },
+  { value: 3, suffix: "x", enLabel: "Follow-up multiplier", ptLabel: "Multiplicador de follow-up" },
+  { value: 12, suffix: "min", enLabel: "Avg outreach time", ptLabel: "Tempo médio de outreach" },
+  { value: 47, suffix: "%", enLabel: "More recruiter replies", ptLabel: "Mais respostas de recrutadores" },
+];
+
+const TERMINAL_LINES_EN = [
+  "$ replyflow scan --sources github,greenhouse,lever",
+  "  ✓ 148 new positions found across 12 sources",
+  "$ replyflow rank --profile ./cv.json",
+  "  ✓ Top 23 matches scored (avg: 82/100)",
+  "$ replyflow draft --top 5 --lang en",
+  "  ✓ 5 personalized cold emails generated",
+  "$ replyflow send --account gmail --attach cv.pdf",
+  "  ✓ Sent 5 emails · follow-ups scheduled in 3 days",
+];
+
+const TERMINAL_LINES_PT = [
+  "$ replyflow scan --sources github,greenhouse,lever",
+  "  ✓ 148 novas posições em 12 fontes",
+  "$ replyflow rank --profile ./cv.json",
+  "  ✓ Top 23 matches pontuados (média: 82/100)",
+  "$ replyflow draft --top 5 --lang pt-br",
+  "  ✓ 5 e-mails personalizados gerados",
+  "$ replyflow send --account gmail --attach cv.pdf",
+  "  ✓ 5 e-mails enviados · follow-ups em 3 dias",
+];
 
 const WHY_USE_ITEMS = [
   {
@@ -31,50 +172,66 @@ const WHY_USE_ITEMS = [
   },
 ];
 
-const MISSION_PILLARS = [
+const BENTO_FEATURES = [
   {
-    id: "clarity",
-    ptTitle: "Clareza",
-    ptDesc: "Decidir melhor onde investir energia.",
-    enTitle: "Clarity",
-    enDesc: "Make better decisions on where to invest effort.",
+    size: "wide" as const,
+    visual: "chart" as const,
+    tag: "INTELLIGENCE",
+    title: "Jobs Intelligence",
+    desc: "Source opportunities from GitHub repos, Greenhouse boards, and Lever postings. Each job card surfaces a weighted match score with full explainability.",
+    ptTitle: "Inteligência de vagas",
+    ptDesc: "Colete oportunidades de repos GitHub, boards Greenhouse e Lever. Cada vaga mostra score ponderado com explicabilidade completa.",
   },
   {
-    id: "system",
-    ptTitle: "Sistema",
-    ptDesc: "Unir ATS + CRM + Outreach + Network no mesmo fluxo.",
-    enTitle: "System",
-    enDesc: "Unify ATS + CRM + Outreach + Network in one flow.",
+    size: "normal" as const,
+    visual: "pipeline" as const,
+    tag: "ATS",
+    title: "ATS Pipeline Tracking",
+    desc: "ATS-only roles are first-class pipeline stages — track submission status alongside direct outreach without switching tools.",
+    ptTitle: "Pipeline ATS",
+    ptDesc: "Vagas ATS-only são etapas legítimas do pipeline — acompanhe status ao lado do outreach direto sem trocar de ferramenta.",
   },
   {
-    id: "outcome",
-    ptTitle: "Resultado",
-    ptDesc: "Aumentar respostas com execução consistente.",
-    enTitle: "Outcome",
-    enDesc: "Increase replies through consistent execution.",
+    size: "normal" as const,
+    visual: "email" as const,
+    tag: "OUTREACH",
+    title: "Direct Outreach Engine",
+    desc: "Draft cold emails in PT-BR or EN using customizable templates, send via Gmail with CV attachment, and track follow-ups.",
+    ptTitle: "Motor de outreach",
+    ptDesc: "Gere rascunhos PT-BR/EN com templates customizáveis, envie pelo Gmail com CV anexo e rastreie follow-ups.",
+  },
+  {
+    size: "wide" as const,
+    visual: "contacts" as const,
+    tag: "CRM",
+    title: "Recruiter CRM",
+    desc: "Contacts automatically enriched from job syncs and email reveals. Browse, filter, export CSV, or compose follow-ups from any contact card.",
+    ptTitle: "CRM de recrutadores",
+    ptDesc: "Contatos enriquecidos automaticamente via sync e reveal. Navegue, filtre, exporte CSV ou componha follow-ups direto do card.",
   },
 ];
 
-const FEATURES = [
+const HOW_IT_WORKS = [
   {
-    title: "Intel + data + CRM",
-    desc: "Collect opportunities, rank by real signals, and keep every recruiter touchpoint in one framework.",
-    tag: "signal",
+    step: "01",
+    enTitle: "Connect sources",
+    enDesc: "Add GitHub repos, Greenhouse boards, and Lever postings. ReplyFlow syncs and scores every listing against your profile.",
+    ptTitle: "Conecte fontes",
+    ptDesc: "Adicione repos GitHub, boards Greenhouse e Lever. O ReplyFlow sincroniza e pontua cada vaga contra seu perfil.",
   },
   {
-    title: "ATS reality mode",
-    desc: "Track ATS-only openings as first-class pipeline stages while still prioritizing direct contacts.",
-    tag: "speed",
+    step: "02",
+    enTitle: "Draft & send",
+    enDesc: "Generate personalized cold emails in PT-BR or EN. Send via your Gmail account with CV attachment and outreach tracking.",
+    ptTitle: "Rascunhe e envie",
+    ptDesc: "Gere e-mails personalizados em PT-BR ou EN. Envie pelo Gmail com CV anexo e rastreio completo.",
   },
   {
-    title: "Direct outreach engine",
-    desc: "Generate PT-BR/EN drafts, send from Gmail, and run follow-ups with status tracking.",
-    tag: "system",
-  },
-  {
-    title: "Recruiter bank",
-    desc: "Turn old openings into actionable recruiter leads instead of losing those contacts.",
-    tag: "data",
+    step: "03",
+    enTitle: "Follow up & close",
+    enDesc: "Automated follow-up reminders, per-contact outreach history, and pipeline status tracking until you land the interview.",
+    ptTitle: "Siga e feche",
+    ptDesc: "Lembretes automáticos de follow-up, histórico por contato e status do pipeline até conseguir a entrevista.",
   },
 ];
 
@@ -82,29 +239,97 @@ const FAQ_ITEMS = [
   {
     q: "Is ReplyFlow a job board?",
     a: "Not only. ReplyFlow is a job search framework: jobs intel, ATS tracking, direct outreach, and CRM in one system.",
+    ptQ: "A ReplyFlow é um job board?",
+    ptA: "Não apenas. A ReplyFlow é um framework de busca de emprego: coleta, inteligência, ATS, CRM e outreach em um único painel.",
   },
   {
     q: "Does it guarantee interviews?",
     a: "No tool can guarantee that. What ReplyFlow does is reduce friction and increase consistency in your outreach. More sends + better follow-ups = more replies. The math compounds.",
+    ptQ: "Ela garante entrevistas?",
+    ptA: "Nenhuma ferramenta garante isso. A ReplyFlow reduz fricção e aumenta a consistência no outreach. Mais envios e follow-ups melhores resultam em mais respostas.",
   },
   {
     q: "Do I need to use ATS platforms?",
     a: "Yes, often. ReplyFlow embraces ATS reality and tracks ATS stages while still highlighting direct recruiter contacts when available.",
+    ptQ: "Preciso usar plataformas ATS?",
+    ptA: "Na maioria das vezes, sim. A ReplyFlow assume a realidade: ATS é parte do processo, mas o contato direto continua sendo uma vantagem competitiva.",
   },
 ];
 
-/* ───────────────────────── component ───────────────────── */
+/* ───────────────────────── feature visuals ───────────────────────── */
+
+function FeatureVisual({ type }: { type: "chart" | "pipeline" | "email" | "contacts" }) {
+  if (type === "chart") {
+    return (
+      <div className="flex items-end gap-1.5 h-10">
+        {[40, 65, 50, 80, 70, 90, 85].map((h, i) => (
+          <div
+            key={i}
+            className="w-2 rounded-sm"
+            style={{
+              height: `${h}%`,
+              background: i >= 5 ? "var(--rf-green)" : "var(--rf-border)",
+              opacity: i >= 5 ? 1 : 0.5,
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+  if (type === "pipeline") {
+    return (
+      <div className="flex items-center gap-2">
+        {["var(--rf-cyan)", "var(--rf-amber)", "var(--rf-green)"].map((c, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ background: c }} />
+            {i < 2 && <div className="w-6 h-px" style={{ background: "var(--rf-border)" }} />}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (type === "email") {
+    return (
+      <div className="relative w-10 h-8">
+        <div className="absolute inset-0 rounded border border-[var(--rf-border)] bg-[var(--rf-surface)]" />
+        <div className="absolute top-0 left-0 right-0 h-4 border-b border-[var(--rf-border)]" style={{
+          clipPath: "polygon(0 0, 50% 100%, 100% 0)",
+          background: "var(--rf-cyan)",
+          opacity: 0.3,
+        }} />
+      </div>
+    );
+  }
+  // contacts
+  return (
+    <div className="flex -space-x-2">
+      {["var(--rf-cyan)", "var(--rf-green)", "var(--rf-amber)"].map((c, i) => (
+        <div
+          key={i}
+          className="w-7 h-7 rounded-full border-2 border-[var(--rf-bg)] flex items-center justify-center text-[9px] font-mono font-bold"
+          style={{ background: c, color: "var(--rf-bg)" }}
+        >
+          {["R", "M", "S"][i]}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ───────────────────────── component ───────────────────────── */
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[var(--rf-bg)] text-[var(--rf-text)]">
       <Nav />
       <Hero />
-      <WhyUseReplyFlow />
+      <StatsBar />
+      <ProblemSolution />
       <Features />
-      <Mission />
+      <HowItWorks />
       <Pricing />
       <Faq />
+      <FinalCta />
       <Footer />
     </div>
   );
@@ -117,20 +342,27 @@ function Nav() {
   const isPt = locale === "pt-BR";
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5">
-          <span className="font-semibold text-sm tracking-tight text-white">
-            Reply<span className="text-[var(--rf-green)]">Flow</span>
+    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-3xl">
+      <div className="flex items-center justify-between px-5 py-2.5 rounded-full border border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
+        <Link href="/" className="flex items-center gap-1.5">
+          <span className="font-[var(--font-serif)] italic text-lg text-white">
+            Reply
+          </span>
+          <span className="font-bold text-lg text-[var(--rf-green)]">
+            Flow
           </span>
         </Link>
 
-        <Link
-          href="/app"
-          className="text-sm font-medium px-4 py-1.5 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors"
-        >
-          {isPt ? "Abrir app" : "Open app"}
-        </Link>
+        <div className="flex items-center gap-3">
+          <LanguageSwitch variant="inline" />
+          <Link
+            href="/app"
+            className="text-sm font-medium px-4 py-1.5 rounded-full text-[var(--rf-bg)] transition-all hover:opacity-90"
+            style={{ background: "var(--rf-gradient)" }}
+          >
+            {isPt ? "Começar grátis" : "Start free"}
+          </Link>
+        </div>
       </div>
     </nav>
   );
@@ -141,67 +373,150 @@ function Nav() {
 function Hero() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const terminalLines = isPt ? TERMINAL_LINES_PT : TERMINAL_LINES_EN;
+  const { displayedLines, currentLine, done } = useTypewriter(terminalLines, 30, 700);
 
   return (
-    <section className="rf-grid-bg relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6">
-      {/* Gradient glow behind hero */}
+    <section className="rf-grid-bg relative pt-28 pb-16 sm:pt-36 sm:pb-24 px-6 overflow-hidden">
+      {/* Gradient glow orb */}
       <div
         className="absolute top-20 left-1/2 -translate-x-1/2 w-[300px] sm:w-[600px] h-[200px] sm:h-[300px] rounded-full opacity-[0.07] blur-[100px] pointer-events-none"
         style={{ background: "var(--rf-gradient)" }}
       />
 
-      <div className="max-w-3xl mx-auto text-center relative">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
-          <span className="text-xs font-mono text-[var(--rf-muted)]">
-            {isPt ? "v1.0 - já disponível" : "v1.0 - now open"}
-          </span>
+      <div className="max-w-6xl mx-auto relative lg:grid lg:grid-cols-5 lg:gap-12 lg:items-center">
+        {/* Left — copy (3 cols) */}
+        <div className="lg:col-span-3 text-center lg:text-left mb-12 lg:mb-0">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
+            <span className="text-xs font-mono text-[var(--rf-muted)]">
+              {isPt ? "v1.0 — já disponível" : "v1.0 — now open"}
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-[var(--font-serif)] italic tracking-tight leading-[1.08] mb-6">
+            <span className="text-white">
+              {isPt
+                ? "Menos candidaturas no escuro."
+                : "Stop applying blindly."}
+            </span>
+            <br />
+            <span className="rf-gradient-text">
+              {isPt
+                ? "Mais entrevistas."
+                : "Start getting interviews."}
+            </span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-[var(--font-sans-display)]">
+            {isPt
+              ? "Inteligência de vagas + CRM + ATS + outreach no mesmo sistema. Priorize oportunidades reais, acione contatos certos e mantenha follow-ups com consistência."
+              : "Jobs intelligence + CRM + ATS + outreach in one system. Prioritize real opportunities, activate the right contacts, and keep follow-ups consistent."}
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4">
+            <Link
+              href="/app"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
+              style={{ background: "var(--rf-gradient)" }}
+            >
+              <span className="font-mono text-xs opacity-70">&gt;</span>
+              {isPt ? "Começar grátis" : "Start free"}
+            </Link>
+            <Link
+              href="/app/signin"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
+            >
+              {isPt ? "Entrar" : "Sign in"}
+            </Link>
+          </div>
+
+          <p className="mt-5 text-xs text-zinc-600 font-mono">
+            {isPt ? "plano grátis disponível — sem cartão" : "free tier available — no credit card"}
+          </p>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.1] mb-6">
-          <span className="text-white">{isPt ? "Menos candidaturas no escuro. Mais entrevistas." : "Stop applying blindly. Start getting interviews."}</span>
-          <br />
-          <span className="rf-gradient-text">
-            {isPt ? "Vagas nacionais e internacionais em um só fluxo." : "National and international roles in one flow."}
-          </span>
-        </h1>
-
-        <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
-          {isPt
-            ? "Inteligência de vagas + CRM + ATS + outreach no mesmo sistema. Priorize oportunidades reais, acione contatos certos e mantenha follow-ups com consistência."
-            : "Jobs intelligence + CRM + ATS + outreach in one system. Prioritize real opportunities, activate the right contacts, and keep follow-ups consistent."}
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <Link
-            href="/app"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
-            style={{ background: "var(--rf-gradient)" }}
-          >
-            <span className="font-mono text-xs opacity-70">&gt;</span>
-            {isPt ? "Começar grátis" : "Start free"}
-          </Link>
-          <Link
-            href="/app/signin"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
-          >
-            {isPt ? "Entrar" : "Sign in"}
-          </Link>
+        {/* Right — terminal (2 cols) */}
+        <div className="lg:col-span-2">
+          <div className="rf-terminal shadow-2xl">
+            <div className="rf-terminal-bar">
+              <div className="rf-terminal-dot" />
+              <div className="rf-terminal-dot" />
+              <div className="rf-terminal-dot" />
+              <span className="ml-2 text-xs text-[var(--rf-muted)] font-mono">replyflow</span>
+            </div>
+            <div className="p-4 font-mono text-[13px] leading-relaxed min-h-[260px]">
+              {displayedLines.map((line, i) => (
+                <div
+                  key={i}
+                  className={
+                    line.startsWith("  ✓")
+                      ? "text-[var(--rf-green)]"
+                      : "text-[var(--rf-muted)]"
+                  }
+                >
+                  {line}
+                </div>
+              ))}
+              {!done && <span className="rf-cursor" />}
+            </div>
+          </div>
         </div>
-
-        <p className="mt-6 text-xs text-zinc-600 font-mono">
-          {isPt ? "plano grátis disponível - sem cartão" : "free tier available - no credit card"}
-        </p>
       </div>
     </section>
   );
 }
 
-/* ─── Why Use ReplyFlow ─── */
+/* ─── StatsBar ─── */
 
-function WhyUseReplyFlow() {
+function StatsBar() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const revealRef = useScrollReveal(0.2);
+
+  return (
+    <section className="relative border-t border-[var(--rf-border)]">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--rf-cyan)] to-transparent opacity-40" />
+      <div
+        ref={revealRef}
+        className="rf-reveal max-w-5xl mx-auto px-6 py-12"
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          {STATS.map((stat) => (
+            <StatItem key={stat.enLabel} stat={stat} isPt={isPt} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatItem({ stat, isPt }: { stat: typeof STATS[number]; isPt: boolean }) {
+  const { ref, value } = useAnimatedCounter(stat.value);
+
+  return (
+    <div className="text-center">
+      <span ref={ref} className="text-3xl sm:text-4xl font-mono font-bold text-white">
+        {value}
+        <span className="text-[var(--rf-cyan)]">{stat.suffix}</span>
+      </span>
+      <p className="mt-1 text-xs text-[var(--rf-muted)] uppercase tracking-wider">
+        {isPt ? stat.ptLabel : stat.enLabel}
+      </p>
+    </div>
+  );
+}
+
+/* ─── Problem / Solution ─── */
+
+function ProblemSolution() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+  const revealRef = useScrollReveal();
+
+  const pain = WHY_USE_ITEMS[0];
+  const solution = WHY_USE_ITEMS[1];
+  const outcome = WHY_USE_ITEMS[2];
 
   return (
     <section className="relative py-24 px-6 border-t border-[var(--rf-border)] overflow-hidden">
@@ -210,100 +525,125 @@ function WhyUseReplyFlow() {
         style={{ background: "radial-gradient(circle, rgba(56,189,248,0.28) 0%, rgba(34,197,94,0) 70%)" }}
       />
 
-      <div className="max-w-6xl mx-auto relative">
+      <div ref={revealRef} className="rf-reveal max-w-6xl mx-auto relative">
         <div className="text-center mb-14">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "Por que usar" : "Why use it"}
+            {isPt ? "POR QUE USAR" : "WHY USE IT"}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight max-w-3xl mx-auto">
-            {isPt ? "Tudo que move sua busca, reunido no mesmo fluxo." : "You don't need more jobs. You need direction."}
+          <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white tracking-tight max-w-3xl mx-auto">
+            {isPt ? "Você não precisa de mais vagas. Precisa de direção." : "You don't need more jobs. You need direction."}
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {WHY_USE_ITEMS.map((item, i) => (
-            <article
-              key={item.id}
-              className="rf-animate-in group relative overflow-hidden p-5 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-surface)] hover:border-zinc-500 hover:-translate-y-1 transition-all duration-300"
-              style={{ animationDelay: `${i * 80}ms` }}
-            >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
-              <div className="mb-4 w-9 h-9 rounded-lg border border-[var(--rf-border)] bg-[var(--rf-bg)]/70 flex items-center justify-center text-[10px] font-mono text-zinc-500">
-                {String(i + 1).padStart(2, "0")}
+        {/* Asymmetric pain / solution cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+          {/* Pain card */}
+          <article
+            className="relative overflow-hidden p-6 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-surface)] hover:border-zinc-500 transition-all duration-300"
+            style={{ transitionDelay: "100ms" }}
+          >
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-red-400/50 via-amber-300/40 to-transparent" />
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg border border-red-500/30 bg-red-500/10 flex items-center justify-center text-sm font-mono text-red-400">
+                !
               </div>
-              <h3 className="text-base font-semibold text-white mb-2">
-                {isPt ? item.ptTitle : item.enTitle}
-              </h3>
-              <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                {isPt ? item.ptDesc : item.enDesc}
-              </p>
-            </article>
-          ))}
+              <span className="text-[10px] font-mono text-red-400/70 uppercase tracking-widest">
+                {isPt ? "PROBLEMA" : "PROBLEM"}
+              </span>
+            </div>
+            <h3 className="text-base font-semibold text-white mb-2">
+              {isPt ? pain.ptTitle : pain.enTitle}
+            </h3>
+            <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+              {isPt ? pain.ptDesc : pain.enDesc}
+            </p>
+          </article>
+
+          {/* Solution card */}
+          <article
+            className="relative overflow-hidden p-6 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-surface)] hover:border-zinc-500 transition-all duration-300"
+            style={{ transitionDelay: "200ms" }}
+          >
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-sm font-mono text-emerald-400">
+                &gt;
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400/70 uppercase tracking-widest">
+                {isPt ? "SOLUÇÃO" : "SOLUTION"}
+              </span>
+            </div>
+            <h3 className="text-base font-semibold text-white mb-2">
+              {isPt ? solution.ptTitle : solution.enTitle}
+            </h3>
+            <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+              {isPt ? solution.ptDesc : solution.enDesc}
+            </p>
+          </article>
         </div>
+
+        {/* Outcome pull-quote */}
+        <article
+          className="relative overflow-hidden p-8 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-surface)]/60"
+          style={{ transitionDelay: "300ms" }}
+        >
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
+          <p className="text-lg sm:text-xl font-[var(--font-serif)] italic text-white text-center leading-relaxed">
+            &ldquo;{isPt ? outcome.ptDesc : outcome.enDesc}&rdquo;
+          </p>
+          <p className="text-xs font-mono text-[var(--rf-cyan)] text-center mt-3 uppercase tracking-widest">
+            {isPt ? outcome.ptTitle : outcome.enTitle}
+          </p>
+        </article>
       </div>
     </section>
   );
 }
 
-/* ─── Features ─── */
+/* ─── Features (Bento) ─── */
 
 function Features() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
-
-  const featurePt = [
-    {
-      title: "Intel + dados + CRM",
-      desc: "Colete oportunidades, priorize por sinais reais e mantenha cada contato de recrutador em um único framework.",
-    },
-    {
-      title: "Modo realidade ATS",
-      desc: "Trate vagas ATS-only como etapas legítimas do pipeline sem abrir mão do contato direto.",
-    },
-    {
-      title: "Motor de outreach",
-      desc: "Gere rascunhos PT-BR/EN, envie pelo Gmail e rode follow-ups com rastreio de status.",
-    },
-    {
-      title: "Banco de recrutadores",
-      desc: "Converta vagas antigas em leads reaproveitáveis em vez de perder contatos valiosos.",
-    },
-  ];
+  const revealRef = useScrollReveal();
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)] bg-[var(--rf-surface)]/50">
-      <div className="max-w-5xl mx-auto">
+      <div ref={revealRef} className="rf-reveal max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "Pilares" : "Core pillars"}
+            {isPt ? "PILARES" : "CORE PILLARS"}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
             {isPt ? "Feito para busca de emprego no mercado real." : "Built for real-world job search."}
           </h2>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6">
-          {FEATURES.map((f, i) => (
-            <div
+        <div className="rf-bento">
+          {BENTO_FEATURES.map((f, i) => (
+            <article
               key={f.title}
-              className="p-6 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-bg)] hover:border-zinc-600 transition-all group"
+              className={`relative overflow-hidden p-6 rounded-xl border border-[var(--rf-border)] bg-[var(--rf-bg)] rf-glow-hover transition-all group ${
+                f.size === "wide" ? "rf-bento-wide" : ""
+              }`}
+              style={{ transitionDelay: `${i * 100}ms` }}
             >
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 mt-1 w-8 h-8 rounded-lg border border-[var(--rf-border)] bg-[var(--rf-surface)] flex items-center justify-center">
-                  <span className="text-xs font-mono rf-gradient-text font-bold">
-                    {f.tag.charAt(0).toUpperCase()}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <span className="text-[10px] font-mono text-[var(--rf-cyan)] uppercase tracking-widest">
+                    {f.tag}
                   </span>
                 </div>
-                <div>
-                  <h3 className="text-base font-semibold text-white mb-1">
-                    {isPt ? featurePt[i].title : f.title}
-                  </h3>
-                  <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                    {isPt ? featurePt[i].desc : f.desc}
-                  </p>
-                </div>
+                <FeatureVisual type={f.visual} />
               </div>
-            </div>
+              <h3 className="text-base font-semibold text-white mb-2">
+                {isPt ? f.ptTitle : f.title}
+              </h3>
+              <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+                {isPt ? f.ptDesc : f.desc}
+              </p>
+            </article>
           ))}
         </div>
 
@@ -319,47 +659,48 @@ function Features() {
   );
 }
 
-/* ─── Mission ─── */
+/* ─── How It Works ─── */
 
-function Mission() {
+function HowItWorks() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const revealRef = useScrollReveal();
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)]">
-      <div className="max-w-5xl mx-auto">
-        <div className="relative rounded-2xl border border-[var(--rf-border)] bg-[var(--rf-surface)]/40 p-8 sm:p-12">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-cyan-400/50 via-emerald-300/40 to-transparent" />
-          <div className="text-center max-w-3xl mx-auto">
-            <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-              {isPt ? "Nossa missão" : "Our mission"}
-            </p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-5">
-              {isPt ? "Transformar busca de emprego em operação estratégica." : "Turn job search into a strategic operation."}
-            </h2>
-            <p className="text-sm sm:text-base text-[var(--rf-muted)] leading-relaxed mb-10">
-              {isPt
-                ? "Ajudar profissionais a sair do improviso e executar com clareza: vagas nacionais e internacionais, relacionamento ativo e consistência diária."
-                : "Help professionals move beyond improvisation and execute with clarity: national and international roles, active relationships, and daily consistency."}
-            </p>
-          </div>
+      <div ref={revealRef} className="rf-reveal max-w-5xl mx-auto">
+        <div className="text-center mb-16">
+          <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
+            {isPt ? "COMO FUNCIONA" : "HOW IT WORKS"}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white tracking-tight">
+            {isPt ? "Três passos para operar com consistência." : "Three steps to consistent execution."}
+          </h2>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {MISSION_PILLARS.map((item, i) => (
-              <article
-                key={item.id}
-                className="rf-animate-in rounded-xl border border-[var(--rf-border)] bg-[var(--rf-bg)]/70 p-5"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <h3 className="text-base font-semibold text-white mb-1.5">
-                  {isPt ? item.ptTitle : item.enTitle}
-                </h3>
-                <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                  {isPt ? item.ptDesc : item.enDesc}
-                </p>
-              </article>
-            ))}
-          </div>
+        <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Connecting line (desktop) */}
+          <div className="hidden md:block absolute top-[44px] left-[16.66%] right-[16.66%] h-px border-t-2 border-dashed border-[var(--rf-border)]" />
+
+          {HOW_IT_WORKS.map((item, i) => (
+            <div
+              key={item.step}
+              className="relative text-center"
+              style={{ transitionDelay: `${i * 150}ms` }}
+            >
+              <div className="relative z-10 w-16 h-16 mx-auto mb-5 rounded-2xl border border-[var(--rf-border)] bg-[var(--rf-surface)] flex items-center justify-center">
+                <span className="text-2xl font-mono font-bold rf-gradient-text">
+                  {item.step}
+                </span>
+              </div>
+              <h3 className="text-base font-semibold text-white mb-2">
+                {isPt ? item.ptTitle : item.enTitle}
+              </h3>
+              <p className="text-sm text-[var(--rf-muted)] leading-relaxed max-w-xs mx-auto">
+                {isPt ? item.ptDesc : item.enDesc}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -371,6 +712,7 @@ function Mission() {
 function Pricing() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const revealRef = useScrollReveal();
 
   const plans = [
     {
@@ -379,10 +721,11 @@ function Pricing() {
       period: isPt ? "para sempre" : "forever",
       desc: isPt ? "Comece agora. Sem cartão." : "Get started. No credit card.",
       features: [
-        isPt ? "Até 50 leads/mês" : "Up to 50 leads/month",
-        isPt ? "Rascunhos de e-mail (PT-BR / EN)" : "Email drafts (PT-BR / EN)",
-        isPt ? "Acompanhamento básico do pipeline" : "Basic pipeline tracking",
-        isPt ? "Envio pela sua conta Gmail" : "Send via your Gmail",
+        isPt ? "Fontes e syncs ilimitados" : "Unlimited sources & syncs",
+        isPt ? "50 reveals de contato/mês" : "50 contact reveals/month",
+        isPt ? "30 gerações de rascunho/mês" : "30 draft generations/month",
+        isPt ? "10 envios/mês" : "10 sends/month",
+        isPt ? "1 conta Gmail conectada" : "1 connected Gmail account",
       ],
       cta: isPt ? "Começar grátis" : "Start free",
       href: "/app",
@@ -396,11 +739,12 @@ function Pricing() {
         ? "Para devs em busca ativa que querem operar com consistência."
         : "For active job seekers who want to run a consistent process.",
       features: [
-        isPt ? "Leads e contatos ilimitados" : "Unlimited leads and contacts",
-        isPt ? "Geração de rascunho prioritária" : "Priority draft generation",
-        isPt ? "Automação de follow-up" : "Follow-up automation",
+        isPt ? "Tudo do Free, sem limites" : "Everything in Free, unlimited",
+        isPt ? "Reveals de contato ilimitados" : "Unlimited contact reveals",
+        isPt ? "Geração de rascunho ilimitada" : "Unlimited draft generation",
+        isPt ? "Envios ilimitados" : "Unlimited sends",
+        isPt ? "Contas Gmail ilimitadas" : "Unlimited Gmail accounts",
         isPt ? "Histórico completo e analytics" : "Full history & analytics",
-        isPt ? "Score por oportunidade (match + frescor + contato)" : "Opportunity scoring (match + freshness + contact)",
       ],
       cta: isPt ? "Upgrade para Pro" : "Upgrade to Pro",
       href: "/app/settings",
@@ -410,25 +754,26 @@ function Pricing() {
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)] bg-[var(--rf-surface)]/50">
-      <div className="max-w-4xl mx-auto">
+      <div ref={revealRef} className="rf-reveal max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "Preços" : "Pricing"}
+            {isPt ? "PREÇOS" : "PRICING"}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
             {isPt ? "Simples. Sem surpresa." : "Simple. No surprises."}
           </h2>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
-          {plans.map((plan) => (
+          {plans.map((plan, i) => (
             <div
               key={plan.name}
-              className={`relative p-8 rounded-2xl border transition-all ${
+              className={`relative p-8 rounded-2xl border transition-all hover:scale-[1.02] duration-300 ${
                 plan.primary
                   ? "border-[var(--rf-green)]/30 bg-[var(--rf-bg)] rf-glow"
                   : "border-[var(--rf-border)] bg-[var(--rf-bg)]"
               }`}
+              style={{ transitionDelay: `${i * 100}ms` }}
             >
               {plan.primary && (
                 <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-medium text-[var(--rf-bg)] bg-[var(--rf-green)]">
@@ -440,7 +785,7 @@ function Pricing() {
                 {plan.name}
               </h3>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-3xl font-bold text-white">
+                <span className="text-4xl font-mono font-bold text-white">
                   {plan.price}
                 </span>
                 <span className="text-sm text-[var(--rf-muted)]">
@@ -457,8 +802,8 @@ function Pricing() {
                     key={f}
                     className="flex items-start gap-2 text-sm text-zinc-300"
                   >
-                    <span className="text-[var(--rf-green)] mt-0.5 font-mono text-xs">
-                      +
+                    <span className="text-[var(--rf-green)] mt-0.5 text-xs">
+                      &#10003;
                     </span>
                     {f}
                   </li>
@@ -494,64 +839,108 @@ function Faq() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
   const [open, setOpen] = useState<number | null>(null);
-
-  const faqPt = [
-    {
-      q: "A ReplyFlow é um job board?",
-      a: "Não apenas. A ReplyFlow é um framework de busca de emprego: coleta, inteligência, ATS, CRM e outreach em um único painel.",
-    },
-    {
-      q: "Ela garante entrevistas?",
-      a: "Nenhuma ferramenta garante isso. A ReplyFlow reduz fricção e aumenta a consistência no outreach. Mais envios e follow-ups melhores resultam em mais respostas.",
-    },
-    {
-      q: "Preciso usar plataformas ATS?",
-      a: "Na maioria das vezes, sim. A ReplyFlow assume a realidade: ATS é parte do processo, mas o contato direto continua sendo uma vantagem competitiva.",
-    },
-  ];
+  const revealRef = useScrollReveal();
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)]">
-      <div className="max-w-3xl mx-auto">
+      <div ref={revealRef} className="rf-reveal max-w-3xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
             FAQ
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
             {isPt ? "Perguntas comuns" : "Common questions"}
           </h2>
         </div>
 
         <div className="space-y-3">
-          {FAQ_ITEMS.map((item, i) => (
-            <div
-              key={i}
-              className="border border-[var(--rf-border)] rounded-xl overflow-hidden bg-[var(--rf-surface)]"
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between px-6 py-4 text-left"
+          {FAQ_ITEMS.map((item, i) => {
+            const isOpen = open === i;
+            return (
+              <div
+                key={i}
+                className={`border rounded-xl overflow-hidden bg-[var(--rf-surface)] transition-colors duration-300 ${
+                  isOpen ? "border-zinc-500" : "border-[var(--rf-border)] hover:border-zinc-600"
+                }`}
               >
-                <span className="text-sm font-medium text-white">
-                  {isPt ? faqPt[i].q : item.q}
-                </span>
-                <span
-                  className={`text-[var(--rf-muted)] font-mono text-lg transition-transform ${
-                    open === i ? "rotate-45" : ""
-                  }`}
+                <button
+                  onClick={() => setOpen(isOpen ? null : i)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left"
                 >
-                  +
-                </span>
-              </button>
-              {open === i && (
-                <div className="px-6 pb-5">
-                  <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
-                    {isPt ? faqPt[i].a : item.a}
-                  </p>
+                  <span className="text-sm font-medium text-white">
+                    {isPt ? item.ptQ : item.q}
+                  </span>
+                  <span
+                    className={`text-[var(--rf-muted)] font-mono text-lg transition-transform duration-300 ${
+                      isOpen ? "rotate-45" : ""
+                    }`}
+                  >
+                    +
+                  </span>
+                </button>
+                <div
+                  className="overflow-hidden transition-all duration-300 ease-out"
+                  style={{
+                    maxHeight: isOpen ? "200px" : "0px",
+                    opacity: isOpen ? 1 : 0,
+                  }}
+                >
+                  <div className="px-6 pb-5">
+                    <p className="text-sm text-[var(--rf-muted)] leading-relaxed">
+                      {isPt ? item.ptA : item.a}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Final CTA ─── */
+
+function FinalCta() {
+  const { locale } = useI18n();
+  const isPt = locale === "pt-BR";
+  const revealRef = useScrollReveal();
+
+  return (
+    <section className="relative py-24 px-6 border-t border-[var(--rf-border)] overflow-hidden">
+      {/* Grid + gradient bg */}
+      <div className="rf-grid-bg absolute inset-0 opacity-50" />
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full blur-[120px] opacity-[0.08] pointer-events-none"
+        style={{ background: "var(--rf-gradient)" }}
+      />
+
+      <div ref={revealRef} className="rf-reveal relative max-w-3xl mx-auto text-center">
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-[var(--font-serif)] italic text-white tracking-tight mb-5">
+          {isPt ? "Pronto para transformar sua busca?" : "Ready to transform your search?"}
+        </h2>
+        <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-8 leading-relaxed">
+          {isPt
+            ? "Comece grátis. Sem cartão. Seus dados, seu ritmo, seu pipeline."
+            : "Start free. No credit card. Your data, your pace, your pipeline."}
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <Link
+            href="/app"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
+            style={{ background: "var(--rf-gradient)" }}
+          >
+            <span className="font-mono text-xs opacity-70">&gt;</span>
+            {isPt ? "Começar grátis" : "Start free"}
+          </Link>
+          <Link
+            href="/app/signin"
+            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
+          >
+            {isPt ? "Entrar" : "Sign in"}
+          </Link>
         </div>
       </div>
     </section>
@@ -565,42 +954,39 @@ function Footer() {
   const isPt = locale === "pt-BR";
 
   return (
-    <footer className="border-t border-[var(--rf-border)] py-10 px-6">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5">
-          <Image
-            src="/brand/replyflow/replyflow-icon.png"
-            alt="ReplyFlow"
-            width={20}
-            height={20}
-            className="rounded"
-          />
-          <span className="text-sm font-medium text-zinc-500">
-            Reply<span className="text-zinc-400">Flow</span>
-          </span>
-        </div>
-
-        <div className="flex items-center gap-6">
-          <Link
-            href="/termos"
-            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-          >
-            {isPt ? "Termos de Uso" : "Terms of Service"}
+    <footer className="border-t border-[var(--rf-border)]">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-1.5">
+            <span className="font-[var(--font-serif)] italic text-base text-zinc-500">
+              Reply
+            </span>
+            <span className="font-bold text-base text-zinc-400">
+              Flow
+            </span>
           </Link>
-          <Link
-            href="/privacidade"
-            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-          >
-            {isPt ? "Privacidade" : "Privacy"}
-          </Link>
-        </div>
 
-        <p className="text-xs text-zinc-600 font-mono">
-          {isPt
-            ? "Mercado real: ATS + relacionamento + consistência."
-            : "Real market: ATS + relationships + consistency."}
-        </p>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/termos"
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              {isPt ? "Termos de Uso" : "Terms of Service"}
+            </Link>
+            <Link
+              href="/privacidade"
+              className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            >
+              {isPt ? "Privacidade" : "Privacy"}
+            </Link>
+          </div>
+
+          <p className="text-xs text-zinc-600 font-mono">
+            &copy; {new Date().getFullYear()} ReplyFlow
+          </p>
+        </div>
       </div>
+      <div className="border-t border-[var(--rf-border)]" />
     </footer>
   );
 }

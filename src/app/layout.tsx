@@ -3,6 +3,30 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider, ModalProvider } from "@/components/ui";
 import { Providers } from "@/components/providers";
+import { Instrument_Serif } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans } from "next/font/google";
+
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-serif",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono-display",
+  display: "swap",
+});
+
+const ibmPlexSans = IBM_Plex_Sans({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-sans-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "ReplyFlow — Outreach pipeline for devs who take ownership",
@@ -48,7 +72,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className="antialiased">
+      <body className={`antialiased ${instrumentSerif.variable} ${jetbrainsMono.variable} ${ibmPlexSans.variable}`}>
         <Providers>
           <ToastProvider>
             <ModalProvider>
