@@ -27,6 +27,7 @@ npm run db:generate  # Generate Drizzle migrations
 npm run db:migrate    # Run Drizzle migrations
 npm run db:seed       # Seed database with sample data
 npm run db:seed-profile # Seed user profile
+npm run db:seed-templates # Seed email templates
 ```
 
 ### Linting
@@ -209,6 +210,41 @@ When adding new providers, implement the interface in `types.ts`.
 - **NextAuth (Google OAuth)** handles user login
 - **Gmail OAuth** is separate - stored in SQLite `connected_email_accounts` table
 - **Session strategy**: JWT-based (stateless)
+
+### Email Templates
+
+The app includes a template system for cold outreach emails:
+
+```
+src/lib/db/
+├── schema.ts           # email_templates table definition
+├── seed-templates.ts   # Seed script for default templates
+```
+
+**Template Types:**
+- `initial` - First outreach email
+- `followup_1` - First follow-up (Day 4-7)
+- `followup_2` - Second follow-up (Day 8-10)
+
+**API Endpoints:**
+- `GET /api/templates` - List templates (filter by `language`, `type`)
+- `POST /api/templates` - Create user template
+- `GET /api/templates/[id]` - Get single template
+- `PUT /api/templates/[id]` - Update template
+- `DELETE /api/templates/[id]` - Delete template
+
+**Seed Templates:**
+Run `npm run db:seed-templates` to seed default templates (10 templates: 5 EN, 5 PT-BR).
+
+**Template Variables:**
+Templates support placeholder variables that are replaced when applied:
+- `{{recipient_name}}` - Recipient's name
+- `{{job_title}}` - Job position title
+- `{{company}}` - Company name
+- `{{your_name}}` - User's name
+- `{{your_highlight}}` - User's key achievement
+- `{{project_name}}` - Referenced project name
+- etc.
 
 ### Directory Structure
 

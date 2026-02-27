@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:seed": "npx tsx src/lib/db/seed.ts",
     "db:seed-profile": "npx tsx src/lib/db/seed-profile.ts",
+    "db:seed-templates": "npx tsx src/lib/db/seed-templates.ts",
     "sync": "npx tsx src/lib/scraper/test-scrape.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"

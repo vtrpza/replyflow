@@ -260,3 +260,19 @@ export const jobMatchScores = sqliteTable("job_match_scores", {
 }, (table) => [
   unique("match_user_job").on(table.userId, table.jobId),
 ]);
+
+export const emailTemplates = sqliteTable("email_templates", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").references(() => users.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(),
+  language: text("language").notNull(),
+  subject: text("subject").notNull(),
+  subjectVariants: text("subject_variants"),
+  body: text("body").notNull(),
+  isDefault: integer("is_default", { mode: "boolean" }).default(false),
+  usageCount: integer("usage_count").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

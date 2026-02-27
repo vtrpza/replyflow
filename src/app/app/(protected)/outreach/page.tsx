@@ -8,6 +8,18 @@ import {
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 
+interface EmailTemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  language: string;
+  subject: string;
+  subjectVariants: string[] | null;
+  body: string;
+  isDefault: boolean;
+}
+
 interface ConnectedAccount {
   id: string;
   emailAddress: string;
@@ -64,6 +76,7 @@ export default function OutreachPage() {
   const [loading, setLoading] = useState(true);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [sheetRecord, setSheetRecord] = useState<OutreachRecord | null>(null);
   const [sheetLoading, setSheetLoading] = useState(false);
   
@@ -74,6 +87,7 @@ export default function OutreachPage() {
     body: "",
     attachCV: "" as "" | "en" | "br",
   });
+  const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
   
   const getStatusLabel = (status: string): string => {
     const labelsPt: Record<string, string> = {
@@ -121,9 +135,23 @@ export default function OutreachPage() {
     }
   };
 
+  const fetchTemplates = async () => {
+    try {
+      const lang = isPt ? "pt-BR" : "en";
+      const res = await fetch(`/api/templates?language=${lang}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data.templates || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch templates:", err);
+    }
+  };
+
   useEffect(() => {
     fetchRecords();
     fetchAccounts();
+    fetchTemplates();
     
     const params = new URLSearchParams(window.location.search);
     const openId = params.get("open");
@@ -153,6 +181,7 @@ export default function OutreachPage() {
 
   const openSheet = (record: OutreachRecord) => {
     setSheetRecord(record);
+    setSelectedTemplate(null);
     setSheetForm({
       to: record.job.contactEmail && record.job.contactEmail !== "***" ? record.job.contactEmail : "",
       from: accounts.find(a => a.isDefault)?.id || accounts[0]?.id || "",
@@ -164,7 +193,26 @@ export default function OutreachPage() {
 
   const closeSheet = () => {
     setSheetRecord(null);
+    setSelectedTemplate(null);
     setSheetForm({ to: "", from: "", subject: "", body: "", attachCV: "" });
+  };
+
+  const applyTemplate = (template: EmailTemplate) => {
+    if (sheetForm.subject || sheetForm.body) {
+      if (!confirm(isPt ? "Substituir conteudo atual?" : "Replace current content?")) {
+        return;
+      }
+    }
+    setSelectedTemplate(template);
+    setSheetForm((prev) => ({
+      ...prev,
+      subject: template.subject,
+      body: template.body,
+    }));
+  };
+
+  const clearTemplate = () => {
+    setSelectedTemplate(null);
   };
 
   const saveDraft = async () => {
@@ -438,6 +486,10 @@ export default function OutreachPage() {
           loading={sheetLoading}
           accounts={accounts}
           isPt={isPt}
+          templates={templates}
+          selectedTemplate={selectedTemplate}
+          onApplyTemplate={applyTemplate}
+          onClearTemplate={clearTemplate}
         />
       )}
     </div>
@@ -466,6 +518,10 @@ interface OperatorSheetProps {
   loading: boolean;
   accounts: ConnectedAccount[];
   isPt: boolean;
+  templates: EmailTemplate[];
+  selectedTemplate: EmailTemplate | null;
+  onApplyTemplate: (template: EmailTemplate) => void;
+  onClearTemplate: () => void;
 }
 
 function OperatorSheet({
@@ -478,6 +534,10 @@ function OperatorSheet({
   loading,
   accounts,
   isPt,
+  templates,
+  selectedTemplate,
+  onApplyTemplate,
+  onClearTemplate,
 }: OperatorSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -552,6 +612,61 @@ function OperatorSheet({
                 ))
               )}
             </select>
+          </div>
+
+          {/* Template Selector */}
+          <div>
+            <label className="block text-sm text-[var(--rf-muted)] mb-1.5">
+              {isPt ? "Template" : "Template"}
+              {selectedTemplate && (
+                <span className="ml-2 text-xs text-emerald-400">
+                  ({selectedTemplate.name})
+                </span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <select
+                value={selectedTemplate?.id || ""}
+                onChange={(e) => {
+                  const template = templates.find((t) => t.id === e.target.value);
+                  if (template) {
+                    onApplyTemplate(template);
+                  }
+                }}
+                className="flex-1 px-3 py-2 bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg text-[var(--rf-text)] focus:outline-none focus:border-emerald-500 text-sm"
+              >
+                <option value="">{isPt ? "Selecionar template..." : "Select template..."}</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} ({template.language})
+                  </option>
+                ))}
+              </select>
+              {selectedTemplate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirm(isPt ? "Limpar template selecionado?" : "Clear selected template?")) {
+                      onClearTemplate();
+                    }
+                  }}
+                  className="px-3 py-2 text-sm text-[var(--rf-muted)] hover:text-[var(--rf-text)] border border-[var(--rf-border)] rounded-lg transition-colors"
+                  title={isPt ? "Limpar" : "Clear"}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            {selectedTemplate && (
+              <div className="mt-2 p-3 bg-[var(--rf-bg)] border border-[var(--rf-border)] rounded-lg">
+                <p className="text-xs text-[var(--rf-muted)] mb-1">
+                  {isPt ? "Preview:" : "Preview:"}
+                </p>
+                <p className="text-sm text-[var(--rf-text)] whitespace-pre-wrap line-clamp-4">
+                  {selectedTemplate.body}
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

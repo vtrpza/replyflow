@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { LanguageSwitch } from "@/components/ui/language-switch";
 
 /* ───────────────────────── data ───────────────────────── */
 
@@ -76,10 +77,11 @@ export default function LandingPage() {
 function Nav() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
           <Image
             src="/brand/replyflow/replyflow-icon.png"
@@ -93,10 +95,10 @@ function Nav() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/app/signin"
-            className="text-sm text-[var(--rf-muted)] hover:text-white transition-colors"
+            className="hidden sm:block text-sm text-[var(--rf-muted)] hover:text-white transition-colors"
           >
             {isPt ? "Entrar" : "Sign in"}
           </Link>
@@ -106,8 +108,64 @@ function Nav() {
           >
             {isPt ? "Abrir app" : "Open app"}
           </Link>
+          <div className="hidden sm:block">
+            <LanguageSwitch variant="inline" />
+          </div>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="sm:hidden p-2 text-[var(--rf-muted)] hover:text-white transition-colors"
+            aria-label="Toggle menu"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {mobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen && (
+        <div className="sm:hidden border-t border-[var(--rf-border)] bg-[var(--rf-bg)]">
+          <div className="px-4 py-4 flex flex-col gap-3">
+            <Link
+              href="/app/signin"
+              className="text-sm text-[var(--rf-muted)] hover:text-white transition-colors py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {isPt ? "Entrar" : "Sign in"}
+            </Link>
+            <Link
+              href="/app"
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-[var(--rf-green)] hover:bg-emerald-400 text-[var(--rf-bg)] transition-colors text-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {isPt ? "Abrir app" : "Open app"}
+            </Link>
+            <div className="pt-2 border-t border-[var(--rf-border)]">
+              <LanguageSwitch variant="inline" />
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -119,15 +177,15 @@ function Hero() {
   const isPt = locale === "pt-BR";
 
   return (
-    <section className="rf-grid-bg relative pt-32 pb-24 px-6">
+    <section className="rf-grid-bg relative pt-24 pb-16 sm:pt-32 sm:pb-24 px-6">
       {/* Gradient glow behind hero */}
       <div
-        className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full opacity-[0.07] blur-[100px] pointer-events-none"
+        className="absolute top-20 left-1/2 -translate-x-1/2 w-[300px] sm:w-[600px] h-[200px] sm:h-[300px] rounded-full opacity-[0.07] blur-[100px] pointer-events-none"
         style={{ background: "var(--rf-gradient)" }}
       />
 
       <div className="max-w-3xl mx-auto text-center relative">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
           <span className="text-xs font-mono text-[var(--rf-muted)]">
             {isPt ? "v1.0 - ja disponivel" : "v1.0 - now open"}
@@ -142,28 +200,28 @@ function Hero() {
           </span>
         </h1>
 
-        <p className="text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
+        <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-10 leading-relaxed">
           {isPt
-            ? "Acompanhe leads, escreva emails, envie, faca follow-up e meca respostas em um unico lugar."
-            : "Track leads, draft emails, send, follow up, and measure replies - in one place."}
+            ? "Encontre vagas com contato direto. Gere emails em um clique. Acompanhe do primeiro contato ate a entrevista."
+            : "Find jobs with direct contacts. Generate emails in one click. Track from first contact to interview."}
           {" "}
           {isPt
-            ? "Trate candidaturas como pipeline, nao como sorte."
-            : "Treat applications like a pipeline, not a vibe."}
+            ? "Mais respostas. Menos forms ATS."
+            : "More replies. Less ATS forms."}
         </p>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link
             href="/app"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
             style={{ background: "var(--rf-gradient)" }}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
-            {isPt ? "Abrir app" : "Open app"}
+            {isPt ? "Comecar gratis" : "Start free"}
           </Link>
           <Link
             href="/app/signin"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
           >
             {isPt ? "Entrar" : "Sign in"}
           </Link>

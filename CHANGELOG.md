@@ -8,6 +8,22 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ### Added
 
+- Email templates feature with database schema (`email_templates` table).
+- Email templates API endpoints (`GET/POST /api/templates`, `GET/PUT/DELETE /api/templates/[id]`).
+- Seeded default email templates (10 templates: 5 EN, 5 PT-BR) for outreach workflow.
+- Template selector UI in Outreach page OperatorSheet.
+- Template selection with preview and replace confirmation.
+- Research-backed cold email templates optimized for developer outreach.
+- Smithery MCP integration for copywriting research.
+- davila7 copywriting and email-sequence skills installed.
+
+### Changed
+
+- Landing page hero and CTA copy updated with benefit-driven messaging.
+- Landing page CTAs changed from "Open app" to "Start free".
+
+### Added (from previous)
+
 - Multi-tenant plan/usage model (`user_plan`, `usage_counters`, `job_reveals`, `job_match_scores`).
 - `POST /api/jobs/reveal` endpoint for direct contact reveal flow.
 - Server-side plan enforcement helper module.

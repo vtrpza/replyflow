@@ -22,6 +22,13 @@
       "when": 1772159599043,
       "tag": "0002_multi_tenant_plan_usage_apply",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1772164872689,
+      "tag": "0003_overrated_daimon_hellstrom",
+      "breakpoints": true
     }
   ]
 }
