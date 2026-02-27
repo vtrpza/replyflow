@@ -18,7 +18,10 @@ export async function POST() {
       providerCheckoutId: result.providerCheckoutId,
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("active subscription")) {
+    if (
+      error instanceof Error
+      && (error.message.includes("active subscription") || error.message.includes("active entitlement"))
+    ) {
       return NextResponse.json({ error: "Subscription already active" }, { status: 409 });
     }
 

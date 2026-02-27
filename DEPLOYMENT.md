@@ -59,7 +59,7 @@ flyctl secrets set -a replyflow \
 | `ASAAS_API_KEY`                 | Yes      | Asaas API key (preserve exact value, including `$`)   |
 | `ASAAS_BASE_URL`                | Yes      | Asaas API base URL                                    |
 | `ASAAS_CHECKOUT_BASE_URL`       | Yes      | Asaas checkout host URL                               |
-| `ASAAS_WEBHOOK_TOKEN`           | Yes      | Token expected in `asaas-access-token` webhook header |
+| `ASAAS_WEBHOOK_TOKEN`           | Yes      | Token expected in `asaas-access-token` webhook header (fail-closed) |
 | `ASAAS_SUCCESS_URL`             | Yes      | Redirect URL after successful checkout                |
 | `ASAAS_CANCEL_URL`              | Yes      | Redirect URL after canceled checkout                  |
 | `PLAN_PRO_MONTHLY_BRL_CENTS`    | Yes      | Pro monthly price in BRL cents (3900)                 |
@@ -151,6 +151,12 @@ curl -X POST https://replyflow.fly.dev/api/billing/reconcile/system \
   -H "Content-Type: application/json" \
   -d '{"maxUsers":50}'
 ```
+
+## Billing Security Notes
+
+- `ASAAS_WEBHOOK_TOKEN` is mandatory. If unset, billing config validation fails and the webhook route must not be considered safe/active.
+- The webhook route rejects invalid `asaas-access-token` values and does not process payloads from unauthorized requests.
+- Entitlement projection favors the best currently valid subscription state, preventing accidental downgrade from newer `pending` rows.
 
 ## Backup & Restore
 

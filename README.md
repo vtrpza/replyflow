@@ -193,8 +193,19 @@ Sources support auto-discovery from a curated BR/LATAM ecosystem list. Each sour
 | GET | `/api/stats` | Dashboard analytics |
 | POST | `/api/sync` | Manual sync |
 | POST | `/api/sync/system` | System-level sync (token-protected) |
+| POST | `/api/billing/checkout` | Start Asaas hosted recurring checkout (Pro) |
+| GET | `/api/billing/state` | Read billing/subscription state for current user |
+| POST | `/api/billing/subscription/cancel` | Cancel current subscription at period end |
+| POST | `/api/billing/webhooks/asaas` | Asaas webhook ingestion (requires `asaas-access-token`) |
+| POST | `/api/billing/reconcile/system` | Billing reconciliation endpoint (token-protected) |
 
 </details>
+
+## Billing Notes
+
+- Billing provider is Asaas with hosted recurring checkout (credit card only for MVP).
+- Webhook endpoint is fail-closed: `ASAAS_WEBHOOK_TOKEN` is required and invalid requests are rejected.
+- Entitlement projection is based on the best valid subscription state (active/grace/cancel-at-period-end), not simply the newest row.
 
 ## Deployment
 

@@ -681,13 +681,23 @@ export function listUsersForReconciliation(maxUsers: number): string[] {
 }
 
 export function getLatestProviderSubscriptionId(userId: string): string | null {
-  const row = db
+  const effective = getEffectiveSubscriptionForEntitlement(userId);
+  if (effective?.subscription.providerSubscriptionId) {
+    return effective.subscription.providerSubscriptionId;
+  }
+
+  const fallback = db
     .select({ providerSubscriptionId: schema.billingSubscriptions.providerSubscriptionId })
     .from(schema.billingSubscriptions)
-    .where(eq(schema.billingSubscriptions.userId, userId))
+    .where(
+      and(
+        eq(schema.billingSubscriptions.userId, userId),
+        inArray(schema.billingSubscriptions.status, ["active", "past_due", "canceled"])
+      )
+    )
     .orderBy(desc(schema.billingSubscriptions.updatedAt))
     .limit(1)
     .get();
 
-  return row?.providerSubscriptionId || null;
+  return fallback?.providerSubscriptionId || null;
 }

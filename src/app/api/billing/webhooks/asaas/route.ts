@@ -20,16 +20,13 @@ function safeEqual(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   const config = getBillingConfig();
+  const incomingToken = request.headers.get("asaas-access-token") || "";
+  if (!safeEqual(incomingToken, config.ASAAS_WEBHOOK_TOKEN)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const rawBody = await request.text();
   const payloadFingerprint = sha256(rawBody);
-
-  const webhookToken = config.ASAAS_WEBHOOK_TOKEN;
-  if (webhookToken) {
-    const incomingToken = request.headers.get("asaas-access-token") || "";
-    if (!safeEqual(incomingToken, webhookToken)) {
-      return NextResponse.json({ ok: true }, { status: 200 });
-    }
-  }
 
   try {
     await handleAsaasWebhook({
