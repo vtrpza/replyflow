@@ -9,10 +9,6 @@ const nextConfig: NextConfig = {
     // CI quality job already runs `npx tsc --noEmit`.
     ignoreBuildErrors: skipBuildValidation,
   },
-  eslint: {
-    // CI quality job already validates lint/type-check before deploy.
-    ignoreDuringBuilds: skipBuildValidation,
-  },
 };
 
 export default withSentryConfig(nextConfig, {
