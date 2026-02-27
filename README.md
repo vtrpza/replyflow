@@ -85,7 +85,18 @@ npm run db:seed              # seed source ecosystem/bootstrap data
 npm run db:seed-profile      # seed a sample profile
 npm run db:seed-templates    # seed default outreach templates
 npm run db:backfill-contacts # optional: backfill contacts from existing jobs
+npm run db:backfill-contract-types # normalize contract_type for existing jobs
+npm run db:cleanup-generic-contacts # remove generic/non-direct job_sync contacts from CRM
 ```
+
+## Data Quality Rules
+
+- Dashboard uses `jobsWithEmail` / `jobsWithDirectEmail` as **jobs with scraped email present**.
+- `ATS-only` means `apply_url` exists and no scraped contact email exists.
+- `contract_type` is normalized for all jobs (no `NULL`/`Unknown` bucket in storage):
+  - National-context jobs default to `CLT`.
+  - International-source jobs default to `PJ` when no explicit contract signal exists.
+- Generic emails (for example `noreply`, `support`, `accommodation`) are filtered from recruiter-CRM sync.
 
 ## Project Structure
 
@@ -217,7 +228,7 @@ Deploy note: Fly remote Docker builds in this project already set `NODE_OPTIONS=
 
 ## Plans
 
-| | Free (R$ 0) | Pro (R$ 49/mo) |
+| | Free (R$ 0) | Pro (R$ 39/mo) |
 |---|---|---|
 | Enabled sources | Unlimited | Unlimited |
 | ATS sources | Unlimited | Unlimited |

@@ -1,5 +1,6 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
+import { withJobSyncUnlock } from "@/lib/contacts/visibility";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -19,6 +20,8 @@ export function upsertContactFromJobForUser(
     sourceType?: string | null;
     jobId?: string | null;
     jobTitle?: string | null;
+    unlock?: boolean;
+    unlockSource?: "reveal" | "manual_save" | "outreach";
   }
 ): { id: string; created: boolean } {
   const normalizedEmail = normalizeEmail(input.email);
@@ -66,6 +69,10 @@ export function upsertContactFromJobForUser(
         : [historyEntry, ...parsedHistory].slice(0, 25)
       : parsedHistory;
 
+    const nextCustomFields = input.unlock
+      ? withJobSyncUnlock(existing.customFields, input.unlockSource || "manual_save")
+      : existing.customFields;
+
     db.update(schema.contacts)
       .set({
         company: existing.company || input.company || null,
@@ -79,6 +86,7 @@ export function upsertContactFromJobForUser(
         lastCompany: input.company || existing.lastCompany || existing.company || null,
         lastSourceType: input.sourceType || existing.lastSourceType || null,
         sourceHistoryJson: JSON.stringify(nextHistory),
+        customFields: nextCustomFields,
         updatedAt: now,
       })
       .where(eq(schema.contacts.id, existing.id))
@@ -88,6 +96,10 @@ export function upsertContactFromJobForUser(
   }
 
   const id = generateId();
+  const customFields = input.unlock
+    ? withJobSyncUnlock(null, input.unlockSource || "manual_save")
+    : null;
+
   db.insert(schema.contacts)
     .values({
       id,
@@ -100,7 +112,7 @@ export function upsertContactFromJobForUser(
       sourceRef: input.sourceRef || null,
       status: "lead",
       notes: null,
-      customFields: null,
+      customFields,
       firstSeenAt: now,
       lastSeenAt: now,
       jobsCount: 1,

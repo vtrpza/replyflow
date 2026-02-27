@@ -22,6 +22,46 @@ interface I18nContextValue {
 const STORAGE_KEY = "replyflow.locale";
 const DEFAULT_LOCALE: Locale = "pt-BR";
 
+function isLocale(value: string | null): value is Locale {
+  return value === "pt-BR" || value === "en";
+}
+
+function resolveBrowserLocale(): Locale {
+  if (typeof window === "undefined") {
+    return DEFAULT_LOCALE;
+  }
+
+  const browserLocales =
+    window.navigator.languages.length > 0
+      ? window.navigator.languages
+      : [window.navigator.language];
+
+  for (const browserLocale of browserLocales) {
+    if (browserLocale.toLowerCase().startsWith("pt")) {
+      return "pt-BR";
+    }
+
+    if (browserLocale.toLowerCase().startsWith("en")) {
+      return "en";
+    }
+  }
+
+  return "en";
+}
+
+function resolveInitialLocale(): Locale {
+  if (typeof window === "undefined") {
+    return DEFAULT_LOCALE;
+  }
+
+  const storedLocale = window.localStorage.getItem(STORAGE_KEY);
+  if (isLocale(storedLocale)) {
+    return storedLocale;
+  }
+
+  return resolveBrowserLocale();
+}
+
 const messages: Record<Locale, Record<string, string>> = {
   "pt-BR": {
     "language.switch": "Idioma",
@@ -47,6 +87,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "sidebar.nav.contacts": "Contatos",
     "sidebar.nav.outreach": "Outreach",
     "sidebar.nav.settings": "Configuracoes",
+    "sidebar.nav.billing": "Assinatura",
 
     "signin.tagline": "Framework para devs brasileiros conseguirem entrevistas mais rapido",
     "signin.welcomeBack": "Bem-vindo de volta",
@@ -56,7 +97,7 @@ const messages: Record<Locale, Record<string, string>> = {
 
     "compose.fillRecipientSubject": "Preencha destinatario e assunto",
     "compose.connectAccountFirst": "Conecte uma conta de email primeiro",
-    "compose.sendLimitReached": "Limite de envios atingido. Faca upgrade para Pro em Configuracoes.",
+    "compose.sendLimitReached": "Limite de envios atingido. Faca upgrade para Pro em Assinatura.",
     "compose.emailSent": "Email enviado com sucesso!",
     "compose.sendFailed": "Falha ao enviar: {error}",
     "compose.sendFailedGeneric": "Falha ao enviar email",
@@ -100,6 +141,7 @@ const messages: Record<Locale, Record<string, string>> = {
     "sidebar.nav.contacts": "Contacts",
     "sidebar.nav.outreach": "Outreach",
     "sidebar.nav.settings": "Settings",
+    "sidebar.nav.billing": "Billing",
 
     "signin.tagline": "Framework for Brazilian devs to land interviews faster",
     "signin.welcomeBack": "Welcome back",
@@ -109,7 +151,7 @@ const messages: Record<Locale, Record<string, string>> = {
 
     "compose.fillRecipientSubject": "Please fill in recipient and subject",
     "compose.connectAccountFirst": "Please connect an email account first",
-    "compose.sendLimitReached": "Send limit reached. Upgrade to Pro in Settings.",
+    "compose.sendLimitReached": "Send limit reached. Upgrade to Pro in Billing.",
     "compose.emailSent": "Email sent successfully!",
     "compose.sendFailed": "Failed: {error}",
     "compose.sendFailedGeneric": "Failed to send email",
@@ -145,16 +187,7 @@ function formatMessage(message: string, values?: TranslationValues): string {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window === "undefined") {
-      return DEFAULT_LOCALE;
-    }
-
-    const storedLocale = window.localStorage.getItem(STORAGE_KEY);
-    return storedLocale === "pt-BR" || storedLocale === "en"
-      ? storedLocale
-      : DEFAULT_LOCALE;
-  });
+  const [locale, setLocale] = useState<Locale>(resolveInitialLocale);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, locale);

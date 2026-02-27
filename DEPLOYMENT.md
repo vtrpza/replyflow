@@ -30,6 +30,17 @@ flyctl secrets set -a replyflow \
   GOOGLE_CLIENT_SECRET=<your-client-secret> \
   GOOGLE_REDIRECT_URI=https://replyflow.fly.dev/api/auth/callback/google \
   GOOGLE_CONNECT_REDIRECT_URI=https://replyflow.fly.dev/api/accounts/callback \
+  BILLING_PROVIDER=asaas \
+  ASAAS_ENV=production \
+  ASAAS_API_KEY=<your-asaas-api-key> \
+  ASAAS_BASE_URL=https://api.asaas.com/v3 \
+  ASAAS_CHECKOUT_BASE_URL=https://www.asaas.com \
+  ASAAS_WEBHOOK_TOKEN=<your-asaas-webhook-token> \
+  ASAAS_SUCCESS_URL=https://replyflow.fly.dev/app/billing/success \
+  ASAAS_CANCEL_URL=https://replyflow.fly.dev/app/billing/cancel \
+  PLAN_PRO_MONTHLY_BRL_CENTS=3900 \
+  BILLING_GRACE_DAYS=3 \
+  BILLING_RECONCILE_TOKEN=<long-random-token> \
   REPLYFLOW_SYNC_TOKEN=<long-random-token> \
   SENTRY_DSN=<your-sentry-dsn> \
   NEXT_PUBLIC_SENTRY_DSN=<your-sentry-dsn>
@@ -43,6 +54,17 @@ flyctl secrets set -a replyflow \
 | `GOOGLE_CLIENT_SECRET`          | Yes      | Google OAuth client secret                            |
 | `GOOGLE_REDIRECT_URI`           | Yes      | OAuth callback for sign-in                            |
 | `GOOGLE_CONNECT_REDIRECT_URI`   | Yes      | OAuth callback for Gmail account linking              |
+| `BILLING_PROVIDER`              | Yes      | Billing provider key (`asaas`)                        |
+| `ASAAS_ENV`                     | Yes      | `sandbox` or `production`                             |
+| `ASAAS_API_KEY`                 | Yes      | Asaas API key (preserve exact value, including `$`)   |
+| `ASAAS_BASE_URL`                | Yes      | Asaas API base URL                                    |
+| `ASAAS_CHECKOUT_BASE_URL`       | Yes      | Asaas checkout host URL                               |
+| `ASAAS_WEBHOOK_TOKEN`           | Yes      | Token expected in `asaas-access-token` webhook header |
+| `ASAAS_SUCCESS_URL`             | Yes      | Redirect URL after successful checkout                |
+| `ASAAS_CANCEL_URL`              | Yes      | Redirect URL after canceled checkout                  |
+| `PLAN_PRO_MONTHLY_BRL_CENTS`    | Yes      | Pro monthly price in BRL cents (3900)                 |
+| `BILLING_GRACE_DAYS`            | Yes      | Grace period days before downgrade                    |
+| `BILLING_RECONCILE_TOKEN`       | Yes      | Protects `POST /api/billing/reconcile/system`         |
 | `REPLYFLOW_SYNC_TOKEN`          | Yes      | Protects `POST /api/sync/system`                      |
 | `GITHUB_TOKEN`                  | No       | Higher rate limit for GitHub source scraping           |
 | `RESEND_API_KEY`                | No       | Resend key for sending outreach emails                |
@@ -117,6 +139,19 @@ export REPLYFLOW_SYNC_TOKEN=<your-token>
 bash scripts/scheduled-sync.sh
 ```
 
+## Scheduled Billing Reconciliation
+
+Billing reconciliation should run periodically (for example every 6 or 12 hours) to repair missed or delayed webhook effects.
+
+Manual trigger:
+
+```bash
+curl -X POST https://replyflow.fly.dev/api/billing/reconcile/system \
+  -H "x-replyflow-billing-token: ${BILLING_RECONCILE_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"maxUsers":50}'
+```
+
 ## Backup & Restore
 
 ### Automated Backups
@@ -130,6 +165,18 @@ bash scripts/backup-db.sh
 ```
 
 This creates a consistent SQLite snapshot in `./backups/`.
+
+### Data Quality Maintenance (Manual)
+
+For data hygiene after parser/rule changes:
+
+```bash
+# Recompute/normalize contract_type values
+npm run db:backfill-contract-types -- --all
+
+# Remove generic/non-direct contacts from job_sync CRM records
+npm run db:cleanup-generic-contacts
+```
 
 ### Restore
 

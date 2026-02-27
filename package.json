@@ -15,7 +15,9 @@
     "sync": "npx tsx src/lib/scraper/test-scrape.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "sh -c 'if [ \"$NODE_ENV\" = \"production\" ] && [ -f dist-cli/cli/migrate.js ]; then node dist-cli/cli/migrate.js; else npx tsx src/lib/db/migrate.ts; fi'",
-    "db:backfill-contacts": "npx tsx src/lib/db/backfill-contacts.ts"
+    "db:backfill-contacts": "npx tsx src/lib/db/backfill-contacts.ts",
+    "db:backfill-contract-types": "node scripts/backfill-contract-types.mjs",
+    "db:cleanup-generic-contacts": "node scripts/cleanup-generic-contacts.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",

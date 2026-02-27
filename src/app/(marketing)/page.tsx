@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitch } from "@/components/ui/language-switch";
+import { MobileLanguageControl } from "@/components/ui/mobile-language-control";
 
 /* ───────────────────────── hooks ───────────────────────── */
 
@@ -391,29 +392,34 @@ function Nav() {
   const isPt = locale === "pt-BR";
 
   return (
-    <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-3xl">
-      <div className="flex items-center justify-between px-5 py-2.5 rounded-full border border-[var(--rf-border)] bg-[var(--rf-bg)]/80 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-1.5">
-          <span className="font-[var(--font-serif)] italic text-lg text-white">
-            Reply
-          </span>
-          <span className="font-bold text-lg text-[var(--rf-green)]">
-            Flow
-          </span>
-        </Link>
-
-        <div className="flex items-center gap-3">
-          <LanguageSwitch variant="inline" />
-          <Link
-            href="/app"
-            className="inline-flex items-center justify-center text-center whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full text-[var(--rf-bg)] transition-all hover:opacity-90"
-            style={{ background: "var(--rf-gradient)" }}
-          >
-            {isPt ? "Começar grátis" : "Get started"}
+    <>
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1rem)] max-w-3xl">
+        <div className="flex items-center justify-between rounded-full border border-[var(--rf-border)] bg-[var(--rf-bg)]/80 px-3 py-2 backdrop-blur-md sm:px-5 sm:py-2.5">
+          <Link href="/" className="flex items-center gap-1.5">
+            <span className="font-[var(--font-serif)] italic text-lg text-white">
+              Reply
+            </span>
+            <span className="font-bold text-lg text-[var(--rf-green)]">
+              Flow
+            </span>
           </Link>
+
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex">
+              <LanguageSwitch variant="inline" />
+            </div>
+            <Link
+              href="/app"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-center text-xs font-medium text-[var(--rf-bg)] transition-all hover:opacity-90 sm:px-4 sm:text-sm"
+              style={{ background: "var(--rf-gradient)" }}
+            >
+              {isPt ? "Começar grátis" : "Get started"}
+            </Link>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      <MobileLanguageControl />
+    </>
   );
 }
 
@@ -797,7 +803,7 @@ function Pricing() {
     },
     {
       name: "Pro",
-      price: "R$ 49",
+      price: "R$ 39",
       period: isPt ? "/mês" : "/month",
       desc: isPt
         ? "Para busca ativa com volume e disciplina."
@@ -811,7 +817,7 @@ function Pricing() {
         isPt ? "Histórico completo e analytics" : "Full history & analytics",
       ],
       cta: isPt ? "Ir ilimitado" : "Go unlimited",
-      href: "/app/settings",
+      href: "/app/billing",
       primary: true,
     },
   ];

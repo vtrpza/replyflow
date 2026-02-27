@@ -6,6 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useToast, LoadingButton } from "@/components/ui";
 import { Send, Mail, AlertCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import {
+  BILLING_UPGRADE_ROUTE,
+  formatLimit,
+  getMonthlyResetLabel,
+  getUpgradeMessage,
+  usePlanSnapshot,
+} from "@/lib/plan/client";
 
 interface ConnectedAccount {
   id: string;
@@ -19,7 +26,9 @@ export default function ComposePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isPt = locale === "pt-BR";
+  const { snapshot, refresh } = usePlanSnapshot();
 
   const [accounts, setAccounts] = useState<ConnectedAccount[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
@@ -91,13 +100,14 @@ export default function ComposePage() {
       const data = await res.json();
 
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error(t("compose.sendLimitReached"));
-        router.push("/app/settings");
+        toast.error(getUpgradeMessage(data, isPt));
+        router.push(BILLING_UPGRADE_ROUTE);
         return;
       }
 
       if (data.success) {
         toast.success(t("compose.emailSent"));
+        void refresh();
         setTo("");
         setSubject("");
         setBodyHtml("");
@@ -152,6 +162,20 @@ export default function ComposePage() {
         <p className="text-sm text-zinc-500 mt-1">
           {t("compose.subtitle")}
         </p>
+      </div>
+
+      <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-zinc-300">
+            {isPt ? "Envios no ciclo atual" : "Sends in current cycle"}:{" "}
+            <span className="font-medium text-zinc-100">
+              {snapshot?.usage.sendsUsed ?? 0} / {formatLimit(snapshot?.limits.sends, isPt)}
+            </span>
+          </p>
+          <p className="text-xs text-zinc-500">
+            {getMonthlyResetLabel(snapshot?.usage.periodStart, isPt)}
+          </p>
+        </div>
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">

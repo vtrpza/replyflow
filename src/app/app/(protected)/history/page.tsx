@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useToast, Skeleton, EmptyState } from "@/components/ui";
 import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { usePlanSnapshot } from "@/lib/plan/client";
 
 interface EmailRecord {
   id: string;
@@ -30,6 +31,7 @@ export default function HistoryPage() {
   const toast = useToast();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const { snapshot } = usePlanSnapshot();
 
   const [emails, setEmails] = useState<EmailRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +149,14 @@ export default function HistoryPage() {
           </button>
         </div>
       </div>
+
+      {snapshot?.plan === "free" && (
+        <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+          {isPt
+            ? `Voce esta vendo os ultimos ${snapshot.limits.historyItems} envios no plano Free. O Pro mostra historico completo.`
+            : `You are seeing the latest ${snapshot.limits.historyItems} sends on Free. Pro unlocks full history.`}
+        </div>
+      )}
 
       {emails.length === 0 ? (
         <EmptyState

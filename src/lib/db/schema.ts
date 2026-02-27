@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, unique, index } from "drizzle-orm/sqlite-core";
 
 // ─── Global tables (not per-user) ──────────────────────────
 
@@ -304,6 +304,91 @@ export const userPlan = sqliteTable("user_plan", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+/** Billing customers */
+export const billingCustomers = sqliteTable("billing_customers", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  provider: text("provider").notNull().default("asaas"),
+  providerCustomerId: text("provider_customer_id").notNull(),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  cpfCnpj: text("cpf_cnpj"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  unique("billing_customers_user_provider_unique").on(table.userId, table.provider),
+  unique("billing_customers_provider_customer_unique").on(table.provider, table.providerCustomerId),
+  index("idx_billing_customers_user_id").on(table.userId),
+]);
+
+/** Billing subscriptions */
+export const billingSubscriptions = sqliteTable("billing_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  provider: text("provider").notNull().default("asaas"),
+  providerSubscriptionId: text("provider_subscription_id"),
+  providerCustomerId: text("provider_customer_id").notNull(),
+  providerCheckoutId: text("provider_checkout_id"),
+  planKey: text("plan_key").notNull().default("pro_monthly"),
+  planPriceCents: integer("plan_price_cents").notNull(),
+  currency: text("currency").notNull().default("BRL"),
+  status: text("status").notNull().default("pending"),
+  billingType: text("billing_type").notNull().default("CREDIT_CARD"),
+  nextDueDate: text("next_due_date"),
+  currentPeriodEnd: text("current_period_end"),
+  cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" }).notNull().default(false),
+  cancelledAt: text("cancelled_at"),
+  rawPayload: text("raw_payload").notNull().default("{}"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  unique("billing_subscriptions_provider_subscription_unique").on(table.provider, table.providerSubscriptionId),
+  index("idx_billing_subscriptions_user_status").on(table.userId, table.status),
+  index("idx_billing_subscriptions_provider_checkout").on(table.provider, table.providerCheckoutId),
+]);
+
+/** Billing payments */
+export const billingPayments = sqliteTable("billing_payments", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id),
+  provider: text("provider").notNull().default("asaas"),
+  providerPaymentId: text("provider_payment_id").notNull(),
+  providerSubscriptionId: text("provider_subscription_id"),
+  amountCents: integer("amount_cents").notNull(),
+  currency: text("currency").notNull().default("BRL"),
+  status: text("status").notNull().default("pending"),
+  dueDate: text("due_date"),
+  paidAt: text("paid_at"),
+  invoiceUrl: text("invoice_url"),
+  paymentLink: text("payment_link"),
+  rawPayload: text("raw_payload").notNull().default("{}"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  unique("billing_payments_provider_payment_unique").on(table.provider, table.providerPaymentId),
+  index("idx_billing_payments_provider_subscription").on(table.providerSubscriptionId),
+  index("idx_billing_payments_due_date").on(table.dueDate),
+]);
+
+/** Billing webhook event ledger */
+export const billingWebhookEvents = sqliteTable("billing_webhook_events", {
+  id: text("id").primaryKey(),
+  provider: text("provider").notNull().default("asaas"),
+  eventType: text("event_type").notNull(),
+  providerEventId: text("provider_event_id"),
+  payloadFingerprint: text("payload_fingerprint").notNull(),
+  payload: text("payload").notNull(),
+  processedAt: text("processed_at"),
+  processingStatus: text("processing_status").notNull().default("received"),
+  errorMessage: text("error_message"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  unique("billing_webhook_events_provider_event_unique").on(table.provider, table.providerEventId),
+  unique("billing_webhook_events_provider_fingerprint_unique").on(table.provider, table.payloadFingerprint),
+  index("idx_billing_webhook_events_created_at").on(table.createdAt),
+  index("idx_billing_webhook_events_status").on(table.processingStatus),
+]);
 
 /** Monthly usage counters per user */
 export const usageCounters = sqliteTable("usage_counters", {

@@ -21,6 +21,9 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Research-backed cold email templates optimized for developer outreach.
 - Smithery MCP integration for copywriting research.
 - davila7 copywriting and email-sequence skills installed.
+- Data maintenance scripts:
+  - `npm run db:backfill-contract-types`
+  - `npm run db:cleanup-generic-contacts`
 
 ### Changed
 
@@ -32,6 +35,14 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Source/sync UI messaging updated to remove stale free-tier source quota upgrade copy.
 - Landing page hero and CTA copy updated with benefit-driven messaging.
 - Landing page CTAs changed from "Open app" to "Start free".
+- Dashboard simplified to KPI-first layout with less ambiguous terminology.
+- Stats contract aggregation now enforces contract classification buckets without `Unknown` persistence.
+- Contract inference now respects national/international context:
+  - `CLT` only when national signals exist.
+  - international-source fallback defaults to `PJ`.
+- Contact metrics and ATS-only semantics clarified:
+  - `jobsWithEmail` reflects jobs with scraped email present.
+  - `ATS-only` reflects jobs with apply URL and no scraped email.
 
 ### Added (from previous)
 

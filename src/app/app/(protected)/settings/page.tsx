@@ -7,6 +7,13 @@ import { useSearchParams } from "next/navigation";
 import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitch } from "@/components/ui/language-switch";
+import {
+  BILLING_UPGRADE_ROUTE,
+  formatLimit,
+  getDailyResetLabel,
+  getMonthlyResetLabel,
+  getUpgradeMessage,
+} from "@/lib/plan/client";
 
 interface Profile {
   name: string;
@@ -73,6 +80,14 @@ interface PlanSnapshot {
   enabledAtsSources?: number;
 }
 
+interface BillingState {
+  entitlementPlan: "free" | "pro";
+  subscriptionStatus: "pending" | "active" | "past_due" | "canceled" | "expired" | null;
+  nextDueDate: string | null;
+  cancelAtPeriodEnd: boolean;
+  lastPaymentStatus: "pending" | "paid" | "overdue" | "canceled" | "refunded" | null;
+}
+
 function SettingsPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
@@ -114,11 +129,7 @@ function SettingsPageContent() {
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [planSnapshot, setPlanSnapshot] = useState<PlanSnapshot | null>(null);
-
-  const formatLimit = (value: number | undefined, fallback: number): string => {
-    const current = value ?? fallback;
-    return current < 0 ? (isPt ? "Ilimitado" : "Unlimited") : String(current);
-  };
+  const [billingState, setBillingState] = useState<BillingState | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -157,6 +168,21 @@ function SettingsPageContent() {
           }
         })
         .catch(console.error);
+
+      fetch("/api/billing/state")
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.error) {
+            setBillingState({
+              entitlementPlan: data.entitlementPlan,
+              subscriptionStatus: data.subscriptionStatus,
+              nextDueDate: data.nextDueDate,
+              cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+              lastPaymentStatus: data.lastPaymentStatus,
+            });
+          }
+        })
+        .catch(console.error);
     }
   }, [session]);
 
@@ -178,9 +204,7 @@ function SettingsPageContent() {
     } else if (gmailStatus === "upgrade_required") {
       toast.error(
         gmailMessage
-          || (isPt
-            ? "Plano Free suporta 1 conta conectada. Faca upgrade para Pro."
-            : "Free plan supports 1 connected account. Upgrade to Pro.")
+          || getUpgradeMessage({ error: "upgrade_required", feature: "accounts", limit: 1, period: "total" }, isPt)
       );
       window.history.replaceState(null, "", "/app/settings");
     }
@@ -254,11 +278,8 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error(
-          isPt
-            ? "Plano Free suporta 1 conta conectada. Faca upgrade para Pro."
-            : "Free plan supports 1 connected account. Upgrade to Pro."
-        );
+        toast.error(getUpgradeMessage(data, isPt));
+        window.location.href = BILLING_UPGRADE_ROUTE;
         return;
       }
       if (data.authUrl) {
@@ -449,72 +470,87 @@ function SettingsPageContent() {
               </p>
             </div>
             <a
-              href="/app/settings"
+              href={BILLING_UPGRADE_ROUTE}
               onClick={trackUpgradeCtaClick}
               className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
             >
-              {isPt ? "Upgrade para Pro" : "Upgrade to Pro"}
+              {isPt ? "Gerenciar assinatura" : "Manage billing"}
             </a>
           </div>
 
           <div className="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-sm text-zinc-200">
-            {isPt ? "Plano" : "Plan"}: <span className="font-semibold uppercase">{planSnapshot?.plan || "free"}</span>
+            {isPt ? "Plano" : "Plan"}:{" "}
+            <span className="font-semibold uppercase">{planSnapshot?.plan ?? (isPt ? "indisponivel" : "unavailable")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Reveals" : "Reveals"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.usage.revealsUsed ?? 0} / {formatLimit(planSnapshot?.limits.reveals, 50)}
+                {planSnapshot?.usage.revealsUsed ?? 0} / {formatLimit(planSnapshot?.limits.reveals, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Rascunhos" : "Drafts"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.usage.draftsUsed ?? 0} / {formatLimit(planSnapshot?.limits.drafts, 30)}
+                {planSnapshot?.usage.draftsUsed ?? 0} / {formatLimit(planSnapshot?.limits.drafts, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Envios" : "Sends"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.usage.sendsUsed ?? 0} / {formatLimit(planSnapshot?.limits.sends, 10)}
+                {planSnapshot?.usage.sendsUsed ?? 0} / {formatLimit(planSnapshot?.limits.sends, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Contas conectadas" : "Connected accounts"}</p>
               <p className="text-zinc-100 font-medium">
-                {accounts.length} / {formatLimit(planSnapshot?.limits.accounts, 1)}
+                {accounts.length} / {formatLimit(planSnapshot?.limits.accounts, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Fontes ativas" : "Enabled sources"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.enabledSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledSources, 5)}
+                {planSnapshot?.enabledSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledSources, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "ATS ativas" : "Enabled ATS sources"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.enabledAtsSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledAtsSources, 1)}
+                {planSnapshot?.enabledAtsSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledAtsSources, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Sync manual hoje" : "Manual syncs today"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.sourceUsage?.manualSyncUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.manualSyncPerDay, 3)}
+                {planSnapshot?.sourceUsage?.manualSyncUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.manualSyncPerDay, isPt)}
               </p>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
               <p className="text-zinc-400">{isPt ? "Validacoes hoje" : "Validations today"}</p>
               <p className="text-zinc-100 font-medium">
-                {planSnapshot?.sourceUsage?.sourceValidationsUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.sourceValidationsPerDay, 5)}
+                {planSnapshot?.sourceUsage?.sourceValidationsUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.sourceValidationsPerDay, isPt)}
               </p>
             </div>
           </div>
 
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-zinc-500">
+            <span>{getMonthlyResetLabel(planSnapshot?.usage.periodStart, isPt)}</span>
+            <span>{getDailyResetLabel(planSnapshot?.sourceUsage?.dayStart, isPt)}</span>
+          </div>
+
           <div className="mt-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-sm">
             <p className="text-zinc-300">
-              {isPt ? "Automacao de follow-up" : "Follow-up automation"}: {planSnapshot?.plan === "pro" ? (isPt ? "habilitado (em breve)" : "enabled (soon)") : (isPt ? "bloqueado no Free" : "locked on Free")}
+              {isPt ? "Automacao de follow-up" : "Follow-up automation"}:{" "}
+              {isPt
+                ? "em desenvolvimento (em breve). Hoje o follow-up e manual com templates."
+                : "in development (coming soon). Today follow-up is manual with templates."}
+            </p>
+            <p className="text-zinc-400 mt-1">
+              {isPt ? "Assinatura" : "Subscription"}:{" "}
+              <span className="uppercase text-zinc-200">{billingState?.subscriptionStatus || "none"}</span>
+              {billingState?.nextDueDate ? ` • ${isPt ? "próximo vencimento" : "next due"} ${billingState.nextDueDate}` : ""}
+              {billingState?.cancelAtPeriodEnd ? ` • ${isPt ? "cancelamento agendado" : "cancel at period end"}` : ""}
             </p>
           </div>
         </section>

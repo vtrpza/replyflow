@@ -170,7 +170,7 @@ async function runSingleSourceSync(
           .get();
       }
 
-      const parsed = parseJobBody(item.title, item.body || "", item.labels);
+      const parsed = parseJobBody(item.title, item.body || "", item.labels, source.sourceType);
       const applyUrl = parsed.applyUrl || item.applyUrl;
       const hasParsedSignal = !!(parsed.company || parsed.contactEmail || applyUrl || parsed.location || parsed.techStack.length > 0);
       if (hasParsedSignal) {
@@ -243,6 +243,7 @@ async function runSingleSourceSync(
             updatedAt: item.updatedAt,
             commentsCount: item.commentsCount,
             applyUrl: applyUrl || existing.applyUrl,
+            contractType: parsed.contractType || existing.contractType,
             contactEmail: parsed.contactEmail || existing.contactEmail,
             contactLinkedin: parsed.contactLinkedin || existing.contactLinkedin,
             contactWhatsapp: parsed.contactWhatsapp || existing.contactWhatsapp,

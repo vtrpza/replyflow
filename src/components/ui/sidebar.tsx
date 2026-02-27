@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import { BILLING_UPGRADE_ROUTE, getUpgradeMessage } from "@/lib/plan/client";
 
 const navItems = [
   {
@@ -80,21 +81,25 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: "/app/billing",
+    labelKey: "sidebar.nav.billing",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-9 4h3M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+      </svg>
+    ),
+  },
 ];
 
 export function Sidebar() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const isPt = locale === "pt-BR";
   const pathname = usePathname() ?? "";
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
   const [syncMessage, setSyncMessage] = useState("");
-
-  const getUpgradeMessage = (data: { feature?: string; limit?: number; error?: string }): string => {
-    if (data?.error !== "upgrade_required") {
-      return t("sidebar.syncFailed");
-    }
-    return t("sidebar.syncFailed");
-  };
+  const [syncNeedsUpgrade, setSyncNeedsUpgrade] = useState(false);
 
   return (
     <aside
@@ -187,6 +192,7 @@ export function Sidebar() {
             setSyncing(true);
             setSyncStatus("idle");
             setSyncMessage("");
+            setSyncNeedsUpgrade(false);
             try {
               const res = await fetch("/api/sync", { method: "POST" });
               const data = await res.json();
@@ -204,7 +210,8 @@ export function Sidebar() {
               } else {
                 setSyncStatus("error");
                 if (res.status === 402) {
-                  setSyncMessage(getUpgradeMessage(data));
+                  setSyncNeedsUpgrade(true);
+                  setSyncMessage(getUpgradeMessage(data, isPt));
                 } else {
                   setSyncMessage(data.error || t("sidebar.syncFailed"));
                 }
@@ -239,6 +246,14 @@ export function Sidebar() {
           )}
           {syncMessage || (syncing ? t("sidebar.syncing") : t("sidebar.syncJobs"))}
         </button>
+        {syncNeedsUpgrade && (
+          <Link
+            href={BILLING_UPGRADE_ROUTE}
+            className="mt-2 inline-flex text-xs text-emerald-300 hover:text-emerald-200 underline"
+          >
+            {isPt ? "Fazer upgrade para Pro" : "Upgrade to Pro"}
+          </Link>
+        )}
       </div>
     </aside>
   );

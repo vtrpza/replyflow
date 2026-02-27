@@ -7,7 +7,9 @@
 import type {
   ContractType,
   ExperienceLevel,
+  SourceType,
 } from "@/lib/types";
+import { isDirectContactEmail } from "@/lib/contacts/email-quality";
 
 interface ParsedJob {
   company: string | null;
@@ -216,7 +218,8 @@ const TECH_KEYWORDS = [
 export function parseJobBody(
   title: string,
   body: string,
-  labels: string[]
+  labels: string[],
+  sourceTypeHint?: SourceType
 ): ParsedJob {
   const parsed: ParsedJob = {
     company: null,
@@ -292,7 +295,7 @@ export function parseJobBody(
       parsed.location = extractSection(body, SECTION_PATTERNS.location);
     }
 
-    // Contract type
+    // Contract type (explicit signal only)
     parsed.contractType = extractContractType(body, labels);
 
     // Experience level (from body if not from title)
@@ -323,6 +326,15 @@ export function parseJobBody(
   // --- Extract from labels ---
   if (!parsed.contractType) {
     parsed.contractType = extractContractType("", labels);
+  }
+  if (!parsed.contractType) {
+    parsed.contractType = inferContractTypeFallback({
+      title,
+      body,
+      labels,
+      location: parsed.location,
+      sourceTypeHint,
+    });
   }
   if (!parsed.experienceLevel) {
     parsed.experienceLevel = extractLevelFromBody("", labels);
@@ -378,11 +390,56 @@ function extractContractType(
 ): ContractType | null {
   const text = `${body} ${labels.join(" ")}`.toLowerCase();
 
-  if (/\bclt\b/.test(text)) return "CLT";
+  if (/\bestagio\b|\bestágio\b|\binternship\b|\bintern\b/.test(text)) return "Internship";
   if (/\bpj\b|\bpessoa\s*juridica\b/.test(text)) return "PJ";
-  if (/\bfreela\b|\bfreelance\b|\bcontrato\b/.test(text)) return "Freela";
-  if (/\bestagio\b|\binternship\b|\bintern\b/.test(text)) return "Internship";
+  if (/\bcontractor\b|\bindependent contractor\b|\b1099\b|\bc2c\b/.test(text)) return "PJ";
+  if (/\bfreela\b|\bfreelance\b/.test(text)) return "Freela";
+  if (/\bconsultant\b|\bconsultoria\b|\bpart[-\s]?time\b|\bpart time\b/.test(text)) return "Freela";
+  if (/\bclt\b/.test(text)) return "CLT";
   return null;
+}
+
+function inferContractTypeFallback(input: {
+  title: string;
+  body: string;
+  labels: string[];
+  location: string | null;
+  sourceTypeHint?: SourceType;
+}): ContractType {
+  const text = [
+    input.title,
+    input.body,
+    input.location || "",
+    input.labels.join(" "),
+  ]
+    .join("\n")
+    .toLowerCase();
+
+  const hasBrazilSignal =
+    /\b(brasil|brazil|são paulo|sao paulo|rio de janeiro|curitiba|campinas|belo horizonte|porto alegre|recife|florianópolis|florianopolis|brasilia|brasília)\b/i.test(
+      text
+    ) ||
+    /\b(vaga|requisitos|benef[ií]cios|sal[áa]rio|contrata[cç][aã]o|candidatar|remoto no brasil|h[ií]brido|presencial)\b/i.test(
+      text
+    );
+
+  if (hasBrazilSignal) {
+    return "CLT";
+  }
+
+  if (input.sourceTypeHint && input.sourceTypeHint !== "github_repo") {
+    return "PJ";
+  }
+
+  if (
+    /\b(united states|usa|canada|united kingdom|uk|germany|france|spain|italy|portugal|netherlands|sweden|norway|denmark|finland|poland|india|japan|singapore|australia|new zealand|mexico|argentina|chile|colombia|europe|global)\b/i.test(
+      text
+    )
+  ) {
+    return "PJ";
+  }
+
+  return "CLT";
 }
 
 function extractLevel(text: string): ExperienceLevel {
@@ -422,23 +479,12 @@ function extractTechStack(body: string, title: string): string[] {
 function extractEmail(body: string): string | null {
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
   const matches = [...body.matchAll(emailRegex)];
-  
+
   if (matches.length === 0) return null;
 
   const applySection = extractSection(body, SECTION_PATTERNS.apply) || "";
   const contactSection = body.match(/(?:contato|contact|email|e-mail)\s*(?:[:\-]|\s+para\s+)?([^\n\r]{5,100})/i)?.[1] || "";
   const fallbackDisclaimer = body.match(/(?:em\s*caso\s*de\s*(?:nao|non?)\s*haver|if\s*no\s*response|fallback)[^\.]{0,50}([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i)?.[1];
-
-  const genericPatterns = [
-    "noreply", "no-reply", "github", "bot@", "automated", "notification",
-    "support@", "admin@", "info@", "contact@", "hello@", "webmaster@"
-  ];
-
-  const genericLocalParts = [
-    "talents", "rh", "recrutamento", "jobs", "carreiras", "vagas",
-    "contato", "faleconosco", "atendimento", "suporte", "helpdesk",
-    "no-reply", "noreply", "nao-responda"
-  ];
 
   type ScoredEmail = { email: string; score: number; isFallback: boolean };
 
@@ -449,8 +495,7 @@ function extractEmail(body: string): string | null {
     const localPart = email.split("@")[0];
     const domain = email.split("@")[1];
 
-    if (genericPatterns.some(p => email.includes(p))) continue;
-    if (genericLocalParts.some(p => localPart.includes(p))) continue;
+    if (!isDirectContactEmail(email)) continue;
     if (domain && (domain.length < 4 || !domain.includes("."))) continue;
 
     let score = 0;

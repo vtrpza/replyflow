@@ -8,6 +8,7 @@ import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/in
 import type { UserProfile } from "@/lib/types";
 import path from "path";
 import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
+import { isDirectContactEmail } from "@/lib/contacts/email-quality";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (job.contactEmail) {
+    if (job.contactEmail && isDirectContactEmail(job.contactEmail)) {
       upsertContactFromJobForUser(userId, {
         email: job.contactEmail,
         company: job.company,
@@ -124,6 +125,8 @@ export async function POST(request: Request) {
         sourceType: job.sourceType || "github_repo",
         jobId: job.id,
         jobTitle: job.title,
+        unlock: true,
+        unlockSource: "outreach",
       });
     }
 

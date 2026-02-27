@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { assertWithinPlan, ensureUserExists, getEffectivePlan, upgradeRequiredResponse } from "@/lib/plan";
 import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
 import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
+import { isDirectContactEmail } from "@/lib/contacts/email-quality";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (job.contactEmail) {
+    if (job.contactEmail && isDirectContactEmail(job.contactEmail)) {
       upsertContactFromJobForUser(userId, {
         email: job.contactEmail,
         company: job.company,
@@ -89,6 +90,8 @@ export async function POST(request: NextRequest) {
         sourceType: job.sourceType || "github_repo",
         jobId: job.id,
         jobTitle: job.title,
+        unlock: true,
+        unlockSource: "reveal",
       });
     }
 

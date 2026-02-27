@@ -1,8 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LoadingButton, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import {
+  BILLING_UPGRADE_ROUTE,
+  getDailyResetLabel,
+  getUpgradeMessage,
+  usePlanSnapshot,
+} from "@/lib/plan/client";
 
 type SourceType = "github_repo" | "greenhouse_board" | "lever_postings";
 
@@ -35,12 +42,6 @@ interface ValidateResult {
   };
 }
 
-interface UpgradePayload {
-  error?: string;
-  feature?: string;
-  limit?: number;
-}
-
 function statusClass(status: Source["healthStatus"]): string {
   if (status === "healthy") return "bg-emerald-500/10 text-emerald-300";
   if (status === "warning") return "bg-amber-500/10 text-amber-300";
@@ -48,9 +49,11 @@ function statusClass(status: Source["healthStatus"]): string {
 }
 
 export default function SourcesPage() {
+  const router = useRouter();
   const toast = useToast();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const { snapshot } = usePlanSnapshot();
 
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,11 +85,9 @@ export default function SourcesPage() {
     loadSources();
   }, [loadSources]);
 
-  const getUpgradeMessage = (data: UpgradePayload): string => {
-    if (!data || data.error !== "upgrade_required") {
-      return isPt ? "Acao indisponivel no plano atual" : "Action unavailable on current plan";
-    }
-    return isPt ? "Acao indisponivel no plano atual" : "Action unavailable on current plan";
+  const handleUpgradeRequired = (data: unknown): void => {
+    toast.error(getUpgradeMessage(data, isPt));
+    router.push(BILLING_UPGRADE_ROUTE);
   };
 
   const toggleSource = async (source: Source) => {
@@ -100,7 +101,7 @@ export default function SourcesPage() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 402) {
-          toast.error(getUpgradeMessage(data));
+          handleUpgradeRequired(data);
           return;
         }
         toast.error(data.error || (isPt ? "Falha ao atualizar fonte" : "Failed to update source"));
@@ -122,7 +123,7 @@ export default function SourcesPage() {
       const data = (await res.json()) as ValidateResult & { error?: string };
       if (!res.ok) {
         if (res.status === 402) {
-          toast.error(getUpgradeMessage(data));
+          handleUpgradeRequired(data);
           return;
         }
         toast.error(data.error || (isPt ? "Falha ao validar fonte" : "Failed to validate source"));
@@ -163,7 +164,7 @@ export default function SourcesPage() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 402) {
-          toast.error(getUpgradeMessage(data));
+          handleUpgradeRequired(data);
           return;
         }
         toast.error(data.error || (isPt ? "Falha ao adicionar fonte" : "Failed to add source"));
@@ -187,6 +188,44 @@ export default function SourcesPage() {
             ? "Gerencie conectores, health score e atribuicao/termos por fonte."
             : "Manage connectors, health score, and attribution/terms per source."}
         </p>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="text-xs text-zinc-400">{isPt ? "Plano atual" : "Current plan"}</p>
+            <p className="text-sm text-zinc-100 font-medium uppercase">
+              {snapshot?.plan ?? (isPt ? "indisponivel" : "unavailable")}
+            </p>
+          </div>
+          <div className="text-xs text-zinc-400">
+            {getDailyResetLabel(snapshot?.sourceUsage.dayStart, isPt)}
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3">
+            <p className="text-zinc-400">{isPt ? "Sync manual hoje" : "Manual syncs today"}</p>
+            <p className="text-zinc-100 font-medium">
+              {snapshot?.sourceUsage.manualSyncUsed ?? 0} /{" "}
+              {snapshot?.sourceLimits.manualSyncPerDay !== undefined && snapshot.sourceLimits.manualSyncPerDay < 0
+                ? isPt
+                  ? "Ilimitado"
+                  : "Unlimited"
+                : snapshot?.sourceLimits.manualSyncPerDay ?? "--"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-zinc-700 bg-zinc-800 p-3">
+            <p className="text-zinc-400">{isPt ? "Validacoes hoje" : "Validations today"}</p>
+            <p className="text-zinc-100 font-medium">
+              {snapshot?.sourceUsage.sourceValidationsUsed ?? 0} /{" "}
+              {snapshot?.sourceLimits.sourceValidationsPerDay !== undefined && snapshot.sourceLimits.sourceValidationsPerDay < 0
+                ? isPt
+                  ? "Ilimitado"
+                  : "Unlimited"
+                : snapshot?.sourceLimits.sourceValidationsPerDay ?? "--"}
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
@@ -252,6 +291,17 @@ export default function SourcesPage() {
 
       {loading ? (
         <p className="text-sm text-zinc-500">{isPt ? "Carregando fontes..." : "Loading sources..."}</p>
+      ) : sources.length === 0 ? (
+        <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-6 text-center">
+          <p className="text-sm text-zinc-200 font-medium">
+            {isPt ? "Nenhuma fonte conectada ainda" : "No sources connected yet"}
+          </p>
+          <p className="text-xs text-zinc-500 mt-2">
+            {isPt
+              ? "Adicione uma fonte acima para iniciar a sincronizacao de vagas."
+              : "Add a source above to start syncing jobs."}
+          </p>
+        </div>
       ) : (
         <div className="space-y-2">
           {sources.map((source) => (
@@ -314,7 +364,7 @@ export default function SourcesPage() {
                         const data = await res.json();
                         if (!res.ok) {
                           if (res.status === 402) {
-                            toast.error(getUpgradeMessage(data));
+                            handleUpgradeRequired(data);
                             return;
                           }
                           toast.error(data.error || (isPt ? "Falha no sync" : "Sync failed"));
@@ -330,7 +380,7 @@ export default function SourcesPage() {
                     disabled={syncingId === source.id}
                     className="px-3 py-1.5 text-xs rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white"
                   >
-                    {syncingId === source.id ? "..." : (isPt ? "Sync" : "Sync")}
+                    {syncingId === source.id ? "..." : (isPt ? "Sincronizar" : "Sync")}
                   </button>
                 </div>
               </div>

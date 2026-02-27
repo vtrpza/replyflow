@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { and, eq, sql } from "drizzle-orm";
 import { ensureUserExists, getPlanInfo } from "@/lib/plan";
+import { getContactVisibility } from "@/lib/contacts/visibility";
 
 export async function GET() {
   try {
@@ -92,12 +93,20 @@ export async function GET() {
 
     const contractTypes = db
       .select({
-        type: schema.jobs.contractType,
+        type: sql<string>`case
+          when nullif(trim(${schema.jobs.contractType}), '') is not null then trim(${schema.jobs.contractType})
+          when ${schema.jobs.sourceType} in ('greenhouse_board', 'lever_postings') then 'PJ'
+          else 'CLT'
+        end`,
         count: sql<number>`count(*)`,
       })
       .from(schema.jobs)
-      .where(and(visibleJobsCondition, sql`${schema.jobs.contractType} IS NOT NULL`))
-      .groupBy(schema.jobs.contractType)
+      .where(visibleJobsCondition)
+      .groupBy(sql`case
+          when nullif(trim(${schema.jobs.contractType}), '') is not null then trim(${schema.jobs.contractType})
+          when ${schema.jobs.sourceType} in ('greenhouse_board', 'lever_postings') then 'PJ'
+          else 'CLT'
+        end`)
       .all();
 
     const experienceLevels = db
@@ -122,36 +131,43 @@ export async function GET() {
       .limit(10)
       .all();
 
-    const jobsWithEmail = db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.jobs)
-      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`))
-      .get();
-
-    const uniqueRecruiterEmails = db
-      .select({ count: sql<number>`count(distinct lower(trim(${schema.jobs.contactEmail})))` })
-      .from(schema.jobs)
-      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`))
-      .get();
-
-    const uniqueRecruiterDomains = db
+    const jobsForContactStats = db
       .select({
-        count: sql<number>`count(distinct lower(substr(trim(${schema.jobs.contactEmail}), instr(trim(${schema.jobs.contactEmail}), '@') + 1)))`,
+        contactEmail: schema.jobs.contactEmail,
+        applyUrl: schema.jobs.applyUrl,
       })
       .from(schema.jobs)
-      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') like '%@%'`))
-      .get();
+      .where(visibleJobsCondition)
+      .all();
 
-    const jobsAtsOnly = db
-      .select({ count: sql<number>`count(*)` })
-      .from(schema.jobs)
-      .where(
-        and(
-          visibleJobsCondition,
-          sql`coalesce(trim(${schema.jobs.contactEmail}), '') = '' AND coalesce(trim(${schema.jobs.applyUrl}), '') <> ''`
-        )
-      )
-      .get();
+    let jobsWithEmail = 0;
+    let jobsAtsOnly = 0;
+    const uniqueEmailSet = new Set<string>();
+    const uniqueDomainSet = new Set<string>();
+
+    for (const job of jobsForContactStats) {
+      const contactEmail = (job.contactEmail || "").trim().toLowerCase();
+      const hasScrapedEmail = contactEmail.includes("@");
+      const hasApplyUrl = !!(job.applyUrl || "").trim();
+
+      if (hasScrapedEmail) {
+        jobsWithEmail += 1;
+        uniqueEmailSet.add(contactEmail);
+        const domain = contactEmail.split("@")[1];
+        if (domain) {
+          uniqueDomainSet.add(domain);
+        }
+      } else if (hasApplyUrl) {
+        jobsAtsOnly += 1;
+      }
+    }
+
+    const uniqueRecruiterEmails = uniqueEmailSet.size;
+    const uniqueRecruiterDomains = uniqueDomainSet.size;
+
+    const unknownContracts = 0;
+    const classifiedContracts = totalJobs;
+    const contractCoveragePct = totalJobs > 0 ? 100 : 0;
 
     const jobsWithMatchScore = db
       .select({ count: sql<number>`count(*)` })
@@ -235,6 +251,25 @@ export async function GET() {
 
     const planInfo = getPlanInfo(userId);
 
+    const contacts = db
+      .select({
+        source: schema.contacts.source,
+        customFields: schema.contacts.customFields,
+      })
+      .from(schema.contacts)
+      .where(eq(schema.contacts.userId, userId))
+      .all();
+
+    const contactsTotal = contacts.length;
+    const scrapedContactsTotal = contacts.filter((contact) => contact.source === "job_sync").length;
+    const unlockedContactsTotal = contacts.filter((contact) => (
+      getContactVisibility({
+        plan: planInfo.plan,
+        source: contact.source,
+        customFields: contact.customFields,
+      }) === "full"
+    )).length;
+
     return NextResponse.json({
       totalJobs,
       newJobsToday,
@@ -244,10 +279,14 @@ export async function GET() {
       totalReplies: replies?.count || 0,
       totalInterviews: interviews?.count || 0,
       remoteJobs: remoteCount?.count || 0,
-      jobsWithEmail: jobsWithEmail?.count || 0,
-      uniqueRecruiterEmails: uniqueRecruiterEmails?.count || 0,
-      uniqueRecruiterDomains: uniqueRecruiterDomains?.count || 0,
-      jobsAtsOnly: jobsAtsOnly?.count || 0,
+      jobsWithEmail,
+      jobsWithDirectEmail: jobsWithEmail,
+      uniqueRecruiterEmails,
+      uniqueRecruiterDomains,
+      jobsAtsOnly,
+      contactsTotal,
+      scrapedContactsTotal,
+      unlockedContactsTotal,
       jobsWithMatchScore: jobsWithMatchScore?.count || 0,
       matchScoreLastCalculated: lastCalculated?.date || null,
       outreachDrafted: outreachDrafted?.count || 0,
@@ -260,6 +299,11 @@ export async function GET() {
         type: ct.type || "Unknown",
         count: ct.count,
       })),
+      contractCoverage: {
+        classifiedJobs: classifiedContracts,
+        unknownJobs: unknownContracts,
+        coveragePct: contractCoveragePct,
+      },
       jobsByExperienceLevel: experienceLevels.map((el) => ({
         level: el.level || "Unknown",
         count: el.count,

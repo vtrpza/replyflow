@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   useToast,
   SkeletonList,
   EmptyState,
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import {
+  BILLING_UPGRADE_ROUTE,
+  formatLimit,
+  getMonthlyResetLabel,
+  getUpgradeMessage,
+  usePlanSnapshot,
+} from "@/lib/plan/client";
 
 interface EmailTemplate {
   id: string;
@@ -71,9 +79,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function OutreachPage() {
+  const router = useRouter();
   const toast = useToast();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const { snapshot, refresh: refreshPlanSnapshot } = usePlanSnapshot();
   const [records, setRecords] = useState<OutreachRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRecord, setExpandedRecord] = useState<string | null>(null);
@@ -81,6 +91,7 @@ export default function OutreachPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [sheetRecord, setSheetRecord] = useState<OutreachRecord | null>(null);
   const [sheetLoading, setSheetLoading] = useState(false);
+  const deepLinkHandledRef = useRef<boolean>(false);
   
   const [sheetForm, setSheetForm] = useState({
     to: "",
@@ -106,7 +117,7 @@ export default function OutreachPage() {
     return isPt ? labelsPt[status] || status.replace(/_/g, " ") : status.replace(/_/g, " ");
   };
 
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/outreach");
@@ -124,9 +135,9 @@ export default function OutreachPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isPt, toast]);
 
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
     try {
       const res = await fetch("/api/accounts");
       if (res.ok) {
@@ -136,9 +147,9 @@ export default function OutreachPage() {
     } catch {
       // Silently fail - accounts are optional
     }
-  };
+  }, []);
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const lang = isPt ? "pt-BR" : "en";
       const res = await fetch(`/api/templates?language=${lang}`);
@@ -149,23 +160,44 @@ export default function OutreachPage() {
     } catch (err) {
       console.error("Failed to fetch templates:", err);
     }
-  };
+  }, [isPt]);
+
+  const openSheet = useCallback((record: OutreachRecord) => {
+    setSheetRecord(record);
+    setSelectedTemplate(null);
+    setSheetForm({
+      to: record.job.contactEmail && record.job.contactEmail !== "***" ? record.job.contactEmail : "",
+      from: accounts.find((account) => account.isDefault)?.id || accounts[0]?.id || "",
+      subject: record.emailSubject || "",
+      body: record.emailBody || "",
+      attachCV: "",
+    });
+  }, [accounts]);
 
   useEffect(() => {
-    fetchRecords();
-    fetchAccounts();
-    fetchTemplates();
-    
+    void fetchRecords();
+    void fetchAccounts();
+    void fetchTemplates();
+  }, [fetchRecords, fetchAccounts, fetchTemplates]);
+
+  useEffect(() => {
+    if (deepLinkHandledRef.current || records.length === 0) {
+      return;
+    }
+
     const params = new URLSearchParams(window.location.search);
     const openId = params.get("open");
-    if (openId) {
-      const record = records.find(r => r.id === openId);
-      if (record) {
-        setTimeout(() => openSheet(record), 100);
-      }
+    if (!openId) {
+      deepLinkHandledRef.current = true;
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const record = records.find((item) => item.id === openId);
+    if (record) {
+      deepLinkHandledRef.current = true;
+      setTimeout(() => openSheet(record), 100);
+    }
+  }, [records, openSheet]);
 
   const updateStatus = async (id: string, status: string) => {
     try {
@@ -180,18 +212,6 @@ export default function OutreachPage() {
     } catch {
       toast.error(isPt ? "Falha ao atualizar status" : "Failed to update status");
     }
-  };
-
-  const openSheet = (record: OutreachRecord) => {
-    setSheetRecord(record);
-    setSelectedTemplate(null);
-    setSheetForm({
-      to: record.job.contactEmail && record.job.contactEmail !== "***" ? record.job.contactEmail : "",
-      from: accounts.find(a => a.isDefault)?.id || accounts[0]?.id || "",
-      subject: record.emailSubject || "",
-      body: record.emailBody || "",
-      attachCV: "",
-    });
   };
 
   const closeSheet = () => {
@@ -259,12 +279,8 @@ export default function OutreachPage() {
       });
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error(
-          isPt
-            ? "Limite de envios atingido. Faca upgrade para Pro em Configuracoes."
-            : "Send limit reached. Upgrade to Pro in Settings."
-        );
-        window.location.href = "/app/settings";
+        toast.error(getUpgradeMessage(data, isPt));
+        router.push(BILLING_UPGRADE_ROUTE);
         return;
       }
       if (data.success) {
@@ -273,6 +289,7 @@ export default function OutreachPage() {
             ? `Email enviado!${data.attachedCV ? ` Anexo: CV ${data.attachedCV.toUpperCase()}` : ""}`
             : `Email sent!${data.attachedCV ? ` Attached: ${data.attachedCV} CV` : ""}`
         );
+        void refreshPlanSnapshot();
         fetchRecords();
         closeSheet();
       } else {
@@ -309,6 +326,20 @@ export default function OutreachPage() {
           <h1 className="text-2xl font-bold text-white">{isPt ? "Pipeline de Outreach" : "Outreach Pipeline"}</h1>
           <p className="text-sm text-zinc-500 mt-1">
             {isPt ? `${records.length} registros de outreach` : `${records.length} outreach records`}
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-zinc-300">
+            {isPt ? "Envios no ciclo atual" : "Sends in current cycle"}:{" "}
+            <span className="text-zinc-100 font-medium">
+              {snapshot?.usage.sendsUsed ?? 0} / {formatLimit(snapshot?.limits.sends, isPt)}
+            </span>
+          </p>
+          <p className="text-xs text-zinc-500">
+            {getMonthlyResetLabel(snapshot?.usage.periodStart, isPt)}
           </p>
         </div>
       </div>

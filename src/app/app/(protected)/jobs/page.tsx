@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState, LoadingButton, SkeletonList, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import {
+  BILLING_UPGRADE_ROUTE,
+  formatLimit,
+  getMonthlyResetLabel,
+  getUpgradeMessage,
+  usePlanSnapshot,
+} from "@/lib/plan/client";
 
 interface Job {
   id: string;
@@ -64,6 +71,7 @@ export default function JobsPage() {
   const toast = useToast();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const { snapshot, refresh: refreshPlanSnapshot } = usePlanSnapshot();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -88,7 +96,6 @@ export default function JobsPage() {
   const [expandedJob, setExpandedJob] = useState<string | null>(null);
   const [draftingJob, setDraftingJob] = useState<string | null>(null);
   const [revealingJob, setRevealingJob] = useState<string | null>(null);
-  const [revealBlocked, setRevealBlocked] = useState(false);
 
   const getOutreachStatusLabel = (status: string): string => {
     if (!isPt) {
@@ -159,12 +166,8 @@ export default function JobsPage() {
 
       const data = await res.json();
       if (res.status === 402 && data?.error === "upgrade_required") {
-        toast.error(
-          isPt
-            ? "Limite de rascunhos atingido. Faca upgrade para Pro em Configuracoes."
-            : "Draft limit reached. Upgrade to Pro in Settings."
-        );
-        router.push("/app/settings");
+        toast.error(getUpgradeMessage(data, isPt));
+        router.push(BILLING_UPGRADE_ROUTE);
         return;
       }
 
@@ -174,6 +177,7 @@ export default function JobsPage() {
             ? "Rascunho criado! Veja em Outreach."
             : "Email draft created! Check Outreach."
         );
+        void refreshPlanSnapshot();
         fetchJobs(pagination.page);
       } else {
         toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
@@ -186,11 +190,6 @@ export default function JobsPage() {
   };
 
   const handleReveal = async (jobId: string) => {
-    if (revealBlocked) {
-      router.push("/app/settings");
-      return;
-    }
-
     setRevealingJob(jobId);
     try {
       const res = await fetch("/api/jobs/reveal", {
@@ -201,17 +200,14 @@ export default function JobsPage() {
       const data = await res.json();
 
       if (res.status === 402 && data?.error === "upgrade_required") {
-        setRevealBlocked(true);
-        toast.error(
-          isPt
-            ? "Limite de reveal atingido. Faca upgrade para Pro em Configuracoes."
-            : "Reveal limit reached. Upgrade to Pro in Settings."
-        );
+        toast.error(getUpgradeMessage(data, isPt));
+        router.push(BILLING_UPGRADE_ROUTE);
         return;
       }
 
       if (data.success) {
         toast.success(isPt ? "Contato revelado" : "Contact revealed");
+        void refreshPlanSnapshot();
         fetchJobs(pagination.page);
       } else {
         toast.error(data.error || (isPt ? "Falha ao revelar contato" : "Failed to reveal contact"));
@@ -269,6 +265,24 @@ export default function JobsPage() {
             ? `${pagination.total} vagas encontradas em todos os repos`
             : `${pagination.total} jobs found across all repos`}
         </p>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <p className="text-sm text-zinc-300">
+            {isPt ? "Uso mensal" : "Monthly usage"}:{" "}
+            <span className="text-zinc-100 font-medium">
+              {isPt ? "Revelacoes" : "Reveals"} {snapshot?.usage.revealsUsed ?? 0} / {formatLimit(snapshot?.limits.reveals, isPt)}
+            </span>
+            <span className="mx-2 text-zinc-600">|</span>
+            <span className="text-zinc-100 font-medium">
+              {isPt ? "Rascunhos" : "Drafts"} {snapshot?.usage.draftsUsed ?? 0} / {formatLimit(snapshot?.limits.drafts, isPt)}
+            </span>
+          </p>
+          <p className="text-xs text-zinc-500">
+            {getMonthlyResetLabel(snapshot?.usage.periodStart, isPt)}
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-6">
@@ -361,7 +375,7 @@ export default function JobsPage() {
           message={
             isPt
               ? "Tente sincronizar repos primeiro ou ajuste os filtros."
-              : "Try scraping repos first or adjust your filters."
+              : "Try syncing sources first or adjust your filters."
           }
         />
       ) : (
@@ -493,21 +507,9 @@ export default function JobsPage() {
                       <button
                         onClick={() => handleReveal(job.id)}
                         disabled={revealingJob === job.id}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                          revealBlocked
-                            ? "bg-amber-600 hover:bg-amber-700 text-white"
-                            : "bg-cyan-600 hover:bg-cyan-700 text-white"
-                        }`}
+                        className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors bg-cyan-600 hover:bg-cyan-700 text-white"
                       >
-                        {revealingJob === job.id
-                          ? "..."
-                          : revealBlocked
-                            ? isPt
-                              ? "Upgrade"
-                              : "Upgrade"
-                            : isPt
-                              ? "Revelar"
-                              : "Reveal"}
+                        {revealingJob === job.id ? "..." : isPt ? "Revelar" : "Reveal"}
                       </button>
                     )}
 
