@@ -13,6 +13,8 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Server-side plan enforcement helper module.
 - Protected/public app route groups for server-side auth gating.
 - Plan/usage UI blocks in settings with upgrade CTA.
+- Fly.io deployment infrastructure (`fly.toml`, `Dockerfile`, entrypoint, deploy workflow).
+- Deployment runbook for SQLite persistence on Fly (`DEPLOYMENT.md`).
 
 ### Changed
 
@@ -26,3 +28,4 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Removed cross-user leakage in outreach/profile/account-related paths.
 - Scoped connected email account reads and writes by authenticated user.
 - Standardized upgrade limit response as HTTP `402` with `upgrade_required` payload.
+- Sign-in flow now reuses canonical user by email to prevent `UNIQUE(users.email)` failures for returning users.

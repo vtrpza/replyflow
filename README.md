@@ -73,3 +73,34 @@ This repository follows Semantic Versioning and conventional commit guidelines.
 - Never commit `.env` files or real credentials.
 - OAuth tokens are user-scoped and persisted in the database.
 - Free-plan limits are enforced on the backend (not only in UI).
+
+## Deploy (SQLite without migration to external DB)
+
+This project is configured to run on **Fly.io** with persistent volume storage for SQLite.
+
+- Config file: `fly.toml`
+- Volume mount path: `/app/data`
+- SQLite file path in app runtime: `/app/data/gitjobs.db`
+- Generated Docker files: `Dockerfile`, `docker-entrypoint.js`, `.dockerignore`
+
+Quick deploy:
+
+```bash
+"/home/vtrpza/.fly/bin/flyctl" deploy --app replyflow-vhnpouza --remote-only
+```
+
+Required secrets (Fly):
+
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_REDIRECT_URI`
+- `GOOGLE_CONNECT_REDIRECT_URI`
+
+Google OAuth callback URLs must include:
+
+- `https://<your-app>.fly.dev/api/auth/callback/google`
+- `https://<your-app>.fly.dev/api/accounts/callback`
+
+See full operational runbook: `DEPLOYMENT.md`.
