@@ -31,7 +31,8 @@ flyctl secrets set -a replyflow \
   GOOGLE_REDIRECT_URI=https://replyflow.fly.dev/api/auth/callback/google \
   GOOGLE_CONNECT_REDIRECT_URI=https://replyflow.fly.dev/api/accounts/callback \
   REPLYFLOW_SYNC_TOKEN=<long-random-token> \
-  SENTRY_DSN=<your-sentry-dsn>
+  SENTRY_DSN=<your-sentry-dsn> \
+  NEXT_PUBLIC_SENTRY_DSN=<your-sentry-dsn>
 ```
 
 | Variable                        | Required | Description                                           |
@@ -47,6 +48,7 @@ flyctl secrets set -a replyflow \
 | `RESEND_API_KEY`                | No       | Resend key for sending outreach emails                |
 | `RESEND_SENDER_EMAIL`           | No       | Verified sender address in Resend                     |
 | `SENTRY_DSN`                    | No       | Sentry error reporting DSN                            |
+| `NEXT_PUBLIC_SENTRY_DSN`        | No       | Client-side Sentry DSN (use same value as `SENTRY_DSN`) |
 
 ## First-Time Setup
 

@@ -84,7 +84,7 @@ const navItems = [
 
 export function Sidebar() {
   const { t } = useI18n();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
   const [syncMessage, setSyncMessage] = useState("");

@@ -4,26 +4,47 @@ Error tracking and performance monitoring for the application.
 
 ## Setup
 
-- **DSN**: `https://ed7a2fa3cb4e75e871223fc4265fa971@o4510956029214720.ingest.us.sentry.io/4510956029476864`
+- **DSN (server/edge)**: `SENTRY_DSN`
+- **DSN (client/browser)**: `NEXT_PUBLIC_SENTRY_DSN` (same value)
 - **Project**: gitjobs-v2 (ReplyFlow)
-- **SDK**: `@sentry/node`
+- **SDK**: `@sentry/nextjs`
 
 ## Configuration
 
-The Sentry SDK is initialized in `src/instrument.ts`, imported at the top of `src/app/layout.tsx` to capture errors as early as possible in the application lifecycle.
+Sentry is initialized in Next.js instrumentation hooks and dedicated runtime config files:
+
+- `src/instrumentation.ts`
+  - `register()` loads runtime config for `nodejs` and `edge`
+  - `onRequestError` forwards request errors to Sentry (`captureRequestError`)
+- `src/sentry.server.config.ts`
+  - server-side init
+- `src/sentry.edge.config.ts`
+  - edge runtime init
+- `src/instrumentation-client.ts`
+  - browser init and navigation hook (`onRouterTransitionStart`)
+- `src/app/global-error.tsx`
+  - captures App Router render errors on client with `captureException`
 
 ```typescript
-// src/instrument.ts
-import * as Sentry from "@sentry/node";
+// src/instrumentation.ts
+import * as Sentry from "@sentry/nextjs";
 
-Sentry.init({
-  dsn: "https://ed7a2fa3cb4e75e871223fc4265fa971@o4510956029214720.ingest.us.sentry.io/4510956029476864",
-  sendDefaultPii: true,
-});
+export async function register(): Promise<void> {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    await import("./sentry.server.config");
+  }
+
+  if (process.env.NEXT_RUNTIME === "edge") {
+    await import("./sentry.edge.config");
+  }
+}
+
+export const onRequestError = (...args: Parameters<typeof Sentry.captureRequestError>): void => {
+  Sentry.captureRequestError(...args);
+};
 ```
 
 ## Notes
 
 - `sendDefaultPii: true` is enabled - IP addresses and other PII may be collected
-- Currently using the Node SDK (server-side only)
-- For client-side error capturing, consider adding `@sentry/nextjs` package
+- Client-side errors are now captured via `instrumentation-client.ts` and `global-error.tsx`

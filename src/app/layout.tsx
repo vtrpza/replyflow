@@ -1,4 +1,3 @@
-import "@/instrument";
 import type { Metadata } from "next";
 import "./globals.css";
 import { ToastProvider, ModalProvider } from "@/components/ui";
@@ -29,6 +28,7 @@ const ibmPlexSans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://replyflow.fly.dev"),
   title: "ReplyFlow — Outreach pipeline for devs who take ownership",
   description:
     "Track leads, draft emails, send, follow up, and measure replies — in one place.",
