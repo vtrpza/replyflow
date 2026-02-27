@@ -89,6 +89,16 @@ export function Sidebar() {
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
   const [syncMessage, setSyncMessage] = useState("");
 
+  const getUpgradeMessage = (data: { feature?: string; limit?: number; error?: string }): string => {
+    if (data?.error !== "upgrade_required") {
+      return t("sidebar.syncFailed");
+    }
+    if (data.feature === "syncs_daily") {
+      return t("sidebar.syncLimitReached");
+    }
+    return t("sidebar.syncFailed");
+  };
+
   return (
     <aside
       className="hidden md:flex w-64 flex-col border-r backdrop-blur-md"
@@ -183,29 +193,33 @@ export function Sidebar() {
             try {
               const res = await fetch("/api/sync", { method: "POST" });
               const data = await res.json();
-                if (res.ok) {
-                  setSyncStatus("success");
-                  const count = data.totalNewJobs || 0;
-                  setSyncMessage(
-                    count > 0
-                      ? t("sidebar.newJobsFound", { count })
-                      : t("sidebar.alreadyUpToDate")
-                  );
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 1500);
+              if (res.ok) {
+                setSyncStatus("success");
+                const count = data.totalNewJobs || 0;
+                setSyncMessage(
+                  count > 0
+                    ? t("sidebar.newJobsFound", { count })
+                    : t("sidebar.alreadyUpToDate")
+                );
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1500);
+              } else {
+                setSyncStatus("error");
+                if (res.status === 402) {
+                  setSyncMessage(getUpgradeMessage(data));
                 } else {
-                  setSyncStatus("error");
                   setSyncMessage(data.error || t("sidebar.syncFailed"));
                 }
-              } catch (err) {
-                setSyncStatus("error");
-                setSyncMessage(
-                  err instanceof Error ? err.message : t("sidebar.unknownError")
-                );
-              } finally {
-                setSyncing(false);
               }
+            } catch (err) {
+              setSyncStatus("error");
+              setSyncMessage(
+                err instanceof Error ? err.message : t("sidebar.unknownError")
+              );
+            } finally {
+              setSyncing(false);
+            }
           }}
         >
           {syncing ? (

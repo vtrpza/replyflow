@@ -105,6 +105,7 @@ export interface OutreachRecord {
 
 export interface RepoSource {
   id: string;
+  userId: string;
   sourceType: SourceType;
   displayName: string | null;
   owner: string;

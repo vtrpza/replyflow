@@ -11,6 +11,14 @@ import type { Session } from "next-auth";
 
 export type PlanType = "free" | "pro";
 export type FeatureKey = "drafts" | "sends" | "reveals" | "accounts";
+export type SourceDailyFeature = "manual_sync" | "source_validate";
+export type UpgradeFeatureKey =
+  | FeatureKey
+  | "sources_enabled"
+  | "ats_sources_enabled"
+  | "syncs_daily"
+  | "source_validations_daily";
+export type UpgradePeriod = "month" | "day" | "total";
 
 export interface PlanLimits {
   reveals: number;
@@ -20,6 +28,13 @@ export interface PlanLimits {
   historyItems: number;
 }
 
+export interface SourcePlanLimits {
+  enabledSources: number;
+  enabledAtsSources: number;
+  manualSyncPerDay: number;
+  sourceValidationsPerDay: number;
+}
+
 export interface UsageInfo {
   revealsUsed: number;
   draftsUsed: number;
@@ -27,10 +42,20 @@ export interface UsageInfo {
   periodStart: string;
 }
 
+export interface SourceUsageInfo {
+  dayStart: string;
+  manualSyncUsed: number;
+  sourceValidationsUsed: number;
+}
+
 export interface PlanInfo {
   plan: PlanType;
   limits: PlanLimits;
   usage: UsageInfo;
+  sourceLimits: SourcePlanLimits;
+  sourceUsage: SourceUsageInfo;
+  enabledSources: number;
+  enabledAtsSources: number;
 }
 
 // ─── Constants ──────────────────────────────────────────────
@@ -51,8 +76,26 @@ const PRO_LIMITS: PlanLimits = {
   historyItems: -1,
 };
 
+const FREE_SOURCE_LIMITS: SourcePlanLimits = {
+  enabledSources: 5,
+  enabledAtsSources: 1,
+  manualSyncPerDay: 3,
+  sourceValidationsPerDay: 5,
+};
+
+const PRO_SOURCE_LIMITS: SourcePlanLimits = {
+  enabledSources: -1,
+  enabledAtsSources: -1,
+  manualSyncPerDay: -1,
+  sourceValidationsPerDay: -1,
+};
+
 export function getLimitsForPlan(plan: PlanType): PlanLimits {
   return plan === "pro" ? PRO_LIMITS : FREE_LIMITS;
+}
+
+export function getSourceLimitsForPlan(plan: PlanType): SourcePlanLimits {
+  return plan === "pro" ? PRO_SOURCE_LIMITS : FREE_SOURCE_LIMITS;
 }
 
 // ─── Helpers ────────────────────────────────────────────────
@@ -64,6 +107,11 @@ function generateId(): string {
 function getCurrentPeriodStart(): string {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+}
+
+function getCurrentDayStart(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 /**
@@ -146,6 +194,107 @@ export function getOrCreateUsage(userId: string): UsageInfo {
   };
 }
 
+function getOrCreateSourceDailyUsage(userId: string, feature: SourceDailyFeature): number {
+  const dayStart = getCurrentDayStart();
+
+  let row = db
+    .select()
+    .from(schema.sourceUsageDaily)
+    .where(
+      and(
+        eq(schema.sourceUsageDaily.userId, userId),
+        eq(schema.sourceUsageDaily.feature, feature),
+        eq(schema.sourceUsageDaily.dayStart, dayStart)
+      )
+    )
+    .get();
+
+  if (!row) {
+    const now = new Date().toISOString();
+    db.insert(schema.sourceUsageDaily)
+      .values({
+        id: generateId(),
+        userId,
+        feature,
+        dayStart,
+        used: 0,
+        updatedAt: now,
+      })
+      .run();
+
+    row = db
+      .select()
+      .from(schema.sourceUsageDaily)
+      .where(
+        and(
+          eq(schema.sourceUsageDaily.userId, userId),
+          eq(schema.sourceUsageDaily.feature, feature),
+          eq(schema.sourceUsageDaily.dayStart, dayStart)
+        )
+      )
+      .get();
+  }
+
+  return row?.used || 0;
+}
+
+function incrementSourceDailyUsage(userId: string, feature: SourceDailyFeature, cost: number): void {
+  const dayStart = getCurrentDayStart();
+  const now = new Date().toISOString();
+
+  getOrCreateSourceDailyUsage(userId, feature);
+
+  db.update(schema.sourceUsageDaily)
+    .set({
+      used: sql`${schema.sourceUsageDaily.used} + ${cost}`,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(schema.sourceUsageDaily.userId, userId),
+        eq(schema.sourceUsageDaily.feature, feature),
+        eq(schema.sourceUsageDaily.dayStart, dayStart)
+      )
+    )
+    .run();
+}
+
+export function getSourceUsageInfo(userId: string): SourceUsageInfo {
+  const dayStart = getCurrentDayStart();
+  const manualSyncUsed = getOrCreateSourceDailyUsage(userId, "manual_sync");
+  const sourceValidationsUsed = getOrCreateSourceDailyUsage(userId, "source_validate");
+
+  return {
+    dayStart,
+    manualSyncUsed,
+    sourceValidationsUsed,
+  };
+}
+
+export function getSourceCounts(userId: string): { enabledSources: number; enabledAtsSources: number } {
+  const enabledSources = db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.repoSources)
+    .where(and(eq(schema.repoSources.userId, userId), eq(schema.repoSources.enabled, true)))
+    .get()
+    ?.count || 0;
+
+  const enabledAtsSources = db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.repoSources)
+    .where(
+      and(
+        eq(schema.repoSources.userId, userId),
+        eq(schema.repoSources.enabled, true),
+        sql`${schema.repoSources.sourceType} IN ('greenhouse_board', 'lever_postings')`
+      )
+    )
+    .get()
+    ?.count || 0;
+
+  return { enabledSources, enabledAtsSources };
+}
+
 function incrementUsage(userId: string, feature: FeatureKey, cost: number): void {
   if (feature === "accounts") return; // accounts don't get incremented
 
@@ -207,7 +356,7 @@ export function assertWithinPlan(
   userId: string,
   feature: FeatureKey,
   cost: number = 1
-): { ok: true } | { ok: false; error: string; limit: number; feature: FeatureKey } {
+): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
   const plan = getEffectivePlan(userId);
   const limits = getLimitsForPlan(plan);
 
@@ -233,6 +382,7 @@ export function assertWithinPlan(
       error: "upgrade_required",
       feature,
       limit,
+      period: "month",
     };
   }
 
@@ -244,13 +394,82 @@ export function assertWithinPlan(
 /**
  * Build standardized 402 response body.
  */
-export function upgradeRequiredResponse(feature: FeatureKey, limit: number) {
+export function upgradeRequiredResponse(feature: UpgradeFeatureKey, limit: number, period: UpgradePeriod = "month") {
   return {
     error: "upgrade_required",
     feature,
     limit,
-    period: "month",
+    period,
   };
+}
+
+export function assertWithinSourceDailyQuota(
+  userId: string,
+  feature: SourceDailyFeature,
+  cost: number = 1
+): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
+  const plan = getEffectivePlan(userId);
+  const limits = getSourceLimitsForPlan(plan);
+
+  if (plan === "pro") {
+    incrementSourceDailyUsage(userId, feature, cost);
+    return { ok: true };
+  }
+
+  const used = getOrCreateSourceDailyUsage(userId, feature);
+  const limit = feature === "manual_sync" ? limits.manualSyncPerDay : limits.sourceValidationsPerDay;
+  const responseFeature: UpgradeFeatureKey =
+    feature === "manual_sync" ? "syncs_daily" : "source_validations_daily";
+
+  if (used + cost > limit) {
+    return {
+      ok: false,
+      error: "upgrade_required",
+      feature: responseFeature,
+      limit,
+      period: "day",
+    };
+  }
+
+  incrementSourceDailyUsage(userId, feature, cost);
+  return { ok: true };
+}
+
+export function assertWithinSourceEnableQuota(
+  userId: string,
+  sourceType: string,
+  enablingCount = 1
+): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
+  const plan = getEffectivePlan(userId);
+  if (plan === "pro") {
+    return { ok: true };
+  }
+
+  const limits = getSourceLimitsForPlan(plan);
+  const counts = getSourceCounts(userId);
+  const isAtsSource = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+
+  if (counts.enabledSources + enablingCount > limits.enabledSources) {
+    return {
+      ok: false,
+      error: "upgrade_required",
+      feature: "sources_enabled",
+      limit: limits.enabledSources,
+      period: "total",
+    };
+  }
+
+  if (isAtsSource && counts.enabledAtsSources + enablingCount > limits.enabledAtsSources) {
+    return {
+      ok: false,
+      error: "upgrade_required",
+      feature: "ats_sources_enabled",
+      limit: limits.enabledAtsSources,
+      period: "total",
+    };
+  }
+
+  return { ok: true };
 }
 
 /**
@@ -260,8 +479,19 @@ export function getPlanInfo(userId: string): PlanInfo {
   const plan = getEffectivePlan(userId);
   const limits = getLimitsForPlan(plan);
   const usage = getOrCreateUsage(userId);
+  const sourceLimits = getSourceLimitsForPlan(plan);
+  const sourceUsage = getSourceUsageInfo(userId);
+  const sourceCounts = getSourceCounts(userId);
 
-  return { plan, limits, usage };
+  return {
+    plan,
+    limits,
+    usage,
+    sourceLimits,
+    sourceUsage,
+    enabledSources: sourceCounts.enabledSources,
+    enabledAtsSources: sourceCounts.enabledAtsSources,
+  };
 }
 
 /**

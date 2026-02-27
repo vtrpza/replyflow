@@ -35,6 +35,12 @@ interface ValidateResult {
   };
 }
 
+interface UpgradePayload {
+  error?: string;
+  feature?: string;
+  limit?: number;
+}
+
 function statusClass(status: Source["healthStatus"]): string {
   if (status === "healthy") return "bg-emerald-500/10 text-emerald-300";
   if (status === "warning") return "bg-amber-500/10 text-amber-300";
@@ -50,6 +56,7 @@ export default function SourcesPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [validatingId, setValidatingId] = useState<string | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
   const [form, setForm] = useState({
     sourceType: "github_repo" as SourceType,
     fullName: "",
@@ -75,6 +82,34 @@ export default function SourcesPage() {
     loadSources();
   }, [loadSources]);
 
+  const getUpgradeMessage = (data: UpgradePayload): string => {
+    if (!data || data.error !== "upgrade_required") {
+      return isPt ? "Limite do plano atingido" : "Plan limit reached";
+    }
+    const limitText = typeof data.limit === "number" ? String(data.limit) : "?";
+    if (data.feature === "sources_enabled") {
+      return isPt
+        ? `Plano Free suporta ate ${limitText} fontes ativas.`
+        : `Free plan supports up to ${limitText} enabled sources.`;
+    }
+    if (data.feature === "ats_sources_enabled") {
+      return isPt
+        ? `Plano Free suporta ate ${limitText} fonte ATS ativa.`
+        : `Free plan supports up to ${limitText} enabled ATS source.`;
+    }
+    if (data.feature === "syncs_daily") {
+      return isPt
+        ? `Voce atingiu ${limitText} sincronizacoes hoje.`
+        : `You reached ${limitText} syncs today.`;
+    }
+    if (data.feature === "source_validations_daily") {
+      return isPt
+        ? `Voce atingiu ${limitText} validacoes hoje.`
+        : `You reached ${limitText} validations today.`;
+    }
+    return isPt ? "Limite do plano atingido" : "Plan limit reached";
+  };
+
   const toggleSource = async (source: Source) => {
     setSavingId(source.id);
     try {
@@ -85,6 +120,10 @@ export default function SourcesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 402) {
+          toast.error(getUpgradeMessage(data));
+          return;
+        }
         toast.error(data.error || (isPt ? "Falha ao atualizar fonte" : "Failed to update source"));
         return;
       }
@@ -103,6 +142,10 @@ export default function SourcesPage() {
       const res = await fetch(`/api/sources/${source.id}/validate`, { method: "POST" });
       const data = (await res.json()) as ValidateResult & { error?: string };
       if (!res.ok) {
+        if (res.status === 402) {
+          toast.error(getUpgradeMessage(data));
+          return;
+        }
         toast.error(data.error || (isPt ? "Falha ao validar fonte" : "Failed to validate source"));
         return;
       }
@@ -140,6 +183,10 @@ export default function SourcesPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 402) {
+          toast.error(getUpgradeMessage(data));
+          return;
+        }
         toast.error(data.error || (isPt ? "Falha ao adicionar fonte" : "Failed to add source"));
         return;
       }
@@ -278,16 +325,33 @@ export default function SourcesPage() {
                   </button>
                   <button
                     onClick={async () => {
-                      await fetch("/api/sync", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ sourceId: source.id }),
-                      });
-                      await loadSources();
+                      setSyncingId(source.id);
+                      try {
+                        const res = await fetch("/api/sync", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ sourceId: source.id }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          if (res.status === 402) {
+                            toast.error(getUpgradeMessage(data));
+                            return;
+                          }
+                          toast.error(data.error || (isPt ? "Falha no sync" : "Sync failed"));
+                          return;
+                        }
+                        await loadSources();
+                      } catch {
+                        toast.error(isPt ? "Falha no sync" : "Sync failed");
+                      } finally {
+                        setSyncingId(null);
+                      }
                     }}
+                    disabled={syncingId === source.id}
                     className="px-3 py-1.5 text-xs rounded-lg bg-emerald-700 hover:bg-emerald-600 text-white"
                   >
-                    {isPt ? "Sync" : "Sync"}
+                    {syncingId === source.id ? "..." : (isPt ? "Sync" : "Sync")}
                   </button>
                 </div>
               </div>

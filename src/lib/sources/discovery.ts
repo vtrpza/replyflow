@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { db, schema } from "@/lib/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { SOURCE_POLICY } from "@/lib/sources/policy";
+import { getEffectivePlan, getSourceCounts, getSourceLimitsForPlan } from "@/lib/plan";
 import type { SourceType } from "@/lib/types";
 
 interface EcosystemRepo {
@@ -42,6 +43,7 @@ interface AtsCatalogFile {
 }
 
 interface InsertDiscoveredSourceInput {
+  userId: string;
   sourceType: SourceType;
   displayName: string;
   owner: string;
@@ -144,7 +146,12 @@ function insertDiscoveredSource(input: InsertDiscoveredSourceInput): { created: 
   const existing = db
     .select({ id: schema.repoSources.id })
     .from(schema.repoSources)
-    .where(eq(schema.repoSources.fullName, input.fullName))
+    .where(
+      and(
+        eq(schema.repoSources.userId, input.userId),
+        eq(schema.repoSources.fullName, input.fullName)
+      )
+    )
     .get();
 
   if (existing) {
@@ -156,6 +163,7 @@ function insertDiscoveredSource(input: InsertDiscoveredSourceInput): { created: 
   db.insert(schema.repoSources)
     .values({
       id: generateId(),
+      userId: input.userId,
       sourceType: input.sourceType,
       displayName: input.displayName,
       owner: input.owner,
@@ -191,9 +199,39 @@ function insertDiscoveredSource(input: InsertDiscoveredSourceInput): { created: 
   return { created: true, autoEnabled: input.enabled };
 }
 
-export function runSourceDiscovery(minAutoEnableConfidence = 80): { created: number; autoEnabled: number } {
+export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80): { created: number; autoEnabled: number } {
   let created = 0;
   let autoEnabled = 0;
+  const plan = getEffectivePlan(userId);
+  const sourceLimits = getSourceLimitsForPlan(plan);
+  const sourceCounts = getSourceCounts(userId);
+  let remainingEnabledSlots = sourceLimits.enabledSources < 0
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, sourceLimits.enabledSources - sourceCounts.enabledSources);
+  let remainingAtsSlots = sourceLimits.enabledAtsSources < 0
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, sourceLimits.enabledAtsSources - sourceCounts.enabledAtsSources);
+
+  const canAutoEnable = (sourceType: SourceType): boolean => {
+    const isAts = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+    if (remainingEnabledSlots <= 0) {
+      return false;
+    }
+    if (isAts && remainingAtsSlots <= 0) {
+      return false;
+    }
+    return true;
+  };
+
+  const consumeEnableSlot = (sourceType: SourceType): void => {
+    const isAts = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+    if (remainingEnabledSlots !== Number.POSITIVE_INFINITY) {
+      remainingEnabledSlots -= 1;
+    }
+    if (isAts && remainingAtsSlots !== Number.POSITIVE_INFINITY) {
+      remainingAtsSlots -= 1;
+    }
+  };
 
   const ecosystemPath = path.join(process.cwd(), "data", "brazilian-job-ecosystem.json");
   if (fs.existsSync(ecosystemPath)) {
@@ -214,9 +252,10 @@ export function runSourceDiscovery(minAutoEnableConfidence = 80): { created: num
       const fullName = candidate.fullName.trim();
       const ownerRepo = parseOwnerRepo(fullName);
       const confidence = scoreGithubCandidate(candidate);
-      const shouldEnable = confidence >= minAutoEnableConfidence;
+      const shouldEnable = confidence >= minAutoEnableConfidence && canAutoEnable("github_repo");
 
       const inserted = insertDiscoveredSource({
+        userId,
         sourceType: "github_repo",
         displayName: fullName,
         owner: candidate.owner || ownerRepo.owner,
@@ -235,6 +274,7 @@ export function runSourceDiscovery(minAutoEnableConfidence = 80): { created: num
         created += 1;
         if (inserted.autoEnabled) {
           autoEnabled += 1;
+          consumeEnableSlot("github_repo");
         }
       }
     }
@@ -254,15 +294,17 @@ export function runSourceDiscovery(minAutoEnableConfidence = 80): { created: num
     }
 
     const confidence = normalizeConfidence(source.confidence, 80);
-    const shouldEnable = source.enabledByDefault === undefined
+    const shouldEnableCandidate = source.enabledByDefault === undefined
       ? confidence >= minAutoEnableConfidence
       : !!source.enabledByDefault;
+    const shouldEnable = shouldEnableCandidate && canAutoEnable(source.sourceType);
 
     const fullName = source.sourceType === "greenhouse_board"
       ? `greenhouse/${externalKey}`
       : `lever/${externalKey}`;
 
     const inserted = insertDiscoveredSource({
+      userId,
       sourceType: source.sourceType,
       displayName: source.displayName?.trim() || fullName,
       owner: source.sourceType,
@@ -281,6 +323,7 @@ export function runSourceDiscovery(minAutoEnableConfidence = 80): { created: num
       created += 1;
       if (inserted.autoEnabled) {
         autoEnabled += 1;
+        consumeEnableSlot(source.sourceType);
       }
     }
   }

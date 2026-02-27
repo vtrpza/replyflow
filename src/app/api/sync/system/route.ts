@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { db, schema } from "@/lib/db";
 import { runSourceSync } from "@/lib/sources/sync";
 
 /**
@@ -18,16 +19,51 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+    const targetUserId = body.userId ? String(body.userId) : undefined;
+    const userIds = targetUserId
+      ? [targetUserId]
+      : db.select({ id: schema.users.id }).from(schema.users).all().map((row) => row.id);
 
-    const result = await runSourceSync({
-      sourceId: body.sourceId ? String(body.sourceId) : undefined,
-      sourceFullName: body.sourceFullName ? String(body.sourceFullName) : undefined,
-      reparseExisting: !!body.reparseExisting,
-      runDiscovery: body.runDiscovery === undefined ? true : !!body.runDiscovery,
-      enforceSchedule: true,
+    const results = [];
+    let totalNewJobs = 0;
+    let usersSynced = 0;
+
+    for (const userId of userIds) {
+      try {
+        const result = await runSourceSync({
+          sourceId: body.sourceId ? String(body.sourceId) : undefined,
+          sourceFullName: body.sourceFullName ? String(body.sourceFullName) : undefined,
+          reparseExisting: !!body.reparseExisting,
+          runDiscovery: body.runDiscovery === undefined ? true : !!body.runDiscovery,
+          userId,
+          enforceSchedule: true,
+        });
+
+        results.push({
+          userId,
+          success: true,
+          totalNewJobs: result.totalNewJobs,
+          sources: result.results.length,
+          discovery: result.discovery,
+        });
+        totalNewJobs += result.totalNewJobs;
+        usersSynced += 1;
+      } catch (error) {
+        results.push({
+          userId,
+          success: false,
+          error: error instanceof Error ? error.message : "User sync failed",
+        });
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      usersSynced,
+      usersTotal: userIds.length,
+      totalNewJobs,
+      results,
     });
-
-    return NextResponse.json(result);
   } catch (error) {
     console.error("System sync error:", error);
     return NextResponse.json(

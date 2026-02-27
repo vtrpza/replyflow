@@ -44,12 +44,13 @@ export const jobs = sqliteTable("jobs", {
 
 export const repoSources = sqliteTable("repo_sources", {
   id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
   sourceType: text("source_type").notNull().default("github_repo"),
   displayName: text("display_name"),
   owner: text("owner").notNull(),
   repo: text("repo").notNull(),
   externalKey: text("external_key"),
-  fullName: text("full_name").notNull().unique(),
+  fullName: text("full_name").notNull(),
   url: text("url").notNull(),
   category: text("category").notNull(),
   technology: text("technology"),
@@ -74,7 +75,9 @@ export const repoSources = sqliteTable("repo_sources", {
   throttledUntil: text("throttled_until"),
   lastScrapedAt: text("last_scraped_at"),
   totalJobsFetched: integer("total_jobs_fetched").notNull().default(0),
-});
+}, (table) => [
+  unique("repo_sources_user_full_name_unique").on(table.userId, table.fullName),
+]);
 
 export const scrapeRuns = sqliteTable("scrape_runs", {
   id: text("id").primaryKey(),
@@ -103,6 +106,27 @@ export const sourceSyncRuns = sqliteTable("source_sync_runs", {
   errorCode: text("error_code"),
   errorMessage: text("error_message"),
 });
+
+export const sourceJobLinks = sqliteTable("source_job_links", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  sourceId: text("source_id").notNull().references(() => repoSources.id),
+  jobId: text("job_id").notNull().references(() => jobs.id),
+  createdAt: text("created_at").notNull(),
+}, (table) => [
+  unique("source_job_user_source_job_unique").on(table.userId, table.sourceId, table.jobId),
+]);
+
+export const sourceUsageDaily = sqliteTable("source_usage_daily", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  feature: text("feature").notNull(),
+  dayStart: text("day_start").notNull(),
+  used: integer("used").notNull().default(0),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  unique("source_usage_daily_user_feature_day_unique").on(table.userId, table.feature, table.dayStart),
+]);
 
 // ─── Auth tables (NextAuth) ────────────────────────────────
 

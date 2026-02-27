@@ -34,6 +34,9 @@ function generateId(): string {
 }
 
 async function seed() {
+  const seedUserId = "seed-user";
+  const now = new Date().toISOString();
+
   console.log("Reading ecosystem data...");
   const ecosystem = JSON.parse(fs.readFileSync(ECOSYSTEM_PATH, "utf-8"));
 
@@ -97,6 +100,15 @@ async function seed() {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      email TEXT NOT NULL UNIQUE,
+      image TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS outreach_records (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
@@ -115,15 +127,17 @@ async function seed() {
 
     CREATE TABLE IF NOT EXISTS repo_sources (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       owner TEXT NOT NULL,
       repo TEXT NOT NULL,
-      full_name TEXT NOT NULL UNIQUE,
+      full_name TEXT NOT NULL,
       url TEXT NOT NULL,
       category TEXT NOT NULL,
       technology TEXT,
       enabled INTEGER NOT NULL DEFAULT 1,
       last_scraped_at TEXT,
-      total_jobs_fetched INTEGER NOT NULL DEFAULT 0
+      total_jobs_fetched INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(user_id, full_name)
     );
 
     CREATE TABLE IF NOT EXISTS scrape_runs (
@@ -145,16 +159,24 @@ async function seed() {
     CREATE INDEX IF NOT EXISTS idx_outreach_status ON outreach_records(status);
   `);
 
+  sqlite
+    .prepare(
+      `INSERT OR IGNORE INTO users (id, name, email, image, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    )
+    .run(seedUserId, "Seed User", "seed-user@local.invalid", null, now, now);
+
   // Seed repo sources from byCategory
   console.log("Seeding repo sources from byCategory...");
   for (const repo of ecosystem.githubRepos.byCategory) {
     const existing = sqlite
-      .prepare("SELECT id FROM repo_sources WHERE full_name = ?")
-      .get(repo.fullName);
+      .prepare("SELECT id FROM repo_sources WHERE user_id = ? AND full_name = ?")
+      .get(seedUserId, repo.fullName);
     if (!existing) {
       db.insert(schema.repoSources)
         .values({
           id: generateId(),
+          userId: seedUserId,
           owner: repo.owner,
           repo: repo.repo,
           fullName: repo.fullName,
@@ -174,12 +196,13 @@ async function seed() {
   console.log("Seeding repo sources from byTechnology...");
   for (const repo of ecosystem.githubRepos.byTechnology) {
     const existing = sqlite
-      .prepare("SELECT id FROM repo_sources WHERE full_name = ?")
-      .get(repo.fullName);
+      .prepare("SELECT id FROM repo_sources WHERE user_id = ? AND full_name = ?")
+      .get(seedUserId, repo.fullName);
     if (!existing) {
       db.insert(schema.repoSources)
         .values({
           id: generateId(),
+          userId: seedUserId,
           owner: repo.owner,
           repo: repo.repo,
           fullName: repo.fullName,
@@ -205,12 +228,13 @@ async function seed() {
   for (const agg of ecosystem.githubRepos.aggregatorsAndMeta) {
     if (issueBasedAggregators.includes(agg.fullName)) {
       const existing = sqlite
-        .prepare("SELECT id FROM repo_sources WHERE full_name = ?")
-        .get(agg.fullName);
+        .prepare("SELECT id FROM repo_sources WHERE user_id = ? AND full_name = ?")
+        .get(seedUserId, agg.fullName);
       if (!existing) {
         db.insert(schema.repoSources)
           .values({
             id: generateId(),
+            userId: seedUserId,
             owner: agg.fullName.split("/")[0],
             repo: agg.fullName.split("/")[1],
             fullName: agg.fullName,
@@ -231,12 +255,13 @@ async function seed() {
   console.log("Seeding Portugal repos...");
   for (const repo of ecosystem.githubRepos.portugal) {
     const existing = sqlite
-      .prepare("SELECT id FROM repo_sources WHERE full_name = ?")
-      .get(repo.fullName);
+      .prepare("SELECT id FROM repo_sources WHERE user_id = ? AND full_name = ?")
+      .get(seedUserId, repo.fullName);
     if (!existing) {
       db.insert(schema.repoSources)
         .values({
           id: generateId(),
+          userId: seedUserId,
           owner: repo.fullName.split("/")[0],
           repo: repo.fullName.split("/")[1],
           fullName: repo.fullName,

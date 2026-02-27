@@ -12,10 +12,17 @@ export async function GET() {
     }
 
     const userId = ensureUserExists(session);
+    const visibleJobsCondition = sql`EXISTS (
+      SELECT 1
+      FROM source_job_links sjl
+      WHERE sjl.user_id = ${userId}
+        AND sjl.job_id = ${schema.jobs.id}
+    )`;
 
     const totalResult = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
+      .where(visibleJobsCondition)
       .get();
     const totalJobs = totalResult?.count || 0;
 
@@ -24,7 +31,7 @@ export async function GET() {
     const todayResult = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
-      .where(sql`${schema.jobs.createdAt} >= ${today.toISOString()}`)
+      .where(and(visibleJobsCondition, sql`${schema.jobs.createdAt} >= ${today.toISOString()}`))
       .get();
     const newJobsToday = todayResult?.count || 0;
 
@@ -33,14 +40,14 @@ export async function GET() {
     const weekResult = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
-      .where(sql`${schema.jobs.createdAt} >= ${weekAgo.toISOString()}`)
+      .where(and(visibleJobsCondition, sql`${schema.jobs.createdAt} >= ${weekAgo.toISOString()}`))
       .get();
     const newJobsThisWeek = weekResult?.count || 0;
 
     const reposResult = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.repoSources)
-      .where(eq(schema.repoSources.enabled, true))
+      .where(and(eq(schema.repoSources.userId, userId), eq(schema.repoSources.enabled, true)))
       .get();
     const totalReposMonitored = reposResult?.count || 0;
 
@@ -80,7 +87,7 @@ export async function GET() {
     const remoteCount = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
-      .where(eq(schema.jobs.isRemote, true))
+      .where(and(visibleJobsCondition, eq(schema.jobs.isRemote, true)))
       .get();
 
     const contractTypes = db
@@ -89,7 +96,7 @@ export async function GET() {
         count: sql<number>`count(*)`,
       })
       .from(schema.jobs)
-      .where(sql`${schema.jobs.contractType} IS NOT NULL`)
+      .where(and(visibleJobsCondition, sql`${schema.jobs.contractType} IS NOT NULL`))
       .groupBy(schema.jobs.contractType)
       .all();
 
@@ -99,7 +106,7 @@ export async function GET() {
         count: sql<number>`count(*)`,
       })
       .from(schema.jobs)
-      .where(sql`${schema.jobs.experienceLevel} IS NOT NULL`)
+      .where(and(visibleJobsCondition, sql`${schema.jobs.experienceLevel} IS NOT NULL`))
       .groupBy(schema.jobs.experienceLevel)
       .all();
 
@@ -109,6 +116,7 @@ export async function GET() {
         count: sql<number>`count(*)`,
       })
       .from(schema.jobs)
+      .where(visibleJobsCondition)
       .groupBy(schema.jobs.repoFullName)
       .orderBy(sql`count(*) DESC`)
       .limit(10)
@@ -117,13 +125,13 @@ export async function GET() {
     const jobsWithEmail = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
-      .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`)
+      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`))
       .get();
 
     const uniqueRecruiterEmails = db
       .select({ count: sql<number>`count(distinct lower(trim(${schema.jobs.contactEmail})))` })
       .from(schema.jobs)
-      .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`)
+      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') <> ''`))
       .get();
 
     const uniqueRecruiterDomains = db
@@ -131,14 +139,17 @@ export async function GET() {
         count: sql<number>`count(distinct lower(substr(trim(${schema.jobs.contactEmail}), instr(trim(${schema.jobs.contactEmail}), '@') + 1)))`,
       })
       .from(schema.jobs)
-      .where(sql`coalesce(trim(${schema.jobs.contactEmail}), '') like '%@%'`)
+      .where(and(visibleJobsCondition, sql`coalesce(trim(${schema.jobs.contactEmail}), '') like '%@%'`))
       .get();
 
     const jobsAtsOnly = db
       .select({ count: sql<number>`count(*)` })
       .from(schema.jobs)
       .where(
-        sql`coalesce(trim(${schema.jobs.contactEmail}), '') = '' AND coalesce(trim(${schema.jobs.applyUrl}), '') <> ''`
+        and(
+          visibleJobsCondition,
+          sql`coalesce(trim(${schema.jobs.contactEmail}), '') = '' AND coalesce(trim(${schema.jobs.applyUrl}), '') <> ''`
+        )
       )
       .get();
 
@@ -257,6 +268,10 @@ export async function GET() {
       plan: planInfo.plan,
       usage: planInfo.usage,
       limits: planInfo.limits,
+      sourceUsage: planInfo.sourceUsage,
+      sourceLimits: planInfo.sourceLimits,
+      enabledSources: planInfo.enabledSources,
+      enabledAtsSources: planInfo.enabledAtsSources,
     });
   } catch (error) {
     console.error("Stats error:", error);

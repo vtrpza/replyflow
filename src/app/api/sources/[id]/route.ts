@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { ensureUserExists } from "@/lib/plan";
+import {
+  assertWithinSourceEnableQuota,
+  ensureUserExists,
+  upgradeRequiredResponse,
+} from "@/lib/plan";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -14,7 +18,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const { id } = await context.params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -22,7 +26,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const source = db
       .select()
       .from(schema.repoSources)
-      .where(eq(schema.repoSources.id, id))
+      .where(and(eq(schema.repoSources.id, id), eq(schema.repoSources.userId, userId)))
       .get();
 
     if (!source) {
@@ -33,6 +37,16 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const nextSyncInterval = typeof body.syncIntervalMinutes === "number"
       ? Math.max(5, Math.min(1440, Math.round(body.syncIntervalMinutes)))
       : source.syncIntervalMinutes;
+
+    if (!source.enabled && nextEnabled) {
+      const enableCheck = assertWithinSourceEnableQuota(userId, source.sourceType);
+      if (!enableCheck.ok) {
+        return NextResponse.json(
+          upgradeRequiredResponse(enableCheck.feature, enableCheck.limit, enableCheck.period),
+          { status: 402 }
+        );
+      }
+    }
 
     db.update(schema.repoSources)
       .set({
@@ -46,7 +60,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         syncIntervalMinutes: nextSyncInterval,
         termsAcceptedAt: body.acceptTerms === true ? new Date().toISOString() : source.termsAcceptedAt,
       })
-      .where(and(eq(schema.repoSources.id, id), eq(schema.repoSources.fullName, source.fullName)))
+      .where(and(eq(schema.repoSources.id, id), eq(schema.repoSources.userId, userId)))
       .run();
 
     return NextResponse.json({ success: true });

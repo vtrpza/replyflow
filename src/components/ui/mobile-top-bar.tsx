@@ -9,10 +9,12 @@ export function MobileTopBar() {
   const { t } = useI18n();
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"idle" | "success" | "error">("idle");
+  const [syncError, setSyncError] = useState("");
 
   const handleSync = async () => {
     setSyncing(true);
     setSyncStatus("idle");
+    setSyncError("");
     try {
       const res = await fetch("/api/sync", { method: "POST" });
       const data = await res.json();
@@ -21,10 +23,15 @@ export function MobileTopBar() {
         setTimeout(() => window.location.reload(), 1500);
       } else {
         setSyncStatus("error");
-        console.error(data.error);
+        if (res.status === 402 && data?.feature === "syncs_daily") {
+          setSyncError(t("sidebar.syncLimitReached"));
+        } else {
+          setSyncError(data?.error || t("sidebar.syncFailed"));
+        }
       }
     } catch {
       setSyncStatus("error");
+      setSyncError(t("sidebar.unknownError"));
     } finally {
       setSyncing(false);
     }
@@ -54,6 +61,7 @@ export function MobileTopBar() {
       <button
         onClick={handleSync}
         disabled={syncing}
+        title={syncError || undefined}
         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all disabled:opacity-50"
         style={{
           background: syncStatus === "error"

@@ -1,0 +1,18 @@
+name: Scheduled Sync
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    name: Trigger system sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run scheduled sync
+        run: bash scripts/scheduled-sync.sh
+        env:
+          REPLYFLOW_SYNC_TOKEN: ${{ secrets.REPLYFLOW_SYNC_TOKEN }}

@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { ensureUserExists } from "@/lib/plan";
+import {
+  assertWithinSourceEnableQuota,
+  ensureUserExists,
+  upgradeRequiredResponse,
+} from "@/lib/plan";
 import { SOURCE_POLICY } from "@/lib/sources/policy";
 import type { SourceType } from "@/lib/types";
 
@@ -109,12 +113,16 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const sourceType = request.nextUrl.searchParams.get("sourceType");
     const status = request.nextUrl.searchParams.get("status");
 
-    let rows = db.select().from(schema.repoSources).all();
+    let rows = db
+      .select()
+      .from(schema.repoSources)
+      .where(eq(schema.repoSources.userId, userId))
+      .all();
 
     if (sourceType) {
       rows = rows.filter((row) => row.sourceType === sourceType);
@@ -145,7 +153,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const body = (await request.json()) as Record<string, unknown>;
     const normalized = normalizeSourceInput(body);
@@ -153,11 +161,26 @@ export async function POST(request: NextRequest) {
     const existing = db
       .select({ id: schema.repoSources.id })
       .from(schema.repoSources)
-      .where(eq(schema.repoSources.fullName, normalized.fullName))
+      .where(
+        and(
+          eq(schema.repoSources.userId, userId),
+          eq(schema.repoSources.fullName, normalized.fullName)
+        )
+      )
       .get();
 
     if (existing) {
       return NextResponse.json({ error: "Source already exists" }, { status: 409 });
+    }
+
+    if (normalized.enabled) {
+      const enableCheck = assertWithinSourceEnableQuota(userId, normalized.sourceType);
+      if (!enableCheck.ok) {
+        return NextResponse.json(
+          upgradeRequiredResponse(enableCheck.feature, enableCheck.limit, enableCheck.period),
+          { status: 402 }
+        );
+      }
     }
 
     const policy = SOURCE_POLICY[normalized.sourceType];
@@ -166,6 +189,7 @@ export async function POST(request: NextRequest) {
     db.insert(schema.repoSources)
       .values({
         id: generateId(),
+        userId,
         sourceType: normalized.sourceType,
         displayName: normalized.displayName,
         owner: normalized.owner,

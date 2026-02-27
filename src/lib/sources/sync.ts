@@ -57,14 +57,7 @@ function shouldRunNow(source: SourceRecord): boolean {
   return true;
 }
 
-function getTargetUserIds(userId?: string): string[] {
-  if (userId) {
-    return [userId];
-  }
-  return db.select({ id: schema.users.id }).from(schema.users).all().map((row) => row.id);
-}
-
-function syncContactEmailToUsers(input: {
+function syncContactEmailToUser(input: {
   email: string | null;
   company?: string | null;
   role?: string | null;
@@ -74,27 +67,38 @@ function syncContactEmailToUsers(input: {
   jobTitle?: string;
   userId?: string;
 }) {
-  if (!input.email) {
+  if (!input.email || !input.userId) {
     return;
   }
 
-  const users = getTargetUserIds(input.userId);
-  for (const id of users) {
-    upsertContactFromJobForUser(id, {
-      email: input.email,
-      company: input.company,
-      position: input.role,
-      sourceRef: input.sourceRef,
-      sourceType: input.sourceType,
-      jobId: input.jobId,
-      jobTitle: input.jobTitle,
-    });
-  }
+  upsertContactFromJobForUser(input.userId, {
+    email: input.email,
+    company: input.company,
+    position: input.role,
+    sourceRef: input.sourceRef,
+    sourceType: input.sourceType,
+    jobId: input.jobId,
+    jobTitle: input.jobTitle,
+  });
+}
+
+function linkJobToSourceForUser(userId: string, sourceId: string, jobId: string): void {
+  db.insert(schema.sourceJobLinks)
+    .values({
+      id: generateId(),
+      userId,
+      sourceId,
+      jobId,
+      createdAt: new Date().toISOString(),
+    })
+    .onConflictDoNothing()
+    .run();
 }
 
 function sourceToRecord(raw: typeof schema.repoSources.$inferSelect): SourceRecord {
   return {
     id: raw.id,
+    userId: raw.userId,
     sourceType: raw.sourceType as SourceType,
     displayName: raw.displayName,
     owner: raw.owner,
@@ -119,7 +123,7 @@ function getMinutesSince(dateIso: string | null): number {
 
 async function runSingleSourceSync(
   sourceRaw: typeof schema.repoSources.$inferSelect,
-  userId?: string
+  userId: string
 ): Promise<SyncResultItem> {
   const source = sourceToRecord(sourceRaw);
   const runId = generateId();
@@ -219,7 +223,9 @@ async function runSingleSourceSync(
           })
           .run();
 
-        syncContactEmailToUsers({
+        linkJobToSourceForUser(userId, source.id, jobId);
+
+        syncContactEmailToUser({
           email: parsed.contactEmail,
           company: parsed.company,
           role: parsed.role,
@@ -248,7 +254,9 @@ async function runSingleSourceSync(
           .where(eq(schema.jobs.id, existing.id))
           .run();
 
-        syncContactEmailToUsers({
+        linkJobToSourceForUser(userId, source.id, existing.id);
+
+        syncContactEmailToUser({
           email: parsed.contactEmail || existing.contactEmail,
           company: parsed.company,
           role: parsed.role,
@@ -398,7 +406,7 @@ async function reparseExistingJobs(userId?: string): Promise<RunSourceSyncResult
       updated += 1;
     }
 
-    syncContactEmailToUsers({
+    syncContactEmailToUser({
       email: parsed.contactEmail || job.contactEmail,
       company: parsed.company,
       role: parsed.role,
@@ -432,7 +440,11 @@ export async function runSourceSync(options: RunSourceSyncOptions = {}): Promise
     return reparseExistingJobs(options.userId);
   }
 
-  const globalLockId = "__global__";
+  if (!options.userId) {
+    throw new Error("userId is required for source sync");
+  }
+
+  const globalLockId = `__global__:${options.userId}`;
   const runningLock = db
     .select()
     .from(schema.sourceSyncRuns)
@@ -460,10 +472,19 @@ export async function runSourceSync(options: RunSourceSyncOptions = {}): Promise
   try {
     let discovery: { created: number; autoEnabled: number } | undefined;
     if (options.runDiscovery) {
-      discovery = runSourceDiscovery();
+      discovery = runSourceDiscovery(options.userId);
     }
 
-    let sources = db.select().from(schema.repoSources).where(eq(schema.repoSources.enabled, true)).all();
+    let sources = db
+      .select()
+      .from(schema.repoSources)
+      .where(
+        and(
+          eq(schema.repoSources.userId, options.userId),
+          eq(schema.repoSources.enabled, true)
+        )
+      )
+      .all();
 
     if (options.sourceId) {
       sources = sources.filter((source) => source.id === options.sourceId);

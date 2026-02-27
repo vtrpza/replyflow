@@ -2,6 +2,7 @@ import type { SourceType } from "@/lib/types";
 
 export interface SourceRecord {
   id: string;
+  userId: string;
   sourceType: SourceType;
   displayName: string | null;
   owner: string;

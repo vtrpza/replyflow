@@ -36,13 +36,10 @@ yarn-error.log*
 .env.local
 .env.production
 
-# database
+# database files (keep JSON catalog files for source discovery)
 data/*.db
 data/*.db-wal
 data/*.db-shm
-
-# local runtime/seeding artifacts (Fly uses /data volume in prod)
-data/
 
 # vercel
 .vercel

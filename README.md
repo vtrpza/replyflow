@@ -28,6 +28,16 @@ The core workflow:
   - Header required: `x-replyflow-sync-token: <REPLYFLOW_SYNC_TOKEN>`
   - Discovery can auto-register curated BR/LATAM-friendly sources from `data/brazilian-job-ecosystem.json`.
 
+### Free vs Pro Limits (Source Features)
+
+- Free plan:
+  - up to `5` enabled sources
+  - up to `1` enabled ATS source (Greenhouse/Lever)
+  - up to `3` manual syncs/day
+  - up to `5` source validations/day
+- Pro plan: unlimited source limits
+- Limit violations return HTTP `402` with `error: "upgrade_required"` and feature metadata.
+
 ## Explainability and Scoring
 
 - Job cards now expose matcher explainability:
@@ -138,7 +148,7 @@ This project is configured to run on **Fly.io** with persistent volume storage f
 Quick deploy:
 
 ```bash
-"/home/vtrpza/.fly/bin/flyctl" deploy -a replyflow
+flyctl deploy -a replyflow
 ```
 
 Required secrets (Fly):
@@ -149,10 +159,19 @@ Required secrets (Fly):
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
 - `GOOGLE_CONNECT_REDIRECT_URI`
+- `REPLYFLOW_SYNC_TOKEN`
+- `SENTRY_DSN` (optional)
+- `RESEND_API_KEY` (optional)
 
 Google OAuth callback URLs must include:
 
 - `https://<your-app>.fly.dev/api/auth/callback/google`
 - `https://<your-app>.fly.dev/api/accounts/callback`
+
+Post-deploy verification:
+
+```bash
+bash scripts/smoke-test.sh https://replyflow.fly.dev
+```
 
 See full operational runbook: `DEPLOYMENT.md`.

@@ -15,6 +15,13 @@
       "when": 1772178600000,
       "tag": "0001_sources_connectors_explainability",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1772180400000,
+      "tag": "0002_sources_per_user_plan_quotas",
+      "breakpoints": true
     }
   ]
 }

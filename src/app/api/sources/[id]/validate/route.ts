@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { ensureUserExists } from "@/lib/plan";
+import {
+  assertWithinSourceDailyQuota,
+  ensureUserExists,
+  upgradeRequiredResponse,
+} from "@/lib/plan";
 import { getSourceConnector } from "@/lib/sources/connectors";
 import { computeSourceHealth } from "@/lib/sources/health";
 import type { SourceType } from "@/lib/types";
@@ -17,22 +21,31 @@ export async function POST(_request: Request, context: RouteContext) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    ensureUserExists(session);
+    const userId = ensureUserExists(session);
 
     const { id } = await context.params;
     const source = db
       .select()
       .from(schema.repoSources)
-      .where(eq(schema.repoSources.id, id))
+      .where(and(eq(schema.repoSources.id, id), eq(schema.repoSources.userId, userId)))
       .get();
 
     if (!source) {
       return NextResponse.json({ error: "Source not found" }, { status: 404 });
     }
 
+    const validationCheck = assertWithinSourceDailyQuota(userId, "source_validate");
+    if (!validationCheck.ok) {
+      return NextResponse.json(
+        upgradeRequiredResponse(validationCheck.feature, validationCheck.limit, validationCheck.period),
+        { status: 402 }
+      );
+    }
+
     const connector = getSourceConnector(source.sourceType as SourceType);
     const result = await connector.fetchJobs({
       id: source.id,
+      userId: source.userId,
       sourceType: source.sourceType as SourceType,
       displayName: source.displayName,
       owner: source.owner,

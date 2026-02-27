@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { ensureUserExists } from "@/lib/plan";
+import {
+  assertWithinSourceDailyQuota,
+  ensureUserExists,
+  upgradeRequiredResponse,
+} from "@/lib/plan";
 import { runSourceSync } from "@/lib/sources/sync";
 
 /**
@@ -17,6 +21,16 @@ export async function POST(request: Request) {
 
     const userId = ensureUserExists(session);
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+
+    if (!body.reparseExisting) {
+      const syncCheck = assertWithinSourceDailyQuota(userId, "manual_sync");
+      if (!syncCheck.ok) {
+        return NextResponse.json(
+          upgradeRequiredResponse(syncCheck.feature, syncCheck.limit, syncCheck.period),
+          { status: 402 }
+        );
+      }
+    }
 
     const result = await runSourceSync({
       sourceId: body.sourceId ? String(body.sourceId) : undefined,

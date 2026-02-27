@@ -38,6 +38,9 @@ COPY --from=build /app/public /app/public
 COPY --from=build /app/drizzle /app/drizzle
 COPY --from=build /app/dist-cli /app/dist-cli
 
+# Copy data catalog files for source auto-discovery.
+COPY --from=build /app/data /app/data
+
 COPY --from=build /app/docker-entrypoint.js /app/docker-entrypoint.js
 
 RUN rm -f /app/.env /app/.env.* || true

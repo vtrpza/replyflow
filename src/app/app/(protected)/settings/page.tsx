@@ -58,6 +58,19 @@ interface PlanSnapshot {
     accounts: number;
     historyItems: number;
   };
+  sourceUsage?: {
+    dayStart: string;
+    manualSyncUsed: number;
+    sourceValidationsUsed: number;
+  };
+  sourceLimits?: {
+    enabledSources: number;
+    enabledAtsSources: number;
+    manualSyncPerDay: number;
+    sourceValidationsPerDay: number;
+  };
+  enabledSources?: number;
+  enabledAtsSources?: number;
 }
 
 function SettingsPageContent() {
@@ -136,6 +149,10 @@ function SettingsPageContent() {
               plan: data.plan,
               usage: data.usage,
               limits: data.limits,
+              sourceUsage: data.sourceUsage,
+              sourceLimits: data.sourceLimits,
+              enabledSources: data.enabledSources,
+              enabledAtsSources: data.enabledAtsSources,
             });
           }
         })
@@ -415,7 +432,7 @@ function SettingsPageContent() {
             <div>
               <h2 className="text-lg font-semibold text-zinc-200">{isPt ? "Plano e uso" : "Plan & Usage"}</h2>
               <p className="text-xs text-zinc-500 mt-1">
-                {isPt ? "Uso do mes atual e limites do plano" : "Current month usage and plan limits"}
+                {isPt ? "Uso mensal e diario + limites do plano" : "Monthly and daily usage + plan limits"}
               </p>
             </div>
             <a
@@ -453,6 +470,30 @@ function SettingsPageContent() {
               <p className="text-zinc-400">{isPt ? "Contas conectadas" : "Connected accounts"}</p>
               <p className="text-zinc-100 font-medium">
                 {accounts.length} / {formatLimit(planSnapshot?.limits.accounts, 1)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+              <p className="text-zinc-400">{isPt ? "Fontes ativas" : "Enabled sources"}</p>
+              <p className="text-zinc-100 font-medium">
+                {planSnapshot?.enabledSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledSources, 5)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+              <p className="text-zinc-400">{isPt ? "ATS ativas" : "Enabled ATS sources"}</p>
+              <p className="text-zinc-100 font-medium">
+                {planSnapshot?.enabledAtsSources ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.enabledAtsSources, 1)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+              <p className="text-zinc-400">{isPt ? "Sync manual hoje" : "Manual syncs today"}</p>
+              <p className="text-zinc-100 font-medium">
+                {planSnapshot?.sourceUsage?.manualSyncUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.manualSyncPerDay, 3)}
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800 border border-zinc-700">
+              <p className="text-zinc-400">{isPt ? "Validacoes hoje" : "Validations today"}</p>
+              <p className="text-zinc-100 font-medium">
+                {planSnapshot?.sourceUsage?.sourceValidationsUsed ?? 0} / {formatLimit(planSnapshot?.sourceLimits?.sourceValidationsPerDay, 5)}
               </p>
             </div>
           </div>

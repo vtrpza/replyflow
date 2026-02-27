@@ -22,6 +22,7 @@ This codebase now includes the following product capabilities:
 - `jobs`
   - `source_id`, `source_type`, `external_job_id`
 - `repo_sources`
+  - `user_id` (per-user tenancy)
   - connector/compliance/health/scheduling/discovery fields:
   - `source_type`, `display_name`, `external_key`
   - `attribution_label`, `attribution_url`, `terms_url`, `terms_accepted_at`
@@ -31,6 +32,10 @@ This codebase now includes the following product capabilities:
   - `auto_discovered`, `discovery_confidence`, `region_tags_json`
 - `source_sync_runs`
   - new table for source-level and global sync execution metadata
+- `source_job_links`
+  - per-user visibility links between source and jobs (`user_id`, `source_id`, `job_id`)
+- `source_usage_daily`
+  - per-user daily counters for source-related quotas (`manual_sync`, `source_validate`)
 - `job_match_scores`
   - `reasons_json`, `missing_skills_json`, `breakdown_json`
 - `contacts`
@@ -44,7 +49,8 @@ This codebase now includes the following product capabilities:
 ### Migration files
 
 - `drizzle/0001_sources_connectors_explainability.sql`
-- `drizzle/meta/_journal.json` updated with `0001_sources_connectors_explainability`
+- `drizzle/0002_sources_per_user_plan_quotas.sql`
+- `drizzle/meta/_journal.json` updated with `0001` and `0002`
 
 ## Source Connectors and Discovery
 
@@ -84,11 +90,13 @@ This codebase now includes the following product capabilities:
 ### Core sync orchestrator
 
 - `src/lib/sources/sync.ts`
-  - global lock via `source_sync_runs`
+  - per-user lock via `source_sync_runs` (`source_id=__global__:<userId>`)
+  - user-scoped source selection
   - per-source sync run persistence
   - source health updates and throttling
   - optional discovery and schedule enforcement
-  - contact-email sync into user contacts
+  - user-scoped contact-email sync into contacts bank
+  - `source_job_links` upsert for user-visible jobs
 
 ### APIs
 
@@ -100,6 +108,42 @@ This codebase now includes the following product capabilities:
   - token-protected scheduler endpoint
   - header: `x-replyflow-sync-token`
   - env: `REPLYFLOW_SYNC_TOKEN`
+  - executes sync per user (or one user when `body.userId` is provided)
+
+## Plan Gating (Free vs Pro)
+
+### Source-related limits
+
+- Free:
+  - enabled sources: `5`
+  - enabled ATS sources (Greenhouse/Lever): `1`
+  - manual syncs per day: `3`
+  - source validations per day: `5`
+- Pro:
+  - unlimited (`-1`) for all source-related limits
+
+### Enforcement points
+
+- `POST /api/sources` and `PATCH /api/sources/[id]`
+  - blocks enable actions that exceed enabled source/ATS quotas
+- `POST /api/sources/[id]/validate`
+  - enforces daily validation quota
+- `POST /api/sync`
+  - enforces daily manual-sync quota
+- Standardized `402` payload:
+  - `error: "upgrade_required"`
+  - `feature`: one of `sources_enabled`, `ats_sources_enabled`, `syncs_daily`, `source_validations_daily`
+  - `limit`
+  - `period`: `total|day|month`
+
+### Plan telemetry surfaced to UI
+
+- `/api/stats` now returns:
+  - `sourceUsage`
+  - `sourceLimits`
+  - `enabledSources`
+  - `enabledAtsSources`
+- Settings page displays monthly + daily usage with source quotas.
 
 ## Sources API + UI
 

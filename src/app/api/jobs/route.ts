@@ -47,7 +47,14 @@ export async function GET(request: NextRequest) {
 
     const offset = (page - 1) * limit;
 
-    const conditions = [];
+    const conditions = [
+      sql`EXISTS (
+        SELECT 1
+        FROM source_job_links sjl
+        WHERE sjl.user_id = ${userId}
+          AND sjl.job_id = ${schema.jobs.id}
+      )`,
+    ];
 
     if (search) {
       conditions.push(
@@ -86,7 +93,10 @@ export async function GET(request: NextRequest) {
       const keywordConditions = keywords.map((k) =>
         sql`LOWER(${schema.jobs.title}) LIKE ${`%${k.toLowerCase()}%`}`
       );
-      conditions.push(or(...keywordConditions));
+      const roleCondition = or(...keywordConditions);
+      if (roleCondition) {
+        conditions.push(roleCondition);
+      }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -122,14 +132,38 @@ export async function GET(request: NextRequest) {
       .offset(offset)
       .all();
 
-    const sourceIds = Array.from(
-      new Set(baseJobs.map((job) => job.sourceId).filter((value): value is string => !!value))
-    );
+    const jobIds = baseJobs.map((job) => job.id);
+    const links = jobIds.length > 0
+      ? db
+          .select()
+          .from(schema.sourceJobLinks)
+          .where(
+            and(
+              eq(schema.sourceJobLinks.userId, userId),
+              inArray(schema.sourceJobLinks.jobId, jobIds)
+            )
+          )
+          .all()
+      : [];
+
+    const linkMap = new Map<string, typeof schema.sourceJobLinks.$inferSelect>();
+    for (const link of links) {
+      if (!linkMap.has(link.jobId)) {
+        linkMap.set(link.jobId, link);
+      }
+    }
+
+    const sourceIds = Array.from(new Set(links.map((link) => link.sourceId)));
     const sources = sourceIds.length > 0
       ? db
           .select()
           .from(schema.repoSources)
-          .where(inArray(schema.repoSources.id, sourceIds))
+          .where(
+            and(
+              eq(schema.repoSources.userId, userId),
+              inArray(schema.repoSources.id, sourceIds)
+            )
+          )
           .all()
       : [];
     const sourceMap = new Map(sources.map((source) => [source.id, source]));
@@ -157,7 +191,12 @@ export async function GET(request: NextRequest) {
         )
         .get();
 
-      const source = job.sourceId ? sourceMap.get(job.sourceId) : null;
+      const link = linkMap.get(job.id);
+      const source = link?.sourceId
+        ? sourceMap.get(link.sourceId)
+        : job.sourceId
+          ? sourceMap.get(job.sourceId)
+          : null;
       const parsedReasons = safeJsonParse<string[]>(score?.reasonsJson, []);
       const parsedMissingSkills = safeJsonParse<string[]>(score?.missingSkillsJson, []);
       const parsedBreakdown = safeJsonParse<{
