@@ -7,255 +7,211 @@
 ![SQLite + Drizzle](https://img.shields.io/badge/SQLite-Drizzle-003B57?logo=sqlite)
 ![Fly.io](https://img.shields.io/badge/Fly.io-deployed-8B5CF6?logo=flydotio)
 
-> **Stop applying blindly. Start getting interviews.**
 
-ReplyFlow is a job-search framework for Brazilian mid-to-senior developers. It combines sourcing intelligence, recruiter CRM, ATS pipeline tracking, and Gmail-powered outreach into a single system — so you can treat outdated listings as recruiter leads and still track ATS submissions in the same workflow.
+**Stop applying blindly. Start running your job search like a system.**
 
-> Jobs intelligence + CRM + ATS + outreach in one system.
+ReplyFlow is a job-search workflow product for Brazilian developers.
+
+It brings together **job sourcing, ATS tracking, recruiter context, and outreach** in one place — so the process stops feeling scattered and starts feeling operational.
+
+> Public repository, proprietary software.
+> This project is being built in public for visibility and feedback, but it is **not open source**.
+
+---
+
+## Why this exists
+
+Looking for a job gets messy fast.
+
+You save roles in one place, apply in another, lose recruiter context, forget follow-ups, and end up spending energy without a clear system behind it.
+
+ReplyFlow exists to make that process more structured.
+
+Instead of treating job search as a pile of links and scattered actions, it turns it into a workflow:
+
+* collect opportunities
+* prioritize what is worth your time
+* track ATS submissions
+* keep recruiter context
+* follow up consistently
+
+---
+
+## What ReplyFlow does
+
+### Jobs intelligence
+
+Collect opportunities from sources like GitHub, Greenhouse, and Lever, then help prioritize them with contextual match signals.
+
+### ATS pipeline tracking
+
+Track submitted applications and their current stage without losing visibility of the broader process.
+
+### Recruiter context
+
+Keep recruiter and contact information attached to the opportunities you found, instead of letting it get buried in email threads or notes.
+
+### Outreach workflow
+
+Draft and send outreach emails, keep history per contact, and stay consistent with follow-ups.
+
+### Profile readiness
+
+Surface missing profile information and improve the quality of your outreach and application workflow before you start sending.
+
+---
+
+## Product direction
+
+ReplyFlow is being built around one idea:
+
+**You do not need more vacancies. You need more direction.**
+
+The goal is not to create another generic job board.
+The goal is to help developers run job search with more structure, context, and consistency.
+
+---
+
+## Current stack
+
+* **Framework:** Next.js 16 (App Router)
+* **UI:** React 19 + Tailwind CSS 4
+* **Language:** TypeScript 5
+* **Database:** SQLite + Drizzle ORM
+* **Auth:** NextAuth v5
+* **Email:** Gmail API
+* **Monitoring:** Sentry
+* **Deploy:** Fly.io
+
+---
 
 ## Screenshots
 
-<!-- TODO: Add product screenshots here -->
+Screenshots and demo GIFs will be added here.
 
-_Screenshots coming soon._
+Suggested sections:
 
-## Features
+* dashboard
+* jobs pipeline
+* recruiter/contact workflow
+* outreach flow
 
-### Jobs Intelligence
+---
 
-Source opportunities from GitHub repos, Greenhouse boards, and Lever postings. Each job card surfaces a weighted match score with full explainability — top reasons for the match, missing skills, and a score breakdown — so you know exactly why a role fits (or doesn't) before spending time on it.
-
-### Recruiter CRM
-
-Contacts are automatically enriched from job syncs and email reveals with first/last seen timestamps, linked job count, and company context. Browse, filter, and export your contact bank as CSV, or compose follow-ups directly from any contact card.
-
-### ATS Pipeline Tracking
-
-ATS-only roles (Greenhouse, Lever) are first-class pipeline stages — track submission status alongside direct-outreach opportunities without switching tools or losing context.
-
-### Direct Outreach Engine
-
-Draft cold emails in PT-BR or EN using customizable templates, send via your connected Gmail account with CV attachment support, and track follow-ups with per-contact outreach history.
-
-### Profile Scoring
-
-A completeness score with band classification (`low` | `medium` | `high`) surfaces missing profile fields and actionable suggestions in Settings, ensuring your profile is ready before outreach begins.
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 + Tailwind CSS 4 |
-| Language | TypeScript 5 |
-| Database | SQLite (better-sqlite3) + Drizzle ORM |
-| Auth | NextAuth v5 (JWT sessions) |
-| Email | Gmail API (provider abstraction) |
-| Monitoring | Sentry |
-| Deployment | Fly.io (Docker + persistent volume) |
-| i18n | PT-BR + EN |
-
-## Quick Start
-
-1. **Clone and install**
+## Quick start
 
 ```bash
-git clone <repo-url> && cd gitjobs-v2
+git clone https://github.com/vtrpza/replyflow.git
+cd replyflow
 npm install
-```
-
-2. **Configure environment** — copy `.env.example` to `.env` and fill in required values
-
-3. **Run migrations**
-
-```bash
+cp .env.example .env
 npm run db:migrate
-```
-
-4. **Start the dev server**
-
-```bash
 npm run dev
 ```
 
-Optionally, seed demo data:
+Optional seed commands:
 
 ```bash
-npm run db:seed              # seed source ecosystem/bootstrap data
-npm run db:seed-profile      # seed a sample profile
-npm run db:seed-templates    # seed default outreach templates
-npm run db:backfill-contacts # optional: backfill contacts from existing jobs
-npm run db:backfill-contract-types # normalize contract_type for existing jobs
-npm run db:cleanup-generic-contacts # remove generic/non-direct job_sync contacts from CRM
+npm run db:seed
+npm run db:seed-profile
 ```
 
-## Data Quality Rules
+---
 
-- Dashboard uses `jobsWithEmail` / `jobsWithDirectEmail` as **jobs with scraped email present**.
-- `ATS-only` means `apply_url` exists and no scraped contact email exists.
-- `contract_type` is normalized for all jobs (no `NULL`/`Unknown` bucket in storage):
-  - National-context jobs default to `CLT`.
-  - International-source jobs default to `PJ` when no explicit contract signal exists.
-- Generic emails (for example `noreply`, `support`, `accommodation`) are filtered from recruiter-CRM sync.
+## Project structure
 
-## Project Structure
-
-```
+```text
 src/
 ├── app/
-│   ├── api/               # API route handlers
-│   │   ├── accounts/      # Gmail OAuth connection
-│   │   ├── contacts/      # Recruiter CRM endpoints
-│   │   ├── emails/        # Send + history
-│   │   ├── jobs/          # Listings, match, reveal
-│   │   ├── outreach/      # Draft, send, track
-│   │   ├── profile/       # User profile + scoring
-│   │   ├── sources/       # Source connectors CRUD
-│   │   ├── stats/         # Dashboard analytics
-│   │   ├── sync/          # Manual + system sync
-│   │   └── templates/     # Email templates
-│   ├── app/               # Authenticated app pages
-│   │   ├── compose/       # Email composer
-│   │   ├── history/       # Sent email history
-│   │   ├── jobs/          # Job board
-│   │   ├── outreach/      # Outreach pipeline
-│   │   └── settings/      # Profile & preferences
-│   └── (marketing)/       # Public landing + legal pages
+│   ├── api/
+│   ├── app/
+│   └── (marketing)/
 ├── components/
-│   ├── dashboard/         # Dashboard widgets
-│   ├── jobs/              # Job card & list components
-│   ├── outreach/          # Outreach UI components
-│   └── ui/                # Shared UI primitives
 └── lib/
-    ├── auth/              # Auth helpers
-    ├── contacts/          # Contact enrichment logic
-    ├── db/                # Schema, migrations, seeds
-    ├── i18n/              # Internationalization
-    ├── matcher/           # Job-profile matching engine
-    ├── outreach/          # Outreach generation
-    ├── parser/            # Job description parser
-    ├── plan/              # Plan enforcement logic
-    ├── profile/           # Profile scoring
-    ├── providers/         # Email provider abstraction
-    ├── scraper/           # Job scraping utilities
-    ├── sources/           # Source connector implementations
-    └── types/             # Shared TypeScript types
 ```
 
-## Source Connectors
+Core modules include:
 
-| Type | Description | Example |
-|---|---|---|
-| `github_repo` | Scrapes job listings from GitHub repository issues/files | `frontendbr/vagas` |
-| `greenhouse_board` | Fetches open positions from a Greenhouse job board | `company.greenhouse.io` |
-| `lever_postings` | Fetches open positions from a Lever careers page | `jobs.lever.co/company` |
+* auth
+* contacts
+* db
+* i18n
+* matcher
+* outreach
+* parser
+* profile
+* providers
+* scraper
+* sources
+* types
 
-Sources support auto-discovery from a curated BR/LATAM ecosystem list. Each source tracks health status (`healthy` | `warning` | `critical`) computed from sync outcomes, which drives throttling and retry behavior.
+---
 
-## API Reference
+## Supported sources
 
-<details>
-<summary>Click to expand the full endpoint list</summary>
+ReplyFlow is designed to work with opportunity sources such as:
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/health` | Database connectivity check |
-| GET, POST | `/api/auth/[...nextauth]` | NextAuth sign-in, sign-out, callbacks |
-| GET | `/api/accounts` | List connected email accounts |
-| POST | `/api/accounts` | Connect, disconnect, or set default account |
-| GET | `/api/accounts/callback` | Gmail OAuth2 callback |
-| GET | `/api/contacts` | List contacts (filterable, CSV export) |
-| POST | `/api/contacts` | Create contact or save from job reveal |
-| PATCH | `/api/contacts/[id]` | Update contact details |
-| DELETE | `/api/contacts/[id]` | Delete contact |
-| GET | `/api/jobs` | List jobs with filters, pagination, match scores |
-| PATCH | `/api/jobs` | Update job outreach status |
-| POST | `/api/jobs/match` | Recalculate match scores for all jobs |
-| POST | `/api/jobs/reveal` | Reveal recruiter contact for a job |
-| GET | `/api/emails/history` | Sent email history |
-| POST | `/api/emails/send` | Send email via connected account |
-| GET | `/api/outreach` | List outreach records |
-| POST | `/api/outreach` | Draft cold email for a job |
-| PATCH | `/api/outreach` | Update outreach record |
-| PUT | `/api/outreach` | Send outreach email with CV attachment |
-| GET | `/api/profile` | Get profile with scoring |
-| PUT | `/api/profile` | Update profile and recalculate scores |
-| GET | `/api/sources` | List sources (filterable by type/status) |
-| POST | `/api/sources` | Add new source |
-| PATCH | `/api/sources/[id]` | Update source settings |
-| POST | `/api/sources/[id]/validate` | Validate source connectivity |
-| POST | `/api/telemetry/plan-intent` | Record plan-intent telemetry events |
-| GET | `/api/templates` | List email templates |
-| POST | `/api/templates` | Create email template |
-| GET | `/api/templates/[id]` | Get template by ID |
-| PUT | `/api/templates/[id]` | Update template |
-| DELETE | `/api/templates/[id]` | Delete template |
-| GET | `/api/stats` | Dashboard analytics |
-| POST | `/api/sync` | Manual sync |
-| POST | `/api/sync/system` | System-level sync (token-protected) |
-| POST | `/api/billing/checkout` | Start Asaas hosted recurring checkout (Pro) |
-| GET | `/api/billing/state` | Read billing/subscription state for current user |
-| POST | `/api/billing/subscription/cancel` | Cancel current subscription at period end |
-| POST | `/api/billing/webhooks/asaas` | Asaas webhook ingestion (requires `asaas-access-token`) |
-| POST | `/api/billing/reconcile/system` | Billing reconciliation endpoint (token-protected) |
+* GitHub repository listings
+* Greenhouse boards
+* Lever postings
 
-</details>
+The goal is to unify multiple discovery channels into one operational workflow.
 
-## Billing Notes
+---
 
-- Billing provider is Asaas with hosted recurring checkout (credit card only for MVP).
-- Webhook endpoint is fail-closed: `ASAAS_WEBHOOK_TOKEN` is required and invalid requests are rejected.
-- Entitlement projection is based on the best valid subscription state (active/grace/cancel-at-period-end), not simply the newest row.
-- Billing provider initialization is lazy: missing Asaas billing env vars no longer break `next build`, but billing routes will fail at runtime until those vars are configured.
+## Running locally
 
-## Deployment
+To run the app locally, you will typically need:
 
-ReplyFlow runs on **Fly.io** with a persistent SQLite volume, Docker-based builds, CI/CD quality gates (typecheck + build), scheduled source sync, and automated backups. Migrations execute automatically on container startup.
+* environment variables from `.env.example`
+* a local SQLite database
+* auth configuration
+* optional provider credentials depending on which flows you want to test
 
-```bash
-flyctl deploy -a replyflow
-```
+Some integrations may be partially unavailable without external credentials.
 
-See the full operational runbook, secrets reference, and post-deploy checklist in [`DEPLOYMENT.md`](DEPLOYMENT.md).
+---
 
-## Build Troubleshooting
+## Current status
 
-### JavaScript heap out of memory during `next build`
+ReplyFlow is an actively developed product and already goes beyond a simple prototype.
 
-If your logs show errors like:
+Areas currently being worked on include:
 
-- `Ineffective mark-compacts near heap limit`
-- `Allocation failed - JavaScript heap out of memory`
-- `Next.js build worker exited ... SIGABRT`
+* billing
+* plan enforcement
+* UX polish
+* richer screenshots and demo material
+* stronger end-to-end production flows
 
-the build hit Node.js heap limits during the production bundle step.
+---
 
-Run the build with a larger heap locally:
+## Commercial model
 
-```bash
-NODE_OPTIONS="--max-old-space-size=4096" npm run build
-```
+ReplyFlow is being built as a product.
 
-Deploy note: Fly remote Docker builds in this project already set `NODE_OPTIONS=--max-old-space-size=4096` in the Docker build stage.
+Current pricing direction:
 
-## Plans
+* **Free**
+* **Pro — R$ 39/month**
 
-| | Free (R$ 0) | Pro (R$ 39/mo) |
-|---|---|---|
-| Enabled sources | Unlimited | Unlimited |
-| ATS sources | Unlimited | Unlimited |
-| Manual syncs/day | Unlimited | Unlimited |
-| Source validations/day | Unlimited | Unlimited |
-| Contact reveals | 50/month | Unlimited |
-| Draft generations | 30/month | Unlimited |
-| Sends | 10/month | Unlimited |
-| Connected accounts | 1 | Unlimited |
-| Email history | 30 items | Full |
+This repository may show product internals and implementation details, but the software itself is not licensed for open reuse or redistribution.
 
-## Contributing
+---
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution standards, versioning policy, and code conventions.
+## Feedback
+
+Issues and product feedback are welcome.
+
+This repository is public mainly for visibility and transparency around the product, not as a community-led open-source project.
+
+---
 
 ## License
 
-Private. All rights reserved.
+**Proprietary / All rights reserved.**
+
+This repository is public for transparency and visibility.
+Unless explicitly stated otherwise, you may not copy, redistribute, modify, or use this code to create derivative commercial products.
+
+If a formal license file is added, that file becomes the source of truth.
