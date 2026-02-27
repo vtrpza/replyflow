@@ -71,6 +71,7 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
   const [displayedLines, setDisplayedLines] = useState<string[]>([]);
   const [currentLine, setCurrentLine] = useState(0);
   const [done, setDone] = useState(false);
+  const linesKey = lines.join(",");
 
   const start = useCallback(() => {
     setDisplayedLines([]);
@@ -80,7 +81,7 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
 
   useEffect(() => {
     start();
-  }, [lines.join(","), start]);
+  }, [linesKey, start]);
 
   useEffect(() => {
     if (done || currentLine >= lines.length) {
@@ -120,55 +121,55 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
 /* ───────────────────────── data ───────────────────────── */
 
 const STATS = [
-  { value: 3, suffix: "", enLabel: "Source connectors", ptLabel: "Conectores de fonte" },
-  { value: 5, suffix: "min", enLabel: "To first scan", ptLabel: "Para o primeiro scan" },
-  { value: 10, suffix: "+", enLabel: "Email templates", ptLabel: "Templates de e-mail" },
-  { value: 0, suffix: "", enLabel: "Credit cards required", ptLabel: "Cartões de crédito" },
+  { value: 1, suffix: "", enLabel: "Unified pipeline", ptLabel: "Pipeline único" },
+  { value: 3, suffix: "+", enLabel: "Connected sources", ptLabel: "Fontes conectadas" },
+  { value: 10, suffix: "+", enLabel: "Outreach templates", ptLabel: "Templates prontos" },
+  { value: 2, suffix: "", enLabel: "Outreach languages", ptLabel: "Idiomas de outreach" },
 ];
 
 const TERMINAL_LINES_EN = [
-  "$ replyflow scan --sources github,greenhouse,lever",
-  "  ✓ 148 new positions found across 12 sources",
-  "$ replyflow rank --profile ./cv.json",
-  "  ✓ Top 23 matches scored (avg: 82/100)",
-  "$ replyflow draft --top 5 --lang en",
-  "  ✓ 5 personalized cold emails generated",
-  "$ replyflow send --account gmail --attach cv.pdf",
-  "  ✓ Sent 5 emails · follow-ups scheduled in 3 days",
+  "$ replyflow collect --sources github,greenhouse,lever",
+  "  ✓ Opportunities centralized in one inbox",
+  "$ replyflow prioritize --profile ./cv.json",
+  "  ✓ High-fit roles ranked for this week",
+  "$ replyflow outreach --lang en --account gmail",
+  "  ✓ Personalized emails sent with full history",
+  "$ replyflow followup --cadence 4d",
+  "  ✓ Next actions scheduled per role and contact",
 ];
 
 const TERMINAL_LINES_PT = [
-  "$ replyflow scan --sources github,greenhouse,lever",
-  "  ✓ 148 novas posições em 12 fontes",
-  "$ replyflow rank --profile ./cv.json",
-  "  ✓ Top 23 matches pontuados (média: 82/100)",
-  "$ replyflow draft --top 5 --lang pt-br",
-  "  ✓ 5 e-mails personalizados gerados",
-  "$ replyflow send --account gmail --attach cv.pdf",
-  "  ✓ 5 e-mails enviados · follow-ups em 3 dias",
+  "$ replyflow collect --sources github,greenhouse,lever",
+  "  ✓ Oportunidades centralizadas em um só inbox",
+  "$ replyflow prioritize --profile ./cv.json",
+  "  ✓ Vagas de maior fit rankeadas para a semana",
+  "$ replyflow outreach --lang pt-br --account gmail",
+  "  ✓ E-mails personalizados enviados com histórico",
+  "$ replyflow followup --cadence 4d",
+  "  ✓ Próximas ações agendadas por vaga e contato",
 ];
 
 const WHY_USE_ITEMS = [
   {
     id: "pain",
-    ptTitle: "Você conhece a rotina",
-    ptDesc: "Dez abas abertas. Uma planilha que ninguém atualiza. Candidatura no escuro. E-mails de recrutador perdidos na caixa de entrada. Toda semana a mesma coisa — esforço sem retorno.",
-    enTitle: "You know the routine",
-    enDesc: "Ten tabs open. A spreadsheet nobody updates. Blind applications. Recruiter emails buried in your inbox. Every week the same cycle — effort without traction.",
+    ptTitle: "Sem processo, sua busca vira ruído",
+    ptDesc: "Vaga salva no LinkedIn, candidatura no ATS, contato no inbox, follow-up em lembrete solto. Você trabalha muito, mas sem clareza de prioridade e sem histórico confiável.",
+    enTitle: "Without a system, your search turns into noise",
+    enDesc: "Saved jobs in LinkedIn, ATS submissions elsewhere, recruiter contacts in inbox, follow-ups in random reminders. High effort, low clarity, weak continuity.",
   },
   {
     id: "solution",
-    ptTitle: "Um sistema, não mais uma ferramenta",
-    ptDesc: "ReplyFlow conecta sourcing, score, outreach e CRM em um pipeline único. Vagas nacionais e internacionais rankeadas contra seu perfil, contatos enriquecidos automaticamente, e-mails enviados pelo seu próprio Gmail.",
-    enTitle: "A system, not another tool",
-    enDesc: "ReplyFlow connects sourcing, scoring, outreach, and CRM in one pipeline. National and international roles ranked against your profile, contacts auto-enriched, emails sent from your own Gmail.",
+    ptTitle: "Feito para busca de emprego no mercado real",
+    ptDesc: "ReplyFlow unifica vaga, ATS, contato e outreach no mesmo fluxo. Você coleta oportunidades, prioriza por fit, contata com contexto e executa follow-up sem perder timing.",
+    enTitle: "Built for real-market job search",
+    enDesc: "ReplyFlow unifies jobs, ATS, contacts, and outreach in one flow. Collect opportunities, prioritize by fit, reach out with context, and follow up on schedule.",
   },
   {
     id: "outcome",
-    ptTitle: "O resultado que importa",
-    ptDesc: "Menos tempo perdido em vagas que não encaixam. Mais consistência no follow-up. Mais chances reais de resposta — porque a matemática do volume funciona.",
-    enTitle: "The outcome that matters",
-    enDesc: "Less time wasted on bad-fit roles. More consistency in follow-ups. Stronger odds of getting replies — because the math of consistent volume works.",
+    ptTitle: "Direção e consistência no que importa",
+    ptDesc: "Menos candidaturas no escuro. Mais clareza de decisão, mais disciplina de execução e mais oportunidades reais de resposta.",
+    enTitle: "Direction and consistency where it matters",
+    enDesc: "Fewer blind applications. Better decisions, more disciplined execution, and more real reply opportunities.",
   },
 ];
 
@@ -176,101 +177,131 @@ const BENTO_FEATURES = [
   {
     size: "wide" as const,
     visual: "chart" as const,
-    tag: "INTELLIGENCE",
-    title: "Find jobs worth applying to",
-    desc: "Every role scored against your profile with transparent reasoning — top match reasons, missing skills, and weighted breakdown. You see exactly why a job fits before spending time on it.",
-    ptTitle: "Encontre vagas que valem a pena",
-    ptDesc: "Cada vaga pontuada contra seu perfil com razões transparentes — motivos do match, skills faltantes e breakdown ponderado. Você vê exatamente por que uma vaga encaixa antes de investir tempo.",
+    tag: "RADAR",
+    title: "Job radar with context",
+    desc: "Consolidate openings with enough context to decide where to invest your time first. Why it matters: fewer low-signal applications.",
+    ptTitle: "Radar de vagas com contexto",
+    ptDesc: "Consolida oportunidades com contexto para decidir onde investir energia primeiro. Por que importa: menos candidatura de baixo sinal.",
   },
   {
     size: "normal" as const,
     visual: "pipeline" as const,
-    tag: "ATS",
-    title: "Never lose track of where you stand",
-    desc: "ATS submissions and direct outreach live side-by-side in one pipeline. No more switching between Greenhouse, Lever, and your inbox to check status.",
-    ptTitle: "Nunca perca de vista onde você está",
-    ptDesc: "Candidaturas ATS e outreach direto lado a lado em um pipeline. Sem precisar alternar entre Greenhouse, Lever e sua caixa de entrada.",
+    tag: "PIPELINE",
+    title: "ATS and outreach in one timeline",
+    desc: "Each role keeps stage, messages, and next step together. Why it matters: you stop losing status across tools.",
+    ptTitle: "ATS e outreach na mesma linha do tempo",
+    ptDesc: "Cada vaga mantém etapa, mensagens e próxima ação no mesmo registro. Por que importa: você para de perder contexto entre ferramentas.",
+  },
+  {
+    size: "normal" as const,
+    visual: "contacts" as const,
+    tag: "CRM",
+    title: "Recruiter CRM per opportunity",
+    desc: "Keep contacts and conversation history linked to each opening. Why it matters: relationships do not disappear in your inbox.",
+    ptTitle: "CRM de recrutadores por oportunidade",
+    ptDesc: "Organiza contatos e histórico de conversa por vaga. Por que importa: relacionamento não se perde no inbox.",
   },
   {
     size: "normal" as const,
     visual: "email" as const,
-    tag: "OUTREACH",
-    title: "Send emails that get replies",
-    desc: "Personalized PT-BR or EN cold emails from your own Gmail. CV attached, follow-ups scheduled, outreach history tracked per contact.",
-    ptTitle: "Envie e-mails que recebem respostas",
-    ptDesc: "E-mails personalizados PT-BR ou EN pelo seu próprio Gmail. CV anexo, follow-ups agendados, histórico de outreach por contato.",
+    tag: "GMAIL",
+    title: "Outreach with editable templates",
+    desc: "Send personalized PT-BR or EN emails from your own Gmail. Why it matters: faster execution without generic messaging.",
+    ptTitle: "Outreach com templates editáveis",
+    ptDesc: "Envie mensagens personalizadas em PT-BR ou EN pelo seu Gmail. Por que importa: mais velocidade sem parecer texto genérico.",
+  },
+  {
+    size: "normal" as const,
+    visual: "pipeline" as const,
+    tag: "FOLLOW-UP",
+    title: "Consistent follow-up cadence",
+    desc: "Track attempts, replies, and pending actions per role. Why it matters: consistency where most candidates fail.",
+    ptTitle: "Cadência de follow-up consistente",
+    ptDesc: "Registra tentativas, respostas e pendências por vaga. Por que importa: consistência onde a maioria falha.",
   },
   {
     size: "wide" as const,
-    visual: "contacts" as const,
-    tag: "CRM",
-    title: "Remember every recruiter",
-    desc: "Contact cards auto-enriched from job syncs and email reveals with outreach history. Old listings become reusable recruiter leads instead of lost contacts.",
-    ptTitle: "Lembre de cada recrutador",
-    ptDesc: "Cards de contato enriquecidos automaticamente via sync e reveal com histórico de outreach. Vagas antigas viram leads de recrutador reutilizáveis em vez de contatos perdidos.",
+    visual: "chart" as const,
+    tag: "PRIORIZATION",
+    title: "Prioritization by technical fit",
+    desc: "Rank your week by technical alignment and context quality. Why it matters: better allocation of effort and attention.",
+    ptTitle: "Priorização por fit técnico",
+    ptDesc: "Ranqueia sua semana por aderência técnica e qualidade de contexto. Por que importa: melhor alocação de esforço e atenção.",
   },
 ];
 
 const HOW_IT_WORKS = [
   {
     step: "01",
-    enTitle: "Connect your sources",
-    enDesc: "Add GitHub repos, Greenhouse boards, and Lever postings. First scan runs in under 5 minutes. Every role gets scored against your profile automatically.",
+    enTitle: "Connect sources",
+    enDesc: "Bring jobs and contacts into one flow from your core channels.",
     ptTitle: "Conecte suas fontes",
-    ptDesc: "Adicione repos GitHub, boards Greenhouse e Lever. O primeiro scan roda em menos de 5 minutos. Cada vaga é pontuada automaticamente contra seu perfil.",
+    ptDesc: "Traga vagas e contatos para um fluxo único a partir dos seus canais principais.",
   },
   {
     step: "02",
-    enTitle: "Draft and send outreach",
-    enDesc: "Pick your top matches, generate personalized cold emails in PT-BR or EN, and send from your own Gmail with CV attached. One click per email.",
-    ptTitle: "Rascunhe e envie outreach",
-    ptDesc: "Escolha seus melhores matches, gere e-mails personalizados em PT-BR ou EN, e envie pelo seu Gmail com CV anexo. Um clique por e-mail.",
+    enTitle: "Prioritize and contact",
+    enDesc: "Select what deserves effort first, personalize your message, and keep every action logged.",
+    ptTitle: "Priorize e contate",
+    ptDesc: "Defina o que merece esforço primeiro, personalize a mensagem e registre cada ação.",
   },
   {
     step: "03",
-    enTitle: "Follow up until you land it",
-    enDesc: "Scheduled reminders keep your follow-ups consistent. Per-contact history means you never send the same email twice. The pipeline tracks every stage until the interview.",
-    ptTitle: "Faça follow-up até conseguir",
-    ptDesc: "Lembretes agendados mantêm seus follow-ups consistentes. Histórico por contato garante que você nunca envie o mesmo e-mail duas vezes. O pipeline acompanha cada etapa até a entrevista.",
+    enTitle: "Execute follow-ups",
+    enDesc: "Keep ATS and outreach in sync with a clear cadence and complete history per opportunity.",
+    ptTitle: "Faça follow-up",
+    ptDesc: "Mantenha ATS e contato direto sincronizados com cadência clara e histórico completo por oportunidade.",
   },
 ];
 
 const FAQ_ITEMS = [
   {
     q: "Is ReplyFlow a job board?",
-    a: "No. ReplyFlow is a job search framework — it sources, scores, and helps you act on opportunities. Think of it as your outreach pipeline, not another place to scroll listings.",
+    a: "No. It is an execution system for your search: jobs, ATS stages, recruiter contacts, and follow-ups in one operational flow.",
     ptQ: "A ReplyFlow é um job board?",
-    ptA: "Não. A ReplyFlow é um framework de busca de emprego — ela coleta, pontua e ajuda você a agir sobre oportunidades. Pense nela como seu pipeline de outreach, não outro lugar para rolar vagas.",
+    ptA: "Não. É um sistema de execução da busca: vagas, etapas de ATS, contatos e follow-ups no mesmo fluxo operacional.",
   },
   {
-    q: "Does it guarantee interviews?",
-    a: "No tool can guarantee that. ReplyFlow removes the friction that stops you from sending consistent outreach. More sends + better follow-ups = more replies. The math compounds over weeks.",
-    ptQ: "Ela garante entrevistas?",
-    ptA: "Nenhuma ferramenta garante isso. A ReplyFlow remove a fricção que te impede de manter outreach consistente. Mais envios + follow-ups melhores = mais respostas. A matemática acumula ao longo de semanas.",
+    q: "Do I need outreach for it to be useful?",
+    a: "No. You can use it only for ATS organization and prioritization. Outreach becomes an optional execution layer when you are ready.",
+    ptQ: "Preciso fazer outreach para valer a pena?",
+    ptA: "Não. Você pode usar só para organização de ATS e priorização. Outreach entra como camada opcional quando fizer sentido.",
   },
   {
-    q: "How is this different from Huntr or a spreadsheet?",
-    a: "Spreadsheets don't source jobs, score matches, or send emails. Huntr tracks applications but doesn't do outreach. ReplyFlow connects the full pipeline: source, score, send, follow up, and track.",
-    ptQ: "Como isso é diferente de Huntr ou uma planilha?",
-    ptA: "Planilhas não coletam vagas, pontuam matches ou enviam e-mails. Huntr rastreia candidaturas mas não faz outreach. A ReplyFlow conecta o pipeline completo: coletar, pontuar, enviar, follow-up e rastrear.",
+    q: "Can I use ReplyFlow only for ATS tracking?",
+    a: "Yes. Start with pipeline tracking, stage visibility, and next actions. Add outreach and CRM only when you need it.",
+    ptQ: "Posso usar apenas para organizar ATS?",
+    ptA: "Sim. Comece pelo controle de pipeline, status e próximas ações. Depois adicione outreach e CRM se precisar.",
   },
   {
-    q: "Is my data safe?",
-    a: "Your Gmail credentials use OAuth and are never stored on our servers. All outreach data stays in your account. We don't sell or share user data.",
-    ptQ: "Meus dados estão seguros?",
-    ptA: "Suas credenciais do Gmail usam OAuth e nunca são armazenadas em nossos servidores. Todos os dados de outreach ficam na sua conta. Não vendemos nem compartilhamos dados de usuários.",
+    q: "How does Gmail sending work?",
+    a: "You connect Gmail via OAuth and send from your own account with editable templates. Every send is linked to the related role and contact history.",
+    ptQ: "Como funciona o envio com Gmail?",
+    ptA: "Você conecta seu Gmail via OAuth e envia pela sua própria conta com templates editáveis. Cada envio fica ligado à vaga e ao histórico do contato.",
   },
   {
-    q: "Can I cancel anytime?",
-    a: "Yes. No contracts, no penalties. Downgrade to Free whenever you want and keep all your data, contacts, and outreach history.",
-    ptQ: "Posso cancelar a qualquer momento?",
-    ptA: "Sim. Sem contratos, sem multas. Volte para o Free quando quiser e mantenha todos os seus dados, contatos e histórico de outreach.",
+    q: "Is it secure?",
+    a: "Security is handled through scoped OAuth permissions and controlled access to your connected account data.",
+    ptQ: "É seguro?",
+    ptA: "A segurança é tratada com permissões OAuth escopadas e controle de acesso aos dados das contas conectadas.",
   },
   {
-    q: "Does it work for international remote jobs?",
-    a: "Yes. ReplyFlow sources from Greenhouse, Lever, and GitHub regardless of geography. Draft outreach in English or Portuguese. Many users target global remote roles from Brazil.",
-    ptQ: "Funciona para vagas internacionais remotas?",
-    ptA: "Sim. A ReplyFlow coleta de Greenhouse, Lever e GitHub independente da geografia. Gere outreach em inglês ou português. Muitos usuários miram vagas remotas globais a partir do Brasil.",
+    q: "Does it work for Brazil and international roles?",
+    a: "Yes. You can run one process for Brazilian and global opportunities, including outreach in PT-BR and English.",
+    ptQ: "Funciona para vagas no Brasil e internacionais?",
+    ptA: "Sim. Você pode operar o mesmo processo para oportunidades no Brasil e fora, com outreach em PT-BR e inglês.",
+  },
+  {
+    q: "Does it replace LinkedIn, Gupy, or Greenhouse?",
+    a: "No. It does not replace those channels. It organizes your operation across them so context and follow-up execution stay consistent.",
+    ptQ: "Substitui LinkedIn, Gupy ou Greenhouse?",
+    ptA: "Não. Ele não substitui esses canais. Ele organiza sua operação entre eles para manter contexto e follow-up consistentes.",
+  },
+  {
+    q: "Does ReplyFlow guarantee interviews?",
+    a: "No. It improves process quality and execution consistency. Interview outcomes still depend on fit, communication, and market timing.",
+    ptQ: "A ReplyFlow garante entrevistas?",
+    ptA: "Não. Ela melhora qualidade de processo e consistência de execução. O resultado ainda depende de fit, comunicação e timing de mercado.",
   },
 ];
 
@@ -392,7 +423,7 @@ function Hero() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
   const terminalLines = isPt ? TERMINAL_LINES_PT : TERMINAL_LINES_EN;
-  const { displayedLines, currentLine, done } = useTypewriter(terminalLines, 30, 700);
+  const { displayedLines, done } = useTypewriter(terminalLines, 30, 700);
 
   return (
     <section className="rf-grid-bg relative pt-28 pb-16 sm:pt-36 sm:pb-24 px-6 overflow-hidden">
@@ -408,7 +439,7 @@ function Hero() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
             <span className="text-xs font-mono text-[var(--rf-muted)]">
-              {isPt ? "v1.0 — já disponível" : "v1.0 — now open"}
+              {isPt ? "para devs mid-senior em busca ativa" : "for mid-senior devs in active search"}
             </span>
           </div>
 
@@ -428,8 +459,8 @@ function Hero() {
 
           <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-[var(--font-sans-display)]">
             {isPt
-              ? "Conecte fontes de vagas, pontue matches contra seu perfil, envie outreach pelo Gmail e acompanhe follow-ups — tudo em um só lugar. Chega de planilha e 10 abas abertas."
-              : "Connect job sources, score matches against your profile, send outreach via Gmail, and track follow-ups — all in one place. No more spreadsheets and 10 open tabs."}
+              ? "ReplyFlow transforma sua busca de emprego em um sistema operacional: você organiza oportunidades em um fluxo único, prioriza onde vale investir energia e mantém follow-up consistente."
+              : "ReplyFlow turns your job search into an operating system: organize opportunities in one flow, prioritize where effort matters, and keep follow-ups consistent."}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4">
@@ -439,18 +470,18 @@ function Hero() {
               style={{ background: "var(--rf-gradient)" }}
             >
               <span className="font-mono text-xs opacity-70">&gt;</span>
-              {isPt ? "Escanear vagas agora" : "Scan your first jobs"}
+              {isPt ? "Começar grátis" : "Start free"}
             </Link>
             <Link
-              href="/app/signin"
+              href="#como-funciona"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
             >
-              {isPt ? "Entrar" : "Sign in"}
+              {isPt ? "Ver o fluxo na prática" : "See the flow in action"}
             </Link>
           </div>
 
           <p className="mt-5 text-xs text-zinc-600 font-mono">
-            {isPt ? "grátis para sempre — sem cartão — setup em 5 min" : "free forever — no credit card — setup in 5 min"}
+            {isPt ? "comece sem custo — organize sua busca com método" : "start free — run your search with structure"}
           </p>
         </div>
 
@@ -559,8 +590,13 @@ function ProblemSolution() {
             {isPt ? "POR QUE USAR" : "WHY USE IT"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white tracking-tight max-w-3xl mx-auto">
-            {isPt ? "Você não precisa de mais vagas. Precisa de um sistema." : "You don't need more listings. You need a system."}
+            {isPt ? "Você não precisa de mais vagas. Precisa de direção." : "You don't need more listings. You need direction."}
           </h2>
+          <p className="mt-4 text-sm sm:text-base text-[var(--rf-muted)] max-w-2xl mx-auto">
+            {isPt
+              ? "Menos improviso, mais processo: um fluxo único para decidir melhor e executar com consistência."
+              : "Less improvisation, more process: one flow to decide better and execute with consistency."}
+          </p>
         </div>
 
         {/* Asymmetric pain / solution cards */}
@@ -643,7 +679,7 @@ function Features() {
             {isPt ? "PILARES" : "CORE PILLARS"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
-            {isPt ? "Tudo que move sua busca. Reunido." : "Everything that moves your search. Together."}
+            {isPt ? "Pilares operacionais para busca séria." : "Operational pillars for serious job search."}
           </h2>
         </div>
 
@@ -678,8 +714,8 @@ function Features() {
         <div className="mt-12 text-center">
           <p className="text-sm text-zinc-600 font-mono">
             {isPt
-              ? "\"Goodbye, planilha. Goodbye, 10 abas.\""
-              : "\"Goodbye, spreadsheet. Goodbye, 10 tabs.\""}
+              ? "\"Menos ruído. Mais direção de execução.\""
+              : "\"Less noise. More execution direction.\""}
           </p>
         </div>
       </div>
@@ -695,14 +731,14 @@ function HowItWorks() {
   const revealRef = useScrollReveal();
 
   return (
-    <section className="py-24 px-6 border-t border-[var(--rf-border)]">
+    <section id="como-funciona" className="py-24 px-6 border-t border-[var(--rf-border)]">
       <div ref={revealRef} className="rf-reveal max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
             {isPt ? "COMO FUNCIONA" : "HOW IT WORKS"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white tracking-tight">
-            {isPt ? "De zero a outreach em 5 minutos." : "From zero to outreach in 5 minutes."}
+            {isPt ? "Um processo simples para operar sua busca." : "A simple process to run your search."}
           </h2>
         </div>
 
@@ -747,7 +783,7 @@ function Pricing() {
       name: "Free",
       price: "R$ 0",
       period: isPt ? "para sempre" : "forever",
-      desc: isPt ? "Comece agora. Sem cartão." : "Get started. No credit card.",
+      desc: isPt ? "Estruture sua rotina sem custo inicial." : "Structure your routine with zero upfront cost.",
       features: [
         isPt ? "Fontes e syncs ilimitados" : "Unlimited sources & syncs",
         isPt ? "50 reveals de contato/mês" : "50 contact reveals/month",
@@ -755,7 +791,7 @@ function Pricing() {
         isPt ? "10 envios/mês" : "10 sends/month",
         isPt ? "1 conta Gmail conectada" : "1 connected Gmail account",
       ],
-      cta: isPt ? "Escanear vagas agora" : "Scan your first jobs",
+      cta: isPt ? "Começar grátis" : "Start free",
       href: "/app",
       primary: false,
     },
@@ -764,8 +800,8 @@ function Pricing() {
       price: "R$ 49",
       period: isPt ? "/mês" : "/month",
       desc: isPt
-        ? "Para devs em busca ativa. Sem limites, sem fricção."
-        : "For active job seekers. No limits, no friction.",
+        ? "Para busca ativa com volume e disciplina."
+        : "For active search with volume and consistency.",
       features: [
         isPt ? "Tudo do Free, sem limites" : "Everything in Free, unlimited",
         isPt ? "Reveals de contato ilimitados" : "Unlimited contact reveals",
@@ -788,8 +824,13 @@ function Pricing() {
             {isPt ? "PREÇOS" : "PRICING"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
-            {isPt ? "Comece grátis. Upgrade quando quiser." : "Start free. Upgrade when ready."}
+            {isPt ? "Comece grátis. Evolua com método." : "Start free. Scale with method."}
           </h2>
+          <p className="mt-4 text-sm sm:text-base text-[var(--rf-muted)] max-w-2xl mx-auto">
+            {isPt
+              ? "Sem promessas milagrosas. O valor está em melhorar sua execução semana após semana."
+              : "No miracle promises. The value is improving execution week after week."}
+          </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
@@ -856,6 +897,11 @@ function Pricing() {
             </div>
           ))}
         </div>
+        <p className="mt-8 text-xs text-zinc-600 font-mono text-center">
+          {isPt
+            ? "Comece sem custo. Faça upgrade quando precisar de mais volume e automação."
+            : "Start free. Upgrade when you need more volume and automation."}
+        </p>
       </div>
     </section>
   );
@@ -946,12 +992,12 @@ function FinalCta() {
 
       <div ref={revealRef} className="rf-reveal relative max-w-3xl mx-auto text-center">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-[var(--font-serif)] italic text-white tracking-tight mb-5">
-          {isPt ? "Sua próxima entrevista começa aqui." : "Your next interview starts here."}
+          {isPt ? "Pare de improvisar sua busca de emprego." : "Stop improvising your job search."}
         </h2>
         <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-8 leading-relaxed">
           {isPt
-            ? "Grátis para sempre. Sem cartão. Cancele quando quiser. Seus dados ficam com você."
-            : "Free forever. No credit card. Cancel anytime. Your data stays yours."}
+            ? "Organize seu pipeline, priorize melhor e execute com consistência do primeiro contato ao follow-up."
+            : "Organize your pipeline, prioritize better, and execute consistently from first contact to follow-up."}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -961,13 +1007,13 @@ function FinalCta() {
             style={{ background: "var(--rf-gradient)" }}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
-            {isPt ? "Escanear vagas agora" : "Scan your first jobs"}
+            {isPt ? "Começar grátis no ReplyFlow" : "Start free on ReplyFlow"}
           </Link>
           <Link
-            href="/app/signin"
+            href="#como-funciona"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border border-[var(--rf-border)] text-sm font-medium text-[var(--rf-muted)] hover:text-white hover:border-zinc-600 transition-all w-full sm:w-auto justify-center"
           >
-            {isPt ? "Entrar" : "Sign in"}
+            {isPt ? "Ver como funciona em 3 etapas" : "See the 3-step flow"}
           </Link>
         </div>
       </div>
