@@ -8,6 +8,7 @@ import {
   EmptyState,
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import posthog from "posthog-js";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -207,6 +208,7 @@ export default function OutreachPage() {
         body: JSON.stringify({ id, status }),
       });
       if (!res.ok) throw new Error(isPt ? "Falha ao atualizar status" : "Failed to update status");
+      posthog.capture("outreach_status_updated", { outreach_id: id, new_status: status });
       toast.success(isPt ? "Status atualizado" : "Status updated");
       fetchRecords();
     } catch {
@@ -252,6 +254,7 @@ export default function OutreachPage() {
         }),
       });
       if (!res.ok) throw new Error(isPt ? "Falha ao salvar rascunho" : "Failed to save draft");
+      posthog.capture("outreach_draft_saved", { outreach_id: sheetRecord.id });
       toast.success(isPt ? "Rascunho salvo" : "Draft saved");
       fetchRecords();
     } catch {
@@ -284,6 +287,11 @@ export default function OutreachPage() {
         return;
       }
       if (data.success) {
+        posthog.capture("outreach_email_sent", {
+          outreach_id: sheetRecord.id,
+          has_cv_attachment: !!data.attachedCV,
+          cv_language: data.attachedCV || null,
+        });
         toast.success(
           isPt
             ? `Email enviado!${data.attachedCV ? ` Anexo: CV ${data.attachedCV.toUpperCase()}` : ""}`

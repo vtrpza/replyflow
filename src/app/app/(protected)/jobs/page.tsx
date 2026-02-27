@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState, LoadingButton, SkeletonList, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import posthog from "posthog-js";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -172,6 +173,7 @@ export default function JobsPage() {
       }
 
       if (data.success) {
+        posthog.capture("job_draft_created", { job_id: jobId });
         toast.success(
           isPt
             ? "Rascunho criado! Veja em Outreach."
@@ -206,6 +208,7 @@ export default function JobsPage() {
       }
 
       if (data.success) {
+        posthog.capture("job_contact_revealed", { job_id: jobId });
         toast.success(isPt ? "Contato revelado" : "Contact revealed");
         void refreshPlanSnapshot();
         fetchJobs(pagination.page);
@@ -231,6 +234,7 @@ export default function JobsPage() {
         toast.error(data.error || (isPt ? "Falha ao salvar lead" : "Failed to save lead"));
         return;
       }
+      posthog.capture("job_lead_saved", { job_id: jobId });
       toast.success(isPt ? "Lead salvo no banco de recrutadores" : "Lead saved to recruiter bank");
     } catch {
       toast.error(isPt ? "Falha ao salvar lead" : "Failed to save lead");
@@ -249,6 +253,7 @@ export default function JobsPage() {
         toast.error(data.error || (isPt ? "Falha ao atualizar status" : "Failed to update status"));
         return;
       }
+      posthog.capture("job_ats_applied", { job_id: jobId });
       toast.success(isPt ? "Marcado como ATS aplicado" : "Marked as ATS applied");
       fetchJobs(pagination.page);
     } catch {

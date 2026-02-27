@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingButton, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import posthog from "posthog-js";
 import {
   BILLING_UPGRADE_ROUTE,
   getDailyResetLabel,
@@ -171,6 +172,7 @@ export default function SourcesPage() {
         return;
       }
 
+      posthog.capture("source_added", { source_type: form.sourceType });
       setForm({ sourceType: "github_repo", fullName: "", externalKey: "", displayName: "", category: "" });
       toast.success(isPt ? "Fonte adicionada" : "Source added");
       await loadSources();
@@ -370,6 +372,7 @@ export default function SourcesPage() {
                           toast.error(data.error || (isPt ? "Falha no sync" : "Sync failed"));
                           return;
                         }
+                        posthog.capture("source_synced", { source_id: source.id, source_type: source.sourceType });
                         await loadSources();
                       } catch {
                         toast.error(isPt ? "Falha no sync" : "Sync failed");

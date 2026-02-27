@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 import { useI18n } from "@/lib/i18n";
+import posthog from "posthog-js";
 
 export default function SignInPage() {
   const { data: session, status } = useSession();
@@ -53,7 +54,10 @@ export default function SignInPage() {
           </p>
 
           <button
-            onClick={() => signIn("google", { callbackUrl: "/app" })}
+            onClick={() => {
+              posthog.capture("sign_in_clicked", { provider: "google" });
+              signIn("google", { callbackUrl: "/app" });
+            }}
             className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -6,6 +6,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import posthog from "posthog-js";
 import { LanguageSwitch } from "@/components/ui/language-switch";
 import {
   BILLING_UPGRADE_ROUTE,
@@ -143,6 +144,12 @@ function SettingsPageContent() {
 
   useEffect(() => {
     if (session?.user) {
+      // Identify the authenticated user in PostHog
+      posthog.identify(session.user.id ?? session.user.email ?? undefined, {
+        email: session.user.email ?? undefined,
+        name: session.user.name ?? undefined,
+      });
+
       setLoadingAccounts(true);
       fetch("/api/accounts")
         .then((r) => r.json())
@@ -220,6 +227,14 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (data.success) {
+        posthog.capture("profile_saved", {
+          experience_years: profile.experienceYears,
+          experience_level: profile.experienceLevel,
+          skills_count: profile.skills.length,
+          highlights_count: profile.highlights.length,
+          prefer_remote: profile.preferRemote,
+          profile_score: data.profileScore?.score ?? profile.profileScore?.score,
+        });
         if (data.profileScore) {
           setProfile((prev) => ({ ...prev, profileScore: data.profileScore }));
         }

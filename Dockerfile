@@ -12,6 +12,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 FROM base AS build
 ARG SENTRY_AUTH_TOKEN
 ARG SKIP_BUILD_VALIDATION=0
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ARG NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
 # Needed for native modules (better-sqlite3) during install.
 RUN apt-get update -qq && \
@@ -26,6 +28,8 @@ COPY . .
 # Prevent Next.js production build OOM in constrained build environments.
 ENV NODE_OPTIONS=--max-old-space-size=4096
 ENV SKIP_BUILD_VALIDATION=$SKIP_BUILD_VALIDATION
+ENV NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+ENV NEXT_PUBLIC_POSTHOG_HOST=$NEXT_PUBLIC_POSTHOG_HOST
 
 # Build Next.js (standalone) and a tiny prod CLI for migrations.
 RUN SENTRY_AUTH_TOKEN="$SENTRY_AUTH_TOKEN" npm run build && npm run build:cli

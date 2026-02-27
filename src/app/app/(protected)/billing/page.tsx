@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import posthog from "posthog-js";
 
 type BillingState = {
   planKey: "free" | "pro_monthly";
@@ -67,6 +68,7 @@ export default function BillingPage() {
         throw new Error(payload.error || "Falha ao iniciar checkout");
       }
 
+      posthog.capture("billing_checkout_started", { current_plan: state?.entitlementPlan ?? "free" });
       window.location.href = payload.checkoutUrl;
     } catch (checkoutError) {
       setError(checkoutError instanceof Error ? checkoutError.message : "Falha ao iniciar checkout");
@@ -87,6 +89,7 @@ export default function BillingPage() {
         throw new Error(payload.error || "Falha ao cancelar assinatura");
       }
 
+      posthog.capture("billing_subscription_cancelled");
       await loadState();
     } catch (cancelError) {
       setError(cancelError instanceof Error ? cancelError.message : "Falha ao cancelar assinatura");
