@@ -132,6 +132,9 @@ function SettingsPageContent() {
   const [connecting, setConnecting] = useState(false);
   const [planSnapshot, setPlanSnapshot] = useState<PlanSnapshot | null>(null);
   const [billingState, setBillingState] = useState<BillingState | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -363,6 +366,30 @@ function SettingsPageContent() {
       }
     } catch {
       toast.error(isPt ? "Falha ao definir conta padrao" : "Failed to set default account");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/account/delete", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmText: deleteConfirmText }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(isPt ? "Conta excluida" : "Account deleted");
+        await signOut({ callbackUrl: "/" });
+      } else {
+        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
+        setDeleteModalOpen(false);
+        setDeleteConfirmText("");
+      }
+    } catch {
+      toast.error(isPt ? "Falha ao excluir conta" : "Failed to delete account");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1002,7 +1029,68 @@ function SettingsPageContent() {
             {isPt ? "Salvar perfil" : "Save Profile"}
           </LoadingButton>
         </div>
+
+        <section className="bg-zinc-900 border border-red-900/50 rounded-lg p-6 mt-8">
+          <h2 className="text-lg font-semibold text-red-400 mb-2">
+            {isPt ? "Zona de Perigo" : "Danger Zone"}
+          </h2>
+          <p className="text-sm text-zinc-400 mb-4">
+            {isPt
+              ? "Ao excluir sua conta, todos os dados serao removidos permanentemente. Esta acao nao pode ser desfeita."
+              : "Deleting your account will permanently remove all your data. This action cannot be undone."}
+          </p>
+          <button
+            onClick={() => setDeleteModalOpen(true)}
+            className="px-4 py-2 text-sm font-medium bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-900/50 rounded-lg transition-colors"
+          >
+            {isPt ? "Excluir minha conta" : "Delete my account"}
+          </button>
+        </section>
       </div>
+
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
+          <div className="bg-zinc-900 border border-red-900/50 rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {isPt ? "Excluir conta?" : "Delete account?"}
+            </h3>
+            <p className="text-sm text-zinc-400 mb-4">
+              {isPt
+                ? "Todos os seus dados serao excluidos permanentemente. Digite"
+                : "All your data will be permanently deleted. Type"}{" "}
+              <span className="text-red-400 font-mono">delete my account</span>{" "}
+              {isPt ? "para confirmar." : "to confirm."}
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder={isPt ? "Digite para confirmar" : "Type to confirm"}
+              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-500 mb-4"
+            />
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteConfirmText("");
+                }}
+                className="px-4 py-2 text-sm text-zinc-300 hover:text-white"
+                disabled={deleting}
+              >
+                {isPt ? "Cancelar" : "Cancel"}
+              </button>
+              <LoadingButton
+                onClick={handleDeleteAccount}
+                loading={deleting}
+                disabled={deleteConfirmText !== "delete my account"}
+                className="bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPt ? "Excluir conta" : "Delete account"}
+              </LoadingButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
