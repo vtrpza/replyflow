@@ -8,6 +8,7 @@ import {
   EmptyState,
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import { BILLING_ENABLED } from "@/lib/config";
 import posthog from "posthog-js";
 import {
   BILLING_UPGRADE_ROUTE,
@@ -281,7 +282,7 @@ export default function OutreachPage() {
         }),
       });
       const data = await res.json();
-      if (res.status === 402 && data?.error === "upgrade_required") {
+      if (BILLING_ENABLED && res.status === 402 && data?.error === "upgrade_required") {
         toast.error(getUpgradeMessage(data, isPt));
         router.push(BILLING_UPGRADE_ROUTE);
         return;

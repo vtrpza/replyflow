@@ -181,6 +181,42 @@ return NextResponse.json({ error: error.message }, { status: 500 }); // Exposes 
 - **Use descriptive names**: `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`
 - **Document required vars**: Add to `.env.example` when adding new required variables
 
+#### Feature Flags
+
+This project uses environment variables to control feature availability:
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `NEXT_PUBLIC_BILLING_ENABLED` | boolean | `false` | Enable billing/pro features. When disabled, all billing UI shows "em breve" (coming soon) in amber/yellow color. |
+| `REPLYFLOW_PRE_RELEASE` | boolean | `false` | Server-side: makes `getEffectivePlan()` return "pro" for all users, removing all plan limits. |
+| `NEXT_PUBLIC_PRE_RELEASE` | boolean | `false` | Client-side: enables pre-release UI messaging (e.g., "Pre-release" badge instead of "em breve"). |
+
+**Current behavior when billing is disabled:**
+- Sidebar "Assinatura" link → "em breve" (amber text)
+- Sync upgrade prompt → "em breve" instead of "Upgrade to Pro"
+- Settings "Gerenciar assinatura" → "em breve"
+- Billing page → "em breve" message
+- Contacts free plan warning → hidden
+- All upgrade toasts → disabled
+
+To enable billing, add to your `.env.local`:
+```bash
+NEXT_PUBLIC_BILLING_ENABLED=true
+```
+
+#### Pre-release Mode
+
+To give all users unlimited access without enabling billing:
+
+1. Keep `NEXT_PUBLIC_BILLING_ENABLED=false` (hides all billing/payment UI)
+2. Set `REPLYFLOW_PRE_RELEASE=true` (server: unlocks all plan limits)
+3. Set `NEXT_PUBLIC_PRE_RELEASE=true` (client: shows "pre-release" badge)
+
+To switch back to paid plans later:
+1. Set `REPLYFLOW_PRE_RELEASE=false`
+2. Set `NEXT_PUBLIC_PRE_RELEASE=false`
+3. Set `NEXT_PUBLIC_BILLING_ENABLED=true`
+
 ### CSS & Styling
 
 - **Use Tailwind utility classes** for all styling

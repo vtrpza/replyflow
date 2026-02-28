@@ -187,13 +187,12 @@ function formatMessage(message: string, values?: TranslationValues): string {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // Always initialize with DEFAULT_LOCALE to match SSR output; update on the
-  // client after hydration to avoid a server/client mismatch (hydration error).
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
-
-  useEffect(() => {
-    setLocale(resolveInitialLocale());
-  }, []);
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window !== "undefined") {
+      return resolveInitialLocale();
+    }
+    return DEFAULT_LOCALE;
+  });
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, locale);

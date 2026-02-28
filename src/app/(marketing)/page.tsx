@@ -446,10 +446,16 @@ function Hero() {
       <div className="max-w-6xl mx-auto relative lg:grid lg:grid-cols-5 lg:gap-12 lg:items-center">
         {/* Left — copy (3 cols) */}
         <div className="lg:col-span-3 text-center lg:text-left mb-12 lg:mb-0">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-green)] animate-pulse" />
+          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-amber)] animate-pulse" />
+              <span className="text-xs font-mono text-[var(--rf-amber)]">
+                {isPt ? "Pré-lançamento" : "Pre-release"}
+              </span>
+            </span>
+            <span className="hidden sm:inline text-zinc-700">•</span>
             <span className="text-xs font-mono text-[var(--rf-muted)]">
-              {isPt ? "para devs mid-senior em busca ativa" : "for mid-senior devs in active search"}
+              {isPt ? "para devs em busca ativa" : "for devs in active search"}
             </span>
           </div>
 
@@ -809,6 +815,7 @@ function Pricing() {
       name: "Pro",
       price: "R$ 39",
       period: isPt ? "/mês" : "/month",
+      badge: isPt ? "em breve" : "coming soon",
       desc: isPt
         ? "Para busca ativa com volume e disciplina."
         : "For active search with volume and consistency.",
@@ -823,6 +830,7 @@ function Pricing() {
       cta: isPt ? "Ir ilimitado" : "Go unlimited",
       href: "/app/billing",
       primary: true,
+      disabled: true,
     },
   ];
 
@@ -854,9 +862,9 @@ function Pricing() {
               }`}
               style={{ transitionDelay: `${i * 100}ms` }}
             >
-              {plan.primary && (
-                <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-medium text-[var(--rf-bg)] bg-[var(--rf-green)]">
-                  {isPt ? "recomendado" : "recommended"}
+              {plan.badge && (
+                <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-medium text-[var(--rf-bg)] bg-[var(--rf-amber)]">
+                  {plan.badge}
                 </div>
               )}
 
@@ -889,28 +897,35 @@ function Pricing() {
                 ))}
               </ul>
 
-              <Link
-                href={plan.href}
-                className={`block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  plan.primary
-                    ? "text-[var(--rf-bg)] hover:opacity-90"
-                    : "border border-[var(--rf-border)] text-[var(--rf-muted)] hover:text-white hover:border-zinc-600"
-                }`}
-                style={
-                  plan.primary
-                    ? { background: "var(--rf-gradient)" }
-                    : undefined
-                }
-              >
-                {plan.cta}
-              </Link>
+              {plan.disabled ? (
+                <span className="block text-center w-full py-2.5 rounded-lg text-sm font-medium bg-zinc-800/50 text-zinc-500 cursor-not-allowed">
+                  {plan.cta}
+                </span>
+              ) : (
+                <Link
+                  href={plan.href}
+                  className={`block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    plan.primary
+                      ? "text-[var(--rf-bg)] hover:opacity-90"
+                      : "border border-[var(--rf-border)] text-[var(--rf-muted)] hover:text-white hover:border-zinc-600"
+                  }`}
+                  style={
+                    plan.primary
+                      ? { background: "var(--rf-gradient)" }
+                      : undefined
+                  }
+                >
+                  {plan.cta}
+                </Link>
+              )}
             </div>
           ))}
         </div>
-        <p className="mt-8 text-xs text-zinc-600 font-mono text-center">
+        <p className="mt-8 text-sm text-[var(--rf-muted)] font-mono text-center">
           {isPt
             ? "Comece sem custo. Faça upgrade quando precisar de mais volume e automação."
             : "Start free. Upgrade when you need more volume and automation."}
+          <span className="ml-2 text-[var(--rf-amber)]">(em breve)</span>
         </p>
       </div>
     </section>

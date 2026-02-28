@@ -8,6 +8,7 @@ import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import posthog from "posthog-js";
 import { LanguageSwitch } from "@/components/ui/language-switch";
+import { BILLING_ENABLED } from "@/lib/config";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -208,7 +209,7 @@ function SettingsPageContent() {
             : "Failed to connect Gmail"
       );
       window.history.replaceState(null, "", "/app/settings");
-    } else if (gmailStatus === "upgrade_required") {
+    } else if (gmailStatus === "upgrade_required" && BILLING_ENABLED) {
       toast.error(
         gmailMessage
           || getUpgradeMessage({ error: "upgrade_required", feature: "accounts", limit: 1, period: "total" }, isPt)
@@ -292,7 +293,7 @@ function SettingsPageContent() {
         body: JSON.stringify({ action: "initiate" }),
       });
       const data = await res.json();
-      if (res.status === 402 && data?.error === "upgrade_required") {
+      if (BILLING_ENABLED && res.status === 402 && data?.error === "upgrade_required") {
         toast.error(getUpgradeMessage(data, isPt));
         window.location.href = BILLING_UPGRADE_ROUTE;
         return;
@@ -484,13 +485,19 @@ function SettingsPageContent() {
                 {isPt ? "Uso mensal e diario + limites do plano" : "Monthly and daily usage + plan limits"}
               </p>
             </div>
-            <a
-              href={BILLING_UPGRADE_ROUTE}
-              onClick={trackUpgradeCtaClick}
-              className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
-            >
-              {isPt ? "Gerenciar assinatura" : "Manage billing"}
-            </a>
+            {BILLING_ENABLED ? (
+              <a
+                href={BILLING_UPGRADE_ROUTE}
+                onClick={trackUpgradeCtaClick}
+                className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+              >
+                {isPt ? "Gerenciar assinatura" : "Manage billing"}
+              </a>
+            ) : (
+              <span className="px-4 py-2 text-sm font-medium text-amber-400">
+                em breve
+              </span>
+            )}
           </div>
 
           <div className="mb-4 p-3 rounded-lg bg-zinc-800 border border-zinc-700 text-sm text-zinc-200">

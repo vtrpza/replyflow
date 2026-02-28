@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import { BILLING_ENABLED, PRE_RELEASE } from "@/lib/config";
 import { BILLING_UPGRADE_ROUTE, getUpgradeMessage } from "@/lib/plan/client";
 
 const navItems = [
@@ -145,13 +146,20 @@ export function Sidebar() {
               ? pathname === "/app"
               : pathname.startsWith(item.href);
 
+          const isBilling = item.href === "/app/billing";
+
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={isBilling && !BILLING_ENABLED ? "#" : item.href}
+              onClick={isBilling && !BILLING_ENABLED ? (e) => e.preventDefault() : undefined}
               className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium border transition-all duration-200 ${
                 isActive
                   ? "text-white"
+                  : isBilling && !BILLING_ENABLED
+                  ? PRE_RELEASE
+                    ? "text-emerald-400 cursor-default"
+                    : "text-amber-400 cursor-default"
                   : "text-zinc-400 border-transparent hover:text-zinc-200 hover:bg-zinc-900/70"
               }`}
               style={
@@ -168,7 +176,11 @@ export function Sidebar() {
                 <span className="absolute left-0 top-2 bottom-2 w-[2px] rounded-r-sm bg-[var(--rf-cyan)]" />
               )}
               {item.icon}
-              {t(item.labelKey)}
+              {isBilling && !BILLING_ENABLED
+                ? PRE_RELEASE
+                  ? isPt ? "Pré-lançamento" : "Pre-release"
+                  : "em breve"
+                : t(item.labelKey)}
             </Link>
           );
         })}
@@ -247,12 +259,18 @@ export function Sidebar() {
           {syncMessage || (syncing ? t("sidebar.syncing") : t("sidebar.syncJobs"))}
         </button>
         {syncNeedsUpgrade && (
-          <Link
-            href={BILLING_UPGRADE_ROUTE}
-            className="mt-2 inline-flex text-xs text-emerald-300 hover:text-emerald-200 underline"
-          >
-            {isPt ? "Fazer upgrade para Pro" : "Upgrade to Pro"}
-          </Link>
+          BILLING_ENABLED ? (
+            <Link
+              href={BILLING_UPGRADE_ROUTE}
+              className="mt-2 inline-flex text-xs text-emerald-300 hover:text-emerald-200 underline"
+            >
+              {isPt ? "Fazer upgrade para Pro" : "Upgrade to Pro"}
+            </Link>
+          ) : PRE_RELEASE ? null : (
+            <span className="mt-2 inline-flex text-xs text-amber-400">
+              em breve
+            </span>
+          )
         )}
       </div>
     </aside>

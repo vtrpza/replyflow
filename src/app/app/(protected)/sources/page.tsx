@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingButton, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import { BILLING_ENABLED } from "@/lib/config";
 import posthog from "posthog-js";
 import {
   BILLING_UPGRADE_ROUTE,
@@ -87,6 +88,7 @@ export default function SourcesPage() {
   }, [loadSources]);
 
   const handleUpgradeRequired = (data: unknown): void => {
+    if (!BILLING_ENABLED) return;
     toast.error(getUpgradeMessage(data, isPt));
     router.push(BILLING_UPGRADE_ROUTE);
   };

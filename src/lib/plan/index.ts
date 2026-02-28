@@ -121,10 +121,14 @@ function isUnlimitedLimit(limit: number): boolean {
 
 /**
  * Get effective plan for a user.
- * Respects REPLYFLOW_FORCE_PLAN env var in non-production environments.
+ * Respects REPLYFLOW_PRE_RELEASE (all environments) and
+ * REPLYFLOW_FORCE_PLAN (non-production only) env vars.
  */
 export function getEffectivePlan(userId: string): PlanType {
-  // Dev override
+  if (process.env.REPLYFLOW_PRE_RELEASE === "true") {
+    return "pro";
+  }
+
   if (
     process.env.NODE_ENV !== "production" &&
     process.env.REPLYFLOW_FORCE_PLAN === "pro"

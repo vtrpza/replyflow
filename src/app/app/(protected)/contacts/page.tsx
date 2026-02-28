@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { EmptyState, LoadingButton, SkeletonList, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import { BILLING_ENABLED } from "@/lib/config";
 import { BILLING_UPGRADE_ROUTE } from "@/lib/plan/client";
 
 interface Contact {
@@ -114,7 +115,7 @@ export default function ContactsPage() {
         </p>
       </div>
 
-      {plan === "free" && (
+      {BILLING_ENABLED && plan === "free" && (
         <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <span>
             {isPt
