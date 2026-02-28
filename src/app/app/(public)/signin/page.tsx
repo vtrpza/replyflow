@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Image from "next/image";
 import { useI18n } from "@/lib/i18n";
-import posthog from "posthog-js";
+import { captureEvent } from "@/lib/analytics";
 
 export default function SignInPage() {
   const { data: session, status } = useSession();
@@ -14,7 +14,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (session) {
-      posthog.capture("user_logged_in", { provider: "google" });
+      captureEvent("user_logged_in", { provider: "google" });
       router.push("/app");
     }
   }, [session, router]);
@@ -56,7 +56,7 @@ export default function SignInPage() {
 
           <button
             onClick={() => {
-              posthog.capture("sign_in_clicked", { provider: "google" });
+              captureEvent("sign_in_clicked", { provider: "google" });
               signIn("google", { callbackUrl: "/app" });
             }}
             className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-3"

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import posthog from "posthog-js";
+import { captureEvent } from "@/lib/analytics";
 
 import { BILLING_ENABLED } from "@/lib/config";
 import { useI18n } from "@/lib/i18n";
@@ -75,7 +75,7 @@ export default function BillingPage() {
         throw new Error(payload.error || "Falha ao iniciar checkout");
       }
 
-      posthog.capture("billing_checkout_started", { current_plan: state?.entitlementPlan ?? "free" });
+      captureEvent("billing_checkout_started", { current_plan: state?.entitlementPlan ?? "free" });
       window.location.href = payload.checkoutUrl;
     } catch (checkoutError) {
       setError(checkoutError instanceof Error ? checkoutError.message : "Falha ao iniciar checkout");
@@ -96,7 +96,7 @@ export default function BillingPage() {
         throw new Error(payload.error || "Falha ao cancelar assinatura");
       }
 
-      posthog.capture("billing_subscription_cancelled");
+      captureEvent("billing_subscription_cancelled");
       await loadState();
     } catch (cancelError) {
       setError(cancelError instanceof Error ? cancelError.message : "Falha ao cancelar assinatura");

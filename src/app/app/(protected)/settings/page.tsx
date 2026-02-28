@@ -6,7 +6,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import posthog from "posthog-js";
+import { captureEvent } from "@/lib/analytics";
 import { LanguageSwitch } from "@/components/ui/language-switch";
 import { BILLING_ENABLED } from "@/lib/config";
 import {
@@ -148,12 +148,6 @@ function SettingsPageContent() {
 
   useEffect(() => {
     if (session?.user) {
-      // Identify the authenticated user in PostHog
-      posthog.identify(session.user.id ?? session.user.email ?? undefined, {
-        email: session.user.email ?? undefined,
-        name: session.user.name ?? undefined,
-      });
-
       setLoadingAccounts(true);
       fetch("/api/accounts")
         .then((r) => r.json())
@@ -203,6 +197,7 @@ function SettingsPageContent() {
     const gmailStatus = searchParams.get("gmail");
     const gmailMessage = searchParams.get("message");
     if (gmailStatus === "connected") {
+      captureEvent("gmail_connected");
       toast.success(isPt ? "Conta Gmail conectada com sucesso!" : "Gmail account connected successfully!");
       window.history.replaceState(null, "", "/app/settings");
     } else if (gmailStatus === "error") {
@@ -233,7 +228,7 @@ function SettingsPageContent() {
       });
       const data = await res.json();
       if (data.success) {
-        posthog.capture("profile_saved", {
+        captureEvent("profile_saved", {
           experience_years: profile.experienceYears,
           experience_level: profile.experienceLevel,
           skills_count: profile.skills.length,

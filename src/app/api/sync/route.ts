@@ -8,6 +8,7 @@ import {
 } from "@/lib/plan";
 import { recordPlanIntentEvent } from "@/lib/plan/intent-events";
 import { runSourceSync } from "@/lib/sources/sync";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 /**
  * POST /api/sync
@@ -54,6 +55,20 @@ export async function POST(request: Request) {
         sourceCount: result.results.length,
       },
     });
+
+    if (result.totalNewJobs > 0) {
+      const ph = getPostHogClient();
+      ph.capture({
+        distinctId: userId,
+        event: "job_imported",
+        properties: {
+          jobs_count: result.totalNewJobs,
+          sources_count: result.results.length,
+          method: "sync",
+        },
+      });
+      void ph.shutdown();
+    }
 
     return NextResponse.json(result);
   } catch (error) {

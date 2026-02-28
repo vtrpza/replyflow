@@ -9,8 +9,7 @@ import {
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
-import posthog from "posthog-js";
-import { analytics } from "@/lib/analytics";
+import { analytics, captureEvent } from "@/lib/analytics";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -203,6 +202,8 @@ export default function OutreachPage() {
   }, [records, openSheet]);
 
   const updateStatus = async (id: string, status: string) => {
+    const record = records.find((r) => r.id === id);
+    const fromStage = record?.status ?? "unknown";
     try {
       const res = await fetch("/api/outreach", {
         method: "PATCH",
@@ -210,7 +211,14 @@ export default function OutreachPage() {
         body: JSON.stringify({ id, status }),
       });
       if (!res.ok) throw new Error(isPt ? "Falha ao atualizar status" : "Failed to update status");
-      posthog.capture("outreach_status_updated", { outreach_id: id, new_status: status });
+      captureEvent("card_moved", {
+        outreach_id: id,
+        from_stage: fromStage,
+        to_stage: status,
+      });
+      if (status === "followed_up") {
+        captureEvent("followup_scheduled", { outreach_id: id });
+      }
       toast.success(isPt ? "Status atualizado" : "Status updated");
       fetchRecords();
     } catch {
@@ -248,6 +256,11 @@ export default function OutreachPage() {
       subject: template.subject,
       body: template.body,
     }));
+    captureEvent("template_used", {
+      template_id: template.id,
+      template_type: template.type,
+      template_language: template.language,
+    });
   };
 
   const clearTemplate = () => {
@@ -268,7 +281,7 @@ export default function OutreachPage() {
         }),
       });
       if (!res.ok) throw new Error(isPt ? "Falha ao salvar rascunho" : "Failed to save draft");
-      posthog.capture("outreach_draft_saved", { outreach_id: sheetRecord.id });
+      captureEvent("outreach_draft_saved", { outreach_id: sheetRecord.id });
       toast.success(isPt ? "Rascunho salvo" : "Draft saved");
       fetchRecords();
     } catch {
@@ -301,7 +314,7 @@ export default function OutreachPage() {
         return;
       }
       if (data.success) {
-        posthog.capture("outreach_email_sent", {
+        captureEvent("outreach_email_sent", {
           outreach_id: sheetRecord.id,
           has_cv_attachment: !!data.attachedCV,
           cv_language: data.attachedCV || null,

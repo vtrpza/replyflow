@@ -7,7 +7,7 @@ import { useToast, LoadingButton } from "@/components/ui";
 import { Send, Mail, AlertCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
-import posthog from "posthog-js";
+import { captureEvent } from "@/lib/analytics";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -108,7 +108,7 @@ export default function ComposePage() {
       }
 
       if (data.success) {
-        posthog.capture("compose_email_sent", { account_id: accountId });
+        captureEvent("compose_email_sent", { account_id: accountId });
         toast.success(t("compose.emailSent"));
         void refresh();
         setTo("");

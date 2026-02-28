@@ -553,11 +553,10 @@ export function ensureUserExists(session: Session): string {
       })
       .run();
 
-    // Fire user_signed_up — first time this user has been created in our DB.
     const phClient = getPostHogClient();
     phClient.capture({
       distinctId: requestedId,
-      event: "user_signed_up",
+      event: "signup_completed",
       properties: {
         email: requestedEmail,
         name: session.user.name || null,
@@ -604,6 +603,22 @@ export function ensureUserExists(session: Session): string {
   if (!sourceCount || sourceCount.count === 0) {
     try {
       runSourceDiscovery(canonicalUserId);
+
+      const afterCount = db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.repoSources)
+        .where(eq(schema.repoSources.userId, canonicalUserId))
+        .get();
+
+      if (afterCount && afterCount.count > 0) {
+        const phPipeline = getPostHogClient();
+        phPipeline.capture({
+          distinctId: canonicalUserId,
+          event: "pipeline_created",
+          properties: { sources_count: afterCount.count },
+        });
+        void phPipeline.shutdown();
+      }
     } catch (e) {
       console.error("Auto-discovery failed for new user:", canonicalUserId, e);
     }

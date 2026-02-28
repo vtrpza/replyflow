@@ -3,13 +3,18 @@
 import { useEffect, useRef } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { analytics } from "@/lib/analytics";
+import { analytics, persistFirstTouch, identifyUser } from "@/lib/analytics";
 import { BUILD_VERSION } from "@/lib/config";
 
 function PostHogRegistrar({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const { locale } = useI18n();
   const registered = useRef(false);
+  const identified = useRef(false);
+
+  useEffect(() => {
+    persistFirstTouch();
+  }, []);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -22,6 +27,20 @@ function PostHogRegistrar({ children }: { children: React.ReactNode }) {
       lang: locale,
     });
   }, [status, locale]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    if (identified.current) return;
+    identified.current = true;
+
+    const userId = session.user.id ?? session.user.email;
+    if (userId) {
+      identifyUser(userId, {
+        email: session.user.email ?? undefined,
+        name: session.user.name ?? undefined,
+      });
+    }
+  }, [status, session]);
 
   return <>{children}</>;
 }
