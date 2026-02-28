@@ -379,18 +379,26 @@ function SettingsPageContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmText: deleteConfirmText }),
       });
-      const data = await res.json();
+
+      let data: { success?: boolean; error?: string };
+      try {
+        data = await res.json();
+      } catch {
+        toast.error(isPt ? "Resposta inesperada do servidor" : "Unexpected server response");
+        setDeleting(false);
+        return;
+      }
+
       if (data.success) {
         toast.success(isPt ? "Conta excluida" : "Account deleted");
-        await signOut({ callbackUrl: "/" });
-      } else {
-        toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
-        setDeleteModalOpen(false);
-        setDeleteConfirmText("");
+        signOut({ callbackUrl: "/" });
+        return;
       }
+
+      toast.error(`${isPt ? "Erro" : "Error"}: ${data.error}`);
+      setDeleting(false);
     } catch {
       toast.error(isPt ? "Falha ao excluir conta" : "Failed to delete account");
-    } finally {
       setDeleting(false);
     }
   };
