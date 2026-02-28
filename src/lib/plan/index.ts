@@ -8,6 +8,7 @@ import { eq, and, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { runSourceDiscovery } from "@/lib/sources/discovery";
 import { getPostHogClient } from "@/lib/posthog-server";
+import { BUILD_VERSION } from "@/lib/config";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -558,8 +559,8 @@ export function ensureUserExists(session: Session): string {
       distinctId: requestedId,
       event: "signup_completed",
       properties: {
-        email: requestedEmail,
-        name: session.user.name || null,
+        provider: "google",
+        build_version: BUILD_VERSION,
       },
     });
     void phClient.shutdown();
@@ -615,7 +616,7 @@ export function ensureUserExists(session: Session): string {
         phPipeline.capture({
           distinctId: canonicalUserId,
           event: "pipeline_created",
-          properties: { sources_count: afterCount.count },
+          properties: { build_version: BUILD_VERSION, sources_count: afterCount.count },
         });
         void phPipeline.shutdown();
       }

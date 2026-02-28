@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { ensureUserExists, getEffectivePlan } from "@/lib/plan";
+import { getPostHogClient } from "@/lib/posthog-server";
+import { BUILD_VERSION } from "@/lib/config";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -341,6 +343,20 @@ export async function PATCH(request: Request) {
           updatedAt: now,
         })
         .run();
+      const outreachCount = db
+        .select({ value: sql<number>`count(*)` })
+        .from(schema.outreachRecords)
+        .where(eq(schema.outreachRecords.userId, userId))
+        .get();
+      if (outreachCount?.value === 1) {
+        const ph = getPostHogClient();
+        ph.capture({
+          distinctId: userId,
+          event: "pipeline_created",
+          properties: { build_version: BUILD_VERSION },
+        });
+        void ph.shutdown();
+      }
     } else {
       db.update(schema.outreachRecords)
         .set({ status: outreachStatus, updatedAt: now })

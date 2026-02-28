@@ -9,6 +9,8 @@ import type { UserProfile } from "@/lib/types";
 import path from "path";
 import { upsertContactFromJobForUser } from "@/lib/contacts/upsert";
 import { isDirectContactEmail } from "@/lib/contacts/email-quality";
+import { getPostHogClient } from "@/lib/posthog-server";
+import { BUILD_VERSION } from "@/lib/config";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -200,6 +202,21 @@ export async function POST(request: Request) {
       })
       .run();
 
+    const outreachCount = db
+      .select({ value: sql<number>`count(*)` })
+      .from(schema.outreachRecords)
+      .where(eq(schema.outreachRecords.userId, userId))
+      .get();
+    if (outreachCount?.value === 1) {
+      const ph = getPostHogClient();
+      ph.capture({
+        distinctId: userId,
+        event: "pipeline_created",
+        properties: { build_version: BUILD_VERSION },
+      });
+      void ph.shutdown();
+    }
+
     recordPlanIntentEvent({
       userId,
       plan,
@@ -210,12 +227,6 @@ export async function POST(request: Request) {
         language,
       },
     });
-
-    const outreachCount = db
-      .select({ value: sql<number>`count(*)` })
-      .from(schema.outreachRecords)
-      .where(eq(schema.outreachRecords.userId, userId))
-      .get();
 
     const bodyLen = job.body?.length ?? 0;
     const inputLengthBucket = bodyLen < 200 ? "xs" : bodyLen < 500 ? "sm" : bodyLen < 2000 ? "md" : "lg";
