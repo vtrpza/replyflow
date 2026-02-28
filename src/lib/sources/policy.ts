@@ -22,4 +22,19 @@ export const SOURCE_POLICY: Record<SourceType, SourcePolicy> = {
     attributionUrl: "https://github.com/lever/postings-api",
     termsUrl: "https://www.lever.co/terms",
   },
+  ashby_board: {
+    attributionLabel: "Ashby Job Board API",
+    attributionUrl: "https://developers.ashbyhq.com/docs/public-job-posting-api",
+    termsUrl: "https://www.ashbyhq.com/terms-of-service",
+  },
+  workable_widget: {
+    attributionLabel: "Workable Widget API",
+    attributionUrl: "https://developers.workable.com/",
+    termsUrl: "https://www.workable.com/terms",
+  },
+  recruitee_careers: {
+    attributionLabel: "Recruitee Careers Site API",
+    attributionUrl: "https://docs.recruitee.com/reference/offers",
+    termsUrl: "https://recruitee.com/en/terms",
+  },
 };

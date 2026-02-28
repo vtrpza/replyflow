@@ -74,6 +74,62 @@
       "category": "saas",
       "regionTags": ["INTL_LATAM_FRIENDLY"],
       "confidence": 83
+    },
+    {
+      "sourceType": "ashby_board",
+      "externalKey": "notion",
+      "displayName": "Notion",
+      "category": "saas",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 85
+    },
+    {
+      "sourceType": "ashby_board",
+      "externalKey": "linear",
+      "displayName": "Linear",
+      "category": "saas",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 82
+    },
+    {
+      "sourceType": "ashby_board",
+      "externalKey": "ramp",
+      "displayName": "Ramp",
+      "category": "fintech",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 84
+    },
+    {
+      "sourceType": "workable_widget",
+      "externalKey": "sennder",
+      "displayName": "Sennder",
+      "category": "logistics",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 78
+    },
+    {
+      "sourceType": "workable_widget",
+      "externalKey": "epigamia",
+      "displayName": "Epigamia",
+      "category": "consumer",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 72
+    },
+    {
+      "sourceType": "recruitee_careers",
+      "externalKey": "channable",
+      "displayName": "Channable",
+      "category": "saas",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 80
+    },
+    {
+      "sourceType": "recruitee_careers",
+      "externalKey": "pricehubble",
+      "displayName": "PriceHubble",
+      "category": "proptech",
+      "regionTags": ["INTL_LATAM_FRIENDLY"],
+      "confidence": 76
     }
   ]
 }

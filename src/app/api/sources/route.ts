@@ -85,8 +85,23 @@ function normalizeSourceInput(body: Record<string, unknown>): {
     throw new Error(`${sourceType} source requires externalKey`);
   }
 
-  const isGreenhouse = sourceType === "greenhouse_board";
-  const fullName = isGreenhouse ? `greenhouse/${externalKey}` : `lever/${externalKey}`;
+  const prefixMap: Record<string, string> = {
+    greenhouse_board: "greenhouse",
+    lever_postings: "lever",
+    ashby_board: "ashby",
+    workable_widget: "workable",
+    recruitee_careers: "recruitee",
+  };
+  const prefix = prefixMap[sourceType] || sourceType;
+  const fullName = `${prefix}/${externalKey}`;
+
+  const urlMap: Record<string, string> = {
+    greenhouse_board: `https://boards.greenhouse.io/${externalKey}`,
+    lever_postings: `https://jobs.lever.co/${externalKey}`,
+    ashby_board: `https://jobs.ashbyhq.com/${externalKey}`,
+    workable_widget: `https://apply.workable.com/${externalKey}`,
+    recruitee_careers: `https://${externalKey}.recruitee.com`,
+  };
 
   return {
     sourceType,
@@ -95,11 +110,7 @@ function normalizeSourceInput(body: Record<string, unknown>): {
     repo: externalKey,
     externalKey,
     fullName,
-    url: body.url
-      ? String(body.url)
-      : isGreenhouse
-      ? `https://boards.greenhouse.io/${externalKey}`
-      : `https://jobs.lever.co/${externalKey}`,
+    url: body.url ? String(body.url) : (urlMap[sourceType] || `https://${externalKey}`),
     category,
     technology,
     enabled,

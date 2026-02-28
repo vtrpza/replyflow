@@ -450,7 +450,7 @@ export function assertWithinSourceEnableQuota(
 ): { ok: true } | { ok: false; error: string; limit: number; feature: UpgradeFeatureKey; period: UpgradePeriod } {
   const limits = getSourceLimitsForPlan(getEffectivePlan(userId));
   const counts = getSourceCounts(userId);
-  const isAtsSource = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+  const isAtsSource = sourceType !== "github_repo";
 
   if (!isUnlimitedLimit(limits.enabledSources) && counts.enabledSources + enablingCount > limits.enabledSources) {
     return {

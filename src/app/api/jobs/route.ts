@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
     const contactType = searchParams.get("contactType");
     const minMatchScore = searchParams.get("minMatchScore");
     const roleFilter = searchParams.get("role");
+    const sourceTypeFilter = searchParams.get("sourceType");
+    const sourceIdFilter = searchParams.get("sourceId");
     const hideStale = (searchParams.get("hideStale") || "true") !== "false";
     const staleDays = parseInt(searchParams.get("staleDays") || "45", 10);
 
@@ -62,6 +64,8 @@ export async function GET(request: NextRequest) {
       );
     }
     if (repo) conditions.push(eq(schema.jobs.repoFullName, repo));
+    if (sourceTypeFilter) conditions.push(eq(schema.jobs.sourceType, sourceTypeFilter));
+    if (sourceIdFilter) conditions.push(eq(schema.jobs.sourceId, sourceIdFilter));
     if (remote === "true") conditions.push(eq(schema.jobs.isRemote, true));
     if (contractType) conditions.push(eq(schema.jobs.contractType, contractType));
     if (level) conditions.push(eq(schema.jobs.experienceLevel, level));

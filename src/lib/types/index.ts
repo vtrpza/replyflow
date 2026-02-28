@@ -41,7 +41,13 @@ export interface JobListing {
 }
 
 export type ContractType = "CLT" | "PJ" | "Freela" | "Internship" | "Unknown";
-export type SourceType = "github_repo" | "greenhouse_board" | "lever_postings";
+export type SourceType =
+  | "github_repo"
+  | "greenhouse_board"
+  | "lever_postings"
+  | "ashby_board"
+  | "workable_widget"
+  | "recruitee_careers";
 export type ExperienceLevel =
   | "Junior"
   | "Pleno"

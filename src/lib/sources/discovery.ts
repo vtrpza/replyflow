@@ -28,7 +28,7 @@ interface EcosystemData {
 }
 
 interface AtsCatalogSource {
-  sourceType: "greenhouse_board" | "lever_postings";
+  sourceType: "greenhouse_board" | "lever_postings" | "ashby_board" | "workable_widget" | "recruitee_careers";
   externalKey: string;
   displayName?: string;
   category?: string;
@@ -137,9 +137,14 @@ function getAtsSourceUrl(source: AtsCatalogSource): string {
     return source.url.trim();
   }
 
-  return source.sourceType === "greenhouse_board"
-    ? `https://boards.greenhouse.io/${source.externalKey}`
-    : `https://jobs.lever.co/${source.externalKey}`;
+  const urlMap: Record<string, string> = {
+    greenhouse_board: `https://boards.greenhouse.io/${source.externalKey}`,
+    lever_postings: `https://jobs.lever.co/${source.externalKey}`,
+    ashby_board: `https://jobs.ashbyhq.com/${source.externalKey}`,
+    workable_widget: `https://apply.workable.com/${source.externalKey}`,
+    recruitee_careers: `https://${source.externalKey}.recruitee.com`,
+  };
+  return urlMap[source.sourceType] || `https://${source.externalKey}`;
 }
 
 function insertDiscoveredSource(input: InsertDiscoveredSourceInput): { created: boolean; autoEnabled: boolean } {
@@ -213,7 +218,7 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
     : Math.max(0, sourceLimits.enabledAtsSources - sourceCounts.enabledAtsSources);
 
   const canAutoEnable = (sourceType: SourceType): boolean => {
-    const isAts = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+    const isAts = sourceType !== "github_repo";
     if (remainingEnabledSlots <= 0) {
       return false;
     }
@@ -224,7 +229,7 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
   };
 
   const consumeEnableSlot = (sourceType: SourceType): void => {
-    const isAts = sourceType === "greenhouse_board" || sourceType === "lever_postings";
+    const isAts = sourceType !== "github_repo";
     if (remainingEnabledSlots !== Number.POSITIVE_INFINITY) {
       remainingEnabledSlots -= 1;
     }
@@ -289,7 +294,8 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
       continue;
     }
 
-    if (source.sourceType !== "greenhouse_board" && source.sourceType !== "lever_postings") {
+    const validAtsTypes = ["greenhouse_board", "lever_postings", "ashby_board", "workable_widget", "recruitee_careers"] as const;
+    if (!validAtsTypes.includes(source.sourceType as typeof validAtsTypes[number])) {
       continue;
     }
 
@@ -297,15 +303,21 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
     const shouldEnableCandidate = source.enabledByDefault === undefined
       ? confidence >= minAutoEnableConfidence
       : !!source.enabledByDefault;
-    const shouldEnable = shouldEnableCandidate && canAutoEnable(source.sourceType);
+    const shouldEnable = shouldEnableCandidate && canAutoEnable(source.sourceType as SourceType);
 
-    const fullName = source.sourceType === "greenhouse_board"
-      ? `greenhouse/${externalKey}`
-      : `lever/${externalKey}`;
+    const prefixMap: Record<string, string> = {
+      greenhouse_board: "greenhouse",
+      lever_postings: "lever",
+      ashby_board: "ashby",
+      workable_widget: "workable",
+      recruitee_careers: "recruitee",
+    };
+    const prefix = prefixMap[source.sourceType] || source.sourceType;
+    const fullName = `${prefix}/${externalKey}`;
 
     const inserted = insertDiscoveredSource({
       userId,
-      sourceType: source.sourceType,
+      sourceType: source.sourceType as SourceType,
       displayName: source.displayName?.trim() || fullName,
       owner: source.sourceType,
       repo: externalKey,
@@ -323,7 +335,7 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
       created += 1;
       if (inserted.autoEnabled) {
         autoEnabled += 1;
-        consumeEnableSlot(source.sourceType);
+        consumeEnableSlot(source.sourceType as SourceType);
       }
     }
   }
