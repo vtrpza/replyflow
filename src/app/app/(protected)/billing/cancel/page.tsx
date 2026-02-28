@@ -1,6 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { BILLING_ENABLED } from "@/lib/config";
 
 export default function BillingCancelPage() {
+  if (!BILLING_ENABLED) {
+    redirect("/app");
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-2xl">
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 space-y-4">

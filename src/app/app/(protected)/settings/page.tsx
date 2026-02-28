@@ -180,20 +180,22 @@ function SettingsPageContent() {
         })
         .catch(console.error);
 
-      fetch("/api/billing/state")
-        .then((r) => r.json())
-        .then((data) => {
-          if (!data.error) {
-            setBillingState({
-              entitlementPlan: data.entitlementPlan,
-              subscriptionStatus: data.subscriptionStatus,
-              nextDueDate: data.nextDueDate,
-              cancelAtPeriodEnd: data.cancelAtPeriodEnd,
-              lastPaymentStatus: data.lastPaymentStatus,
-            });
-          }
-        })
-        .catch(console.error);
+      if (BILLING_ENABLED) {
+        fetch("/api/billing/state")
+          .then((r) => r.json())
+          .then((data) => {
+            if (!data.error) {
+              setBillingState({
+                entitlementPlan: data.entitlementPlan,
+                subscriptionStatus: data.subscriptionStatus,
+                nextDueDate: data.nextDueDate,
+                cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+                lastPaymentStatus: data.lastPaymentStatus,
+              });
+            }
+          })
+          .catch(console.error);
+      }
     }
   }, [session]);
 
@@ -512,7 +514,7 @@ function SettingsPageContent() {
                 {isPt ? "Uso mensal e diario + limites do plano" : "Monthly and daily usage + plan limits"}
               </p>
             </div>
-            {BILLING_ENABLED ? (
+            {BILLING_ENABLED && (
               <a
                 href={BILLING_UPGRADE_ROUTE}
                 onClick={trackUpgradeCtaClick}
@@ -520,10 +522,6 @@ function SettingsPageContent() {
               >
                 {isPt ? "Gerenciar assinatura" : "Manage billing"}
               </a>
-            ) : (
-              <span className="px-4 py-2 text-sm font-medium text-amber-400">
-                em breve
-              </span>
             )}
           </div>
 
@@ -595,12 +593,14 @@ function SettingsPageContent() {
                 ? "em desenvolvimento (em breve). Hoje o follow-up e manual com templates."
                 : "in development (coming soon). Today follow-up is manual with templates."}
             </p>
-            <p className="text-zinc-400 mt-1">
-              {isPt ? "Assinatura" : "Subscription"}:{" "}
-              <span className="uppercase text-zinc-200">{billingState?.subscriptionStatus || "none"}</span>
-              {billingState?.nextDueDate ? ` • ${isPt ? "próximo vencimento" : "next due"} ${billingState.nextDueDate}` : ""}
-              {billingState?.cancelAtPeriodEnd ? ` • ${isPt ? "cancelamento agendado" : "cancel at period end"}` : ""}
-            </p>
+            {BILLING_ENABLED && (
+              <p className="text-zinc-400 mt-1">
+                {isPt ? "Assinatura" : "Subscription"}:{" "}
+                <span className="uppercase text-zinc-200">{billingState?.subscriptionStatus || "none"}</span>
+                {billingState?.nextDueDate ? ` • ${isPt ? "próximo vencimento" : "next due"} ${billingState.nextDueDate}` : ""}
+                {billingState?.cancelAtPeriodEnd ? ` • ${isPt ? "cancelamento agendado" : "cancel at period end"}` : ""}
+              </p>
+            )}
           </div>
         </section>
 

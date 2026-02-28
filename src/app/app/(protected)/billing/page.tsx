@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 
-import { BILLING_ENABLED, PRE_RELEASE } from "@/lib/config";
+import { BILLING_ENABLED } from "@/lib/config";
 import { useI18n } from "@/lib/i18n";
 
 type BillingState = {
@@ -29,6 +30,7 @@ function formatDate(value: string | null): string {
 }
 
 export default function BillingPage() {
+  const router = useRouter();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
   const [state, setState] = useState<BillingState | null>(null);
@@ -103,50 +105,14 @@ export default function BillingPage() {
     }
   }
 
-  if (!BILLING_ENABLED) {
-    if (PRE_RELEASE) {
-      return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {isPt ? "Pré-lançamento" : "Pre-release"}
-            </h1>
-            <p className="mt-2 text-zinc-400">
-              {isPt
-                ? "Você tem acesso completo a todos os recursos durante o período de pré-lançamento. Aproveite!"
-                : "You have full access to all features during the pre-release period. Enjoy!"}
-            </p>
-          </div>
-
-          <div className="text-sm text-zinc-500">
-            <Link href="/app/settings" className="underline hover:text-zinc-300">
-              {isPt ? "Voltar para configurações" : "Back to settings"}
-            </Link>
-          </div>
-        </div>
-      );
+  useEffect(() => {
+    if (!BILLING_ENABLED) {
+      router.replace("/app");
     }
+  }, [router]);
 
-    return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-3xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Billing</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            em breve
-          </p>
-        </div>
-
-        <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
-          <p className="text-amber-400 text-lg">em breve</p>
-        </section>
-
-        <div className="text-sm text-zinc-500">
-          <Link href="/app/settings" className="underline hover:text-zinc-300">
-            Voltar para configurações
-          </Link>
-        </div>
-      </div>
-    );
+  if (!BILLING_ENABLED) {
+    return null;
   }
 
   return (
