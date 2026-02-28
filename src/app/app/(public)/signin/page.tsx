@@ -14,6 +14,7 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (session) {
+      posthog.capture("user_logged_in", { provider: "google" });
       router.push("/app");
     }
   }, [session, router]);
