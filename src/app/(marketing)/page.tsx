@@ -97,6 +97,7 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
     let partial = "";
 
     let interval: ReturnType<typeof setInterval> | null = null;
+    let advanceTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const initialTimeout = setTimeout(() => {
       interval = setInterval(() => {
@@ -111,7 +112,7 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
         } else {
           clearInterval(interval!);
           interval = null;
-          setTimeout(() => setCurrentLine((c) => c + 1), delay / 2);
+          advanceTimeout = setTimeout(() => setCurrentLine((c) => c + 1), delay / 2);
         }
       }, speed);
     }, currentLine === 0 ? delay : 100);
@@ -119,6 +120,7 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
     return () => {
       clearTimeout(initialTimeout);
       if (interval !== null) clearInterval(interval);
+      if (advanceTimeout !== null) clearTimeout(advanceTimeout);
     };
   }, [currentLine, done, lines, speed, delay]);
 
@@ -531,7 +533,7 @@ function Hero() {
                 <div
                   key={i}
                   className={
-                    line.startsWith("  ✓")
+                    line?.startsWith("  ✓")
                       ? "text-[var(--rf-green)]"
                       : "text-[var(--rf-muted)]"
                   }
