@@ -6,6 +6,25 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 ## [Unreleased]
 
+## [0.1.0-rc.1] - 2026-02-27
+
+### Added
+
+- Ashby, Workable, and Recruitee job-source connectors.
+- Account deletion (hard delete) with confirmation modal in Settings.
+- Dynamic browser tab title using server-side language detection.
+- MVP analytics events: `reply_created`, `reply_copied`, `build_version`.
+
+### Fixed
+
+- Delete `sourceJobLinks` before `repoSources` to avoid FK constraint violation on source removal.
+- Order experience levels by seniority in dashboard stats.
+
+### Changed
+
+- Landing page copy updated to pre-release messaging.
+- Product description generalized for a broader developer audience.
+
 ### Added
 
 - Plan-intent telemetry pipeline:

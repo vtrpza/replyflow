@@ -17,3 +17,4 @@
 | [SENTRY.md](./SENTRY.md) | Sentry error monitoring setup and configuration |
 | [VERSIONING.md](./VERSIONING.md) | Semantic versioning policy and release cadence |
 | [IMPLEMENTATION_RUNBOOK.md](./IMPLEMENTATION_RUNBOOK.md) | Detailed implementation notes for sources, connectors, and sync |
+| [CONNECTOR_EXPANSION_PLAN.md](./CONNECTOR_EXPANSION_PLAN.md) | Connector expansion strategy |

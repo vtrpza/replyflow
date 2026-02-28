@@ -80,7 +80,7 @@ The goal is to help developers run job search with more structure, context, and 
 * **Database:** SQLite + Drizzle ORM
 * **Auth:** NextAuth v5
 * **Email:** Gmail API
-* **Monitoring:** Sentry
+* **Monitoring:** Sentry + PostHog
 * **Deploy:** Fly.io
 
 ---
@@ -154,6 +154,9 @@ ReplyFlow is designed to work with opportunity sources such as:
 * GitHub repository listings
 * Greenhouse boards
 * Lever postings
+* Ashby boards
+* Workable boards
+* Recruitee boards
 
 The goal is to unify multiple discovery channels into one operational workflow.
 
@@ -174,15 +177,17 @@ Some integrations may be partially unavailable without external credentials.
 
 ## Current status
 
-ReplyFlow is an actively developed product and already goes beyond a simple prototype.
+ReplyFlow is at **release candidate** stage (`v0.1.0-rc.1`).
 
-Areas currently being worked on include:
+Core flows are stable:
+- job sourcing from 6 connectors (GitHub, Greenhouse, Lever, Ashby, Workable, Recruitee)
+- ATS pipeline tracking
+- recruiter contact management
+- outreach with email templates
+- billing (Free / Pro)
+- analytics instrumentation
 
-* billing
-* plan enforcement
-* UX polish
-* richer screenshots and demo material
-* stronger end-to-end production flows
+Active polish areas: UX refinements, screenshots/demo material, and production hardening.
 
 ---
 
