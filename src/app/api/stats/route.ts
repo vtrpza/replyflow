@@ -117,6 +117,16 @@ export async function GET() {
       .from(schema.jobs)
       .where(and(visibleJobsCondition, sql`${schema.jobs.experienceLevel} IS NOT NULL`))
       .groupBy(schema.jobs.experienceLevel)
+      .orderBy(
+        sql`CASE ${schema.jobs.experienceLevel}
+          WHEN 'Intern' THEN 1
+          WHEN 'Junior' THEN 2
+          WHEN 'Pleno' THEN 3
+          WHEN 'Senior' THEN 4
+          WHEN 'Lead' THEN 5
+          ELSE 6
+        END`
+      )
       .all();
 
     const jobsByRepo = db
