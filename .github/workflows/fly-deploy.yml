@@ -23,6 +23,8 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+          NEXT_PUBLIC_PRE_RELEASE: ${{ secrets.NEXT_PUBLIC_PRE_RELEASE }}
+          NEXT_PUBLIC_BILLING_ENABLED: ${{ secrets.NEXT_PUBLIC_BILLING_ENABLED }}
   deploy:
     name: Deploy app
     needs: quality
@@ -31,8 +33,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN --build-arg SKIP_BUILD_VALIDATION=1 --build-arg NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY --build-arg NEXT_PUBLIC_APP_VERSION=${GITHUB_SHA:0:7}
+      - run: >-
+          flyctl deploy --remote-only
+          --build-arg SENTRY_AUTH_TOKEN=$SENTRY_AUTH_TOKEN
+          --build-arg SKIP_BUILD_VALIDATION=1
+          --build-arg NEXT_PUBLIC_POSTHOG_KEY=$NEXT_PUBLIC_POSTHOG_KEY
+          --build-arg NEXT_PUBLIC_APP_VERSION=${GITHUB_SHA:0:7}
+          --build-arg NEXT_PUBLIC_PRE_RELEASE=$NEXT_PUBLIC_PRE_RELEASE
+          --build-arg NEXT_PUBLIC_BILLING_ENABLED=$NEXT_PUBLIC_BILLING_ENABLED
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          NEXT_PUBLIC_PRE_RELEASE: ${{ secrets.NEXT_PUBLIC_PRE_RELEASE }}
+          NEXT_PUBLIC_BILLING_ENABLED: ${{ secrets.NEXT_PUBLIC_BILLING_ENABLED }}
