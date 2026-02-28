@@ -458,7 +458,7 @@ function SettingsPageContent() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <LanguageSwitch />
+          <LanguageSwitch variant="inline" />
           <span className="text-sm text-zinc-400 truncate max-w-[200px]">{session?.user?.email}</span>
           <button
             onClick={() => signOut()}
