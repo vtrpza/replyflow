@@ -200,9 +200,7 @@ export default function Dashboard() {
     );
   }
 
-  const directJobsFromScrape = stats.jobsWithDirectEmail ?? stats.jobsWithEmail ?? 0;
   const directContactsInCrm = stats.contactsTotal ?? 0;
-  const directRate = toPercent(directJobsFromScrape, stats.totalJobs);
   const replyRate = toPercent(stats.totalReplies, stats.totalOutreachSent);
   const interviewRate = toPercent(stats.totalInterviews, stats.totalReplies);
   const interviewStageCount = stats.outreachInterviewing + stats.outreachAccepted;
@@ -290,11 +288,7 @@ export default function Dashboard() {
         <KpiCard
           label={isPt ? "Contatos diretos no CRM" : "Direct contacts in CRM"}
           value={directContactsInCrm}
-          helper={
-            isPt
-              ? `${directJobsFromScrape} vagas com e-mail no scrape (${directRate}%)`
-              : `${directJobsFromScrape} jobs with scraped email (${directRate}%)`
-          }
+          helper={isPt ? "Contatos únicos salvos" : "Unique saved contacts"}
           tone="text-emerald-300"
         />
         <KpiCard
