@@ -50,3 +50,13 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Workspace tooling (Claude Code, agents, AI skills)
+.claude/
+.agents/
+skills-lock.json
+posthog-setup-report.md
+
+# Local runtime data & backups
+data/
+backups/

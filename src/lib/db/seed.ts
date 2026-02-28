@@ -13,7 +13,7 @@ const DB_PATH =
   path.join(process.cwd(), "data", "gitjobs.db");
 const ECOSYSTEM_PATH = path.join(
   process.cwd(),
-  "data",
+  "seed",
   "brazilian-job-ecosystem.json"
 );
 

@@ -238,7 +238,7 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
     }
   };
 
-  const ecosystemPath = path.join(process.cwd(), "data", "brazilian-job-ecosystem.json");
+  const ecosystemPath = path.join(process.cwd(), "seed", "brazilian-job-ecosystem.json");
   if (fs.existsSync(ecosystemPath)) {
     const ecosystem = JSON.parse(fs.readFileSync(ecosystemPath, "utf-8")) as EcosystemData;
     const groups = ecosystem.githubRepos || {};
@@ -285,7 +285,7 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
     }
   }
 
-  const atsCatalogPath = path.join(process.cwd(), "data", "international-ats-sources.json");
+  const atsCatalogPath = path.join(process.cwd(), "seed", "international-ats-sources.json");
   const atsSources = loadAtsSources(atsCatalogPath);
 
   for (const source of atsSources) {
