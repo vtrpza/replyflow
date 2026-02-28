@@ -99,17 +99,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const acceptLanguage = headersList.get("accept-language");
-  const locale = getLocaleFromAcceptLanguage(acceptLanguage);
-
   return (
-    <html lang={locale} className="dark">
+    <html lang="pt-BR" className="dark">
       <body className={`antialiased ${instrumentSerif.variable} ${jetbrainsMono.variable} ${ibmPlexSans.variable}`}>
         <Providers>
           <ToastProvider>
