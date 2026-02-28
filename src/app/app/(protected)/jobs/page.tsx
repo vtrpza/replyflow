@@ -6,6 +6,8 @@ import { EmptyState, LoadingButton, SkeletonList, Tooltip, useToast } from "@/co
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
 import posthog from "posthog-js";
+import { analytics } from "@/lib/analytics";
+import type { InputLengthBucket } from "@/lib/analytics";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -175,6 +177,13 @@ export default function JobsPage() {
 
       if (data.success) {
         posthog.capture("job_draft_created", { job_id: jobId });
+        if (!data.existing && data.analytics) {
+          analytics.replyCreated({
+            is_first_reply: data.analytics.is_first_reply,
+            reply_type: data.analytics.reply_type,
+            input_length_bucket: data.analytics.input_length_bucket as InputLengthBucket,
+          });
+        }
         toast.success(
           isPt
             ? "Rascunho criado! Veja em Outreach."

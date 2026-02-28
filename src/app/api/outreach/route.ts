@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { generateColdEmail } from "@/lib/outreach/email-generator";
 import { assertWithinPlan, ensureUserExists, getEffectivePlan, getOrCreateProfile, upgradeRequiredResponse } from "@/lib/plan";
 import { recordPlanIntentEvent, recordUpgradeBlockedIntent } from "@/lib/plan/intent-events";
@@ -211,11 +211,25 @@ export async function POST(request: Request) {
       },
     });
 
+    const outreachCount = db
+      .select({ value: sql<number>`count(*)` })
+      .from(schema.outreachRecords)
+      .where(eq(schema.outreachRecords.userId, userId))
+      .get();
+
+    const bodyLen = job.body?.length ?? 0;
+    const inputLengthBucket = bodyLen < 200 ? "xs" : bodyLen < 500 ? "sm" : bodyLen < 2000 ? "md" : "lg";
+
     return NextResponse.json({
       success: true,
       outreach: {
         id: outreachId,
         email,
+      },
+      analytics: {
+        is_first_reply: (outreachCount?.value ?? 0) <= 1,
+        reply_type: "cold_email",
+        input_length_bucket: inputLengthBucket,
       },
     });
   } catch (error) {

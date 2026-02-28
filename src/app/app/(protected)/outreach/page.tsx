@@ -10,6 +10,7 @@ import {
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
 import posthog from "posthog-js";
+import { analytics } from "@/lib/analytics";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -221,6 +222,18 @@ export default function OutreachPage() {
     setSheetRecord(null);
     setSelectedTemplate(null);
     setSheetForm({ to: "", from: "", subject: "", body: "", attachCV: "" });
+  };
+
+  const handleCopyReply = async (record: OutreachRecord) => {
+    const parts = [record.emailSubject, record.emailBody].filter(Boolean);
+    const text = parts.join("\n\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      analytics.replyCopied({ reply_type: "cold_email" });
+      toast.success(isPt ? "Copiado!" : "Copied!");
+    } catch {
+      toast.error(isPt ? "Falha ao copiar" : "Failed to copy");
+    }
   };
 
   const applyTemplate = (template: EmailTemplate) => {
@@ -476,7 +489,13 @@ export default function OutreachPage() {
                     </div>
                   )}
                   {record.emailBody && (
-                    <div className="bg-zinc-950 rounded-lg p-4">
+                    <div className="bg-zinc-950 rounded-lg p-4 relative group">
+                      <button
+                        onClick={() => handleCopyReply(record)}
+                        className="absolute top-2 right-2 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      >
+                        {isPt ? "Copiar" : "Copy"}
+                      </button>
                       <pre className="text-sm text-zinc-300 whitespace-pre-wrap font-sans">
                         {record.emailBody}
                       </pre>
