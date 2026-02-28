@@ -7,6 +7,7 @@
 ![SQLite + Drizzle](https://img.shields.io/badge/SQLite-Drizzle-003B57?logo=sqlite)
 ![Fly.io](https://img.shields.io/badge/Fly.io-deployed-8B5CF6?logo=flydotio)
 
+**Live:** [replyflow.fly.dev](https://replyflow.fly.dev?ref=github)
 
 **Stop applying blindly. Start running your job search like a system.**
 

@@ -29,6 +29,10 @@ function PostHogRegistrar({ children }: { children: React.ReactNode }) {
     if (Object.keys(utm).length > 0) {
       posthog.register_once(utm);
     }
+    const ref = params.get("ref");
+    if (ref != null) {
+      posthog.register({ acquisition_ref: ref });
+    }
   }, []);
 
   useEffect(() => {
