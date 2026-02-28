@@ -16,8 +16,8 @@ export async function deleteUserAccount(userId: string): Promise<void> {
     await tx.delete(schema.contacts).where(eq(schema.contacts.userId, userId));
     await tx.delete(schema.connectedEmailAccounts).where(eq(schema.connectedEmailAccounts.userId, userId));
     await tx.delete(schema.emailTemplates).where(eq(schema.emailTemplates.userId, userId));
-    await tx.delete(schema.repoSources).where(eq(schema.repoSources.userId, userId));
     await tx.delete(schema.sourceJobLinks).where(eq(schema.sourceJobLinks.userId, userId));
+    await tx.delete(schema.repoSources).where(eq(schema.repoSources.userId, userId));
     await tx.delete(schema.sourceUsageDaily).where(eq(schema.sourceUsageDaily.userId, userId));
     await tx.delete(schema.userPlan).where(eq(schema.userPlan.userId, userId));
     await tx.delete(schema.userProfile).where(eq(schema.userProfile.userId, userId));
