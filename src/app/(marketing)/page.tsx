@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitch } from "@/components/ui/language-switch";
 import { MobileLanguageControl } from "@/components/ui/mobile-language-control";
+import { PRE_RELEASE } from "@/lib/config";
 
 /* ───────────────────────── hooks ───────────────────────── */
 
@@ -417,7 +418,9 @@ function Nav() {
               className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-center text-xs font-medium text-[var(--rf-bg)] transition-all hover:opacity-90 sm:px-4 sm:text-sm"
               style={{ background: "var(--rf-gradient)" }}
             >
-              {isPt ? "Começar grátis" : "Get started"}
+              {PRE_RELEASE
+                ? (isPt ? "Acesso grátis" : "Free access")
+                : (isPt ? "Começar grátis" : "Get started")}
             </Link>
           </div>
         </div>
@@ -448,14 +451,16 @@ function Hero() {
         <div className="lg:col-span-3 text-center lg:text-left mb-12 lg:mb-0">
           <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1 rounded-full border border-[var(--rf-border)] bg-[var(--rf-surface)] mb-6 sm:mb-8">
             <span className="inline-flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--rf-amber)] animate-pulse" />
-              <span className="text-xs font-mono text-[var(--rf-amber)]">
+              <span className={`w-1.5 h-1.5 rounded-full ${PRE_RELEASE ? "bg-[var(--rf-green)]" : "bg-[var(--rf-amber)]"} animate-pulse`} />
+              <span className={`text-xs font-mono ${PRE_RELEASE ? "text-[var(--rf-green)]" : "text-[var(--rf-amber)]"}`}>
                 {isPt ? "Pré-lançamento" : "Pre-release"}
               </span>
             </span>
             <span className="hidden sm:inline text-zinc-700">•</span>
             <span className="text-xs font-mono text-[var(--rf-muted)]">
-              {isPt ? "para devs em busca ativa" : "for devs in active search"}
+              {PRE_RELEASE
+                ? (isPt ? "acesso Pro completo, sem custo" : "full Pro access, zero cost")
+                : (isPt ? "para devs em busca ativa" : "for devs in active search")}
             </span>
           </div>
 
@@ -474,9 +479,13 @@ function Hero() {
           </h1>
 
           <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-[var(--font-sans-display)]">
-            {isPt
-              ? "ReplyFlow transforma sua busca de emprego em um sistema operacional: você organiza oportunidades em um fluxo único, prioriza onde vale investir energia e mantém follow-up consistente."
-              : "ReplyFlow turns your job search into an operating system: organize opportunities in one flow, prioritize where effort matters, and keep follow-ups consistent."}
+            {PRE_RELEASE
+              ? (isPt
+                ? "ReplyFlow está em pré-lançamento com acesso total liberado. Organize oportunidades, priorize por fit técnico e execute follow-ups — tudo sem custo, sem limites."
+                : "ReplyFlow is in pre-release with full access unlocked. Organize opportunities, prioritize by technical fit, and execute follow-ups — all free, no limits.")
+              : (isPt
+                ? "ReplyFlow transforma sua busca de emprego em um sistema operacional: você organiza oportunidades em um fluxo único, prioriza onde vale investir energia e mantém follow-up consistente."
+                : "ReplyFlow turns your job search into an operating system: organize opportunities in one flow, prioritize where effort matters, and keep follow-ups consistent.")}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center lg:items-start justify-center lg:justify-start gap-3 sm:gap-4">
@@ -486,7 +495,9 @@ function Hero() {
               style={{ background: "var(--rf-gradient)" }}
             >
               <span className="font-mono text-xs opacity-70">&gt;</span>
-              {isPt ? "Começar grátis" : "Start free"}
+              {PRE_RELEASE
+                ? (isPt ? "Acessar tudo grátis" : "Get full access free")
+                : (isPt ? "Começar grátis" : "Start free")}
             </Link>
             <Link
               href="#como-funciona"
@@ -497,7 +508,9 @@ function Hero() {
           </div>
 
           <p className="mt-5 text-xs text-zinc-600 font-mono">
-            {isPt ? "comece sem custo — organize sua busca com método" : "start free — run your search with structure"}
+            {PRE_RELEASE
+              ? (isPt ? "pré-lançamento — todos os recursos Pro liberados" : "pre-release — all Pro features unlocked")
+              : (isPt ? "comece sem custo — organize sua busca com método" : "start free — run your search with structure")}
           </p>
         </div>
 
@@ -557,7 +570,11 @@ function StatsBar() {
           <span className="hidden sm:inline text-zinc-700">|</span>
           <span>{isPt ? "Seus dados ficam com você" : "Your data stays yours"}</span>
           <span className="hidden sm:inline text-zinc-700">|</span>
-          <span>{isPt ? "Cancele quando quiser" : "Cancel anytime"}</span>
+          <span>
+            {PRE_RELEASE
+              ? (isPt ? "Sem cartão de crédito" : "No credit card")
+              : (isPt ? "Cancele quando quiser" : "Cancel anytime")}
+          </span>
           <span className="hidden sm:inline text-zinc-700">|</span>
           <span>{isPt ? "Feito para devs BR" : "Built for BR developers"}</span>
         </div>
@@ -794,6 +811,15 @@ function Pricing() {
   const isPt = locale === "pt-BR";
   const revealRef = useScrollReveal();
 
+  const preReleaseFeatures = [
+    isPt ? "Fontes e syncs ilimitados" : "Unlimited sources & syncs",
+    isPt ? "Reveals de contato ilimitados" : "Unlimited contact reveals",
+    isPt ? "Geração de rascunho ilimitada" : "Unlimited draft generation",
+    isPt ? "Envios ilimitados" : "Unlimited sends",
+    isPt ? "Contas Gmail ilimitadas" : "Unlimited Gmail accounts",
+    isPt ? "Histórico completo e analytics" : "Full history & analytics",
+  ];
+
   const plans = [
     {
       name: "Free",
@@ -833,6 +859,72 @@ function Pricing() {
       disabled: true,
     },
   ];
+
+  if (PRE_RELEASE) {
+    return (
+      <section className="py-24 px-6 border-t border-[var(--rf-border)] bg-[var(--rf-surface)]/50">
+        <div ref={revealRef} className="rf-reveal max-w-3xl mx-auto">
+          <div className="text-center mb-16">
+            <p className="text-xs font-mono text-[var(--rf-green)] uppercase tracking-widest mb-3">
+              {isPt ? "PRÉ-LANÇAMENTO" : "PRE-RELEASE"}
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
+              {isPt ? "Tudo liberado. Custo zero." : "Everything unlocked. Zero cost."}
+            </h2>
+            <p className="mt-4 text-sm sm:text-base text-[var(--rf-muted)] max-w-2xl mx-auto">
+              {isPt
+                ? "Durante o pré-lançamento, todos os recursos Pro estão liberados para quem entrar agora. Sem limite de uso, sem cartão de crédito."
+                : "During pre-release, every Pro feature is unlocked for early adopters. No usage limits, no credit card required."}
+            </p>
+          </div>
+
+          <div className="relative max-w-lg mx-auto p-8 rounded-2xl border border-[var(--rf-green)]/30 bg-[var(--rf-bg)] rf-glow">
+            <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full text-[10px] font-mono font-medium text-[var(--rf-bg)] bg-[var(--rf-green)]">
+              {isPt ? "pré-lançamento" : "pre-release"}
+            </div>
+
+            <h3 className="text-lg font-semibold text-white mb-1">
+              {isPt ? "Acesso completo" : "Full access"}
+            </h3>
+            <div className="flex items-baseline gap-1 mb-1">
+              <span className="text-4xl font-mono font-bold text-white">R$ 0</span>
+              <span className="text-sm text-[var(--rf-muted)]">
+                {isPt ? "durante o pré-lançamento" : "during pre-release"}
+              </span>
+            </div>
+            <p className="text-sm text-[var(--rf-muted)] mb-6">
+              {isPt
+                ? "Todos os recursos Pro liberados para usuários iniciais."
+                : "All Pro features unlocked for early users."}
+            </p>
+
+            <ul className="space-y-3 mb-8">
+              {preReleaseFeatures.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-sm text-zinc-300">
+                  <span className="text-[var(--rf-green)] mt-0.5 text-xs">&#10003;</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/app"
+              className="block text-center w-full py-2.5 rounded-lg text-sm font-medium text-[var(--rf-bg)] hover:opacity-90 transition-all"
+              style={{ background: "var(--rf-gradient)" }}
+            >
+              {isPt ? "Entrar no pré-lançamento" : "Join the pre-release"}
+            </Link>
+          </div>
+
+          <p className="mt-8 text-sm text-[var(--rf-muted)] font-mono text-center">
+            {isPt
+              ? "Planos pagos serão lançados no futuro. Quem entrar agora, opera sem restrição."
+              : "Paid plans are coming later. Early users operate without restrictions."}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-24 px-6 border-t border-[var(--rf-border)] bg-[var(--rf-surface)]/50">
@@ -1017,12 +1109,18 @@ function FinalCta() {
 
       <div ref={revealRef} className="rf-reveal relative max-w-3xl mx-auto text-center">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-[var(--font-serif)] italic text-white tracking-tight mb-5">
-          {isPt ? "Pare de improvisar sua busca de emprego." : "Stop improvising your job search."}
+          {PRE_RELEASE
+            ? (isPt ? "Acesso total. Antes de todo mundo." : "Full access. Before everyone else.")
+            : (isPt ? "Pare de improvisar sua busca de emprego." : "Stop improvising your job search.")}
         </h2>
         <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-8 leading-relaxed">
-          {isPt
-            ? "Organize seu pipeline, priorize melhor e execute com consistência do primeiro contato ao follow-up."
-            : "Organize your pipeline, prioritize better, and execute consistently from first contact to follow-up."}
+          {PRE_RELEASE
+            ? (isPt
+              ? "O ReplyFlow está em pré-lançamento. Todos os recursos Pro estão liberados para quem começar agora — sem custo, sem limites."
+              : "ReplyFlow is in pre-release. Every Pro feature is unlocked for those who start now — no cost, no limits.")
+            : (isPt
+              ? "Organize seu pipeline, priorize melhor e execute com consistência do primeiro contato ao follow-up."
+              : "Organize your pipeline, prioritize better, and execute consistently from first contact to follow-up.")}
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -1032,7 +1130,9 @@ function FinalCta() {
             style={{ background: "var(--rf-gradient)" }}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
-            {isPt ? "Começar grátis no ReplyFlow" : "Start free on ReplyFlow"}
+            {PRE_RELEASE
+              ? (isPt ? "Entrar no pré-lançamento" : "Join the pre-release")
+              : (isPt ? "Começar grátis no ReplyFlow" : "Start free on ReplyFlow")}
           </Link>
           <Link
             href="#como-funciona"

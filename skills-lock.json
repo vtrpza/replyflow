@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "davila7-copywriting": {
+      "source": "smithery/ai",
+      "sourceType": "well-known",
+      "computedHash": "8cd44f5c4573b0780e50ccde113488dd3f647f5eacee275a130d5db8e5bde062"
+    }
+  }
+}
