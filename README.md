@@ -10,7 +10,7 @@
 
 **Stop applying blindly. Start running your job search like a system.**
 
-ReplyFlow is a job-search workflow product for Brazilian developers.
+ReplyFlow is a job-search workflow product for developers.
 
 It brings together **job sourcing, ATS tracking, recruiter context, and outreach** in one place — so the process stops feeling scattered and starts feeling operational.
 
