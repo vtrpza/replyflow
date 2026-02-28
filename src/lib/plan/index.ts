@@ -7,6 +7,7 @@ import { db, schema } from "@/lib/db";
 import { eq, and, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { runSourceDiscovery } from "@/lib/sources/discovery";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -551,6 +552,18 @@ export function ensureUserExists(session: Session): string {
         updatedAt: now,
       })
       .run();
+
+    // Fire user_signed_up — first time this user has been created in our DB.
+    const phClient = getPostHogClient();
+    phClient.capture({
+      distinctId: requestedId,
+      event: "user_signed_up",
+      properties: {
+        email: requestedEmail,
+        name: session.user.name || null,
+      },
+    });
+    void phClient.shutdown();
   } else {
     const safeEmail =
       existingByEmail && existingByEmail.id !== existingById.id

@@ -12,6 +12,10 @@ interface ReplyCopiedProps {
   reply_type: string;
 }
 
+interface CtaClickedProps {
+  location: string;
+}
+
 function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
@@ -32,6 +36,11 @@ export const analytics = {
   replyCopied(props: ReplyCopiedProps): void {
     if (!isBrowser()) return;
     posthog.capture("reply_copied", props);
+  },
+
+  ctaClicked(props: CtaClickedProps): void {
+    if (!isBrowser()) return;
+    posthog.capture("cta_clicked", props);
   },
 
   register(props: Record<string, unknown>): void {

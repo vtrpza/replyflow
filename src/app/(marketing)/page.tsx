@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { LanguageSwitch } from "@/components/ui/language-switch";
 import { MobileLanguageControl } from "@/components/ui/mobile-language-control";
 import { PRE_RELEASE } from "@/lib/config";
+import { analytics } from "@/lib/analytics";
 
 /* ───────────────────────── hooks ───────────────────────── */
 
@@ -417,6 +418,7 @@ function Nav() {
               href="/app"
               className="inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-center text-xs font-medium text-[var(--rf-bg)] transition-all hover:opacity-90 sm:px-4 sm:text-sm"
               style={{ background: "var(--rf-gradient)" }}
+              onClick={() => analytics.ctaClicked({ location: "nav" })}
             >
               {PRE_RELEASE
                 ? (isPt ? "Acesso grátis" : "Free access")
@@ -493,6 +495,7 @@ function Hero() {
               href="/app"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
               style={{ background: "var(--rf-gradient)" }}
+              onClick={() => analytics.ctaClicked({ location: "hero" })}
             >
               <span className="font-mono text-xs opacity-70">&gt;</span>
               {PRE_RELEASE
@@ -911,6 +914,7 @@ function Pricing() {
               href="/app"
               className="block text-center w-full py-2.5 rounded-lg text-sm font-medium text-[var(--rf-bg)] hover:opacity-90 transition-all"
               style={{ background: "var(--rf-gradient)" }}
+              onClick={() => analytics.ctaClicked({ location: "pricing" })}
             >
               {isPt ? "Entrar no pré-lançamento" : "Join the pre-release"}
             </Link>
@@ -1006,6 +1010,7 @@ function Pricing() {
                       ? { background: "var(--rf-gradient)" }
                       : undefined
                   }
+                  onClick={() => analytics.ctaClicked({ location: "pricing" })}
                 >
                   {plan.cta}
                 </Link>
@@ -1128,6 +1133,7 @@ function FinalCta() {
             href="/app"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-medium text-sm text-[var(--rf-bg)] transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto justify-center"
             style={{ background: "var(--rf-gradient)" }}
+            onClick={() => analytics.ctaClicked({ location: "footer_cta" })}
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
             {PRE_RELEASE
