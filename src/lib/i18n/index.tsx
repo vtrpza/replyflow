@@ -187,12 +187,15 @@ function formatMessage(message: string, values?: TranslationValues): string {
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => {
-    if (typeof window !== "undefined") {
-      return resolveInitialLocale();
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+
+  useEffect(() => {
+    const resolved = resolveInitialLocale();
+    if (resolved !== locale) {
+      setLocale(resolved);
     }
-    return DEFAULT_LOCALE;
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, locale);
