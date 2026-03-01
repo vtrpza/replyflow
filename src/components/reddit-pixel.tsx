@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 
 const REDDIT_PIXEL_ID = process.env.NEXT_PUBLIC_REDDIT_PIXEL_ID;
-/** Must match cookie name set in app/(protected)/layout when wasCreated */
-const NEW_SIGNUP_COOKIE = "replyflow_new_signup";
+/** Must match SIGNUP_CONVERSION_ID_ELEMENT_ID in app/(protected)/layout.tsx */
+const SIGNUP_CID_ELEMENT_ID = "replyflow-signup-cid";
 
 declare global {
   interface Window {
@@ -104,12 +104,12 @@ export function RedditPixel(): null {
       conversionId: generateConversionId("pagevisit"),
     });
 
-    // If server set new-signup cookie (first session after signup), fire Reddit SignUp with same conversion_id and clear cookie
-    if (typeof document !== "undefined" && document.cookie.includes(`${NEW_SIGNUP_COOKIE}=`)) {
-      const match = document.cookie.match(new RegExp(`${NEW_SIGNUP_COOKIE}=([^;]+)`));
-      const signupConversionId = match?.[1]?.trim();
-      trackRedditConversion("SignUp", signupConversionId ?? undefined);
-      document.cookie = `${NEW_SIGNUP_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    // If layout rendered new-signup marker (first session after signup), fire Reddit SignUp with same conversionId and remove marker
+    const signupEl = typeof document !== "undefined" ? document.getElementById(SIGNUP_CID_ELEMENT_ID) : null;
+    const signupConversionId = signupEl?.getAttribute("data-conversion-id")?.trim();
+    if (signupConversionId) {
+      trackRedditConversion("SignUp", signupConversionId);
+      signupEl?.remove();
     }
   }, [status, session?.user]);
 
