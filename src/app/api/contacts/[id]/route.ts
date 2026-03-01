@@ -16,7 +16,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const body = await request.json();
 
     const existing = db
@@ -56,7 +56,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     db.delete(schema.contacts)
       .where(and(eq(schema.contacts.id, id), eq(schema.contacts.userId, userId)))

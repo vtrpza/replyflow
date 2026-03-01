@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const body = (await request.json().catch(() => ({}))) as PlanIntentRequestBody;
 
     if (!body.eventType || !ALLOWED_EVENT_TYPES.has(body.eventType)) {

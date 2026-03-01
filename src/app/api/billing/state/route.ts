@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const state = getBillingState(userId);
 
     return NextResponse.json(state);

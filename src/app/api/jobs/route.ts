@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const plan = getEffectivePlan(userId);
 
     const searchParams = request.nextUrl.searchParams;
@@ -317,7 +317,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "id and outreachStatus required" }, { status: 400 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     const existing = db
       .select()

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     const body = await request.json();
     const { jobId, language = "pt-BR" } = body;
@@ -255,7 +255,7 @@ export async function PATCH(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     const body = await request.json();
     const { id, status, notes, emailSubject, emailBody } = body;
@@ -306,7 +306,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const plan = getEffectivePlan(userId);
 
     const body = await request.json();

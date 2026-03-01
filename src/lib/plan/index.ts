@@ -503,13 +503,19 @@ export function getPlanInfo(userId: string): PlanInfo {
   };
 }
 
+export interface EnsureUserResult {
+  userId: string;
+  wasCreated: boolean;
+}
+
 /**
  * Ensure user exists in the users table.
  * Upserts using session data so FK targets exist even without DB adapter.
  */
-export function ensureUserExists(session: Session): string {
+export function ensureUserExists(session: Session): EnsureUserResult {
+  const empty: EnsureUserResult = { userId: "", wasCreated: false };
   if (!session?.user?.id) {
-    return "";
+    return empty;
   }
 
   const now = new Date().toISOString();
@@ -531,6 +537,7 @@ export function ensureUserExists(session: Session): string {
   // Existing user found by email but with a different ID.
   // Keep canonical DB ID to avoid UNIQUE(email) crashes and user duplication.
   let canonicalUserId = requestedId;
+  let wasCreated = false;
   if (existingByEmail && existingByEmail.id !== requestedId) {
     canonicalUserId = existingByEmail.id;
 
@@ -543,6 +550,7 @@ export function ensureUserExists(session: Session): string {
       .where(eq(schema.users.id, existingByEmail.id))
       .run();
   } else if (!existingById) {
+    wasCreated = true;
     db.insert(schema.users)
       .values({
         id: requestedId,
@@ -628,7 +636,7 @@ export function ensureUserExists(session: Session): string {
   // Keep caller/session aligned with canonical id in this request lifecycle.
   session.user.id = canonicalUserId;
 
-  return canonicalUserId;
+  return { userId: canonicalUserId, wasCreated };
 }
 
 /**

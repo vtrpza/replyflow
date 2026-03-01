@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
 
     const sourceType = request.nextUrl.searchParams.get("sourceType");
     const status = request.nextUrl.searchParams.get("status");
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = ensureUserExists(session);
+    const { userId } = ensureUserExists(session);
     const plan = getEffectivePlan(userId);
 
     const body = (await request.json()) as Record<string, unknown>;
