@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
     const visibleJobsCondition = sql`EXISTS (
       SELECT 1
       FROM source_job_links sjl

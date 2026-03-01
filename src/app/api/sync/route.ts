@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
     const plan = getEffectivePlan(userId);
     const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
           method: "sync",
         },
       });
-      void ph.shutdown();
+      await ph.shutdown();
     }
 
     return NextResponse.json(result);

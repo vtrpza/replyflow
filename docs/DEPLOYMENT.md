@@ -18,6 +18,27 @@ ReplyFlow runs on Fly.io with SQLite persisted on a Fly Volume.
 - A `FLY_API_TOKEN` secret in GitHub (for CI/CD)
 - Google Cloud OAuth credentials configured (see [OAuth Callbacks](#oauth-callbacks))
 
+## GitHub Actions (CI)
+
+The **Fly Deploy** workflow (`.github/workflows/fly-deploy.yml`) runs on push to `main`: it runs quality checks (TypeScript, build) then deploys to Fly.
+
+### Required GitHub secrets
+
+Configure these under **Settings → Secrets and variables → Actions**:
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `FLY_API_TOKEN` | **Yes** | Fly.io API token for `flyctl deploy`. Create at [Fly.io dashboard](https://fly.io/user/tokens). |
+| `SENTRY_AUTH_TOKEN` | No | Sentry auth token for uploading source maps. Build succeeds without it. |
+| `NEXT_PUBLIC_POSTHOG_KEY` | No | PostHog project API key (e.g. `phc_...`). If missing, the build still passes and analytics are disabled at runtime. |
+| `NEXT_PUBLIC_PRE_RELEASE` | No | `true` or `false` for pre-release mode. |
+| `NEXT_PUBLIC_BILLING_ENABLED` | No | `true` or `false` to show billing UI. |
+| `NEXT_PUBLIC_REDDIT_PIXEL_ID` | No | Reddit Ads pixel ID for conversion tracking. |
+
+`NEXT_PUBLIC_POSTHOG_HOST` is set in the workflow (not a secret); default is `https://us.i.posthog.com`.
+
+**To make analytics work in production:** set `NEXT_PUBLIC_POSTHOG_KEY` (and optionally `NEXT_PUBLIC_REDDIT_PIXEL_ID`) in GitHub secrets so the build inlines them. Runtime Fly secrets are separate (see [Secrets Reference](#secrets-reference)).
+
 ## Secrets Reference
 
 Set all required secrets in Fly before the first deploy:

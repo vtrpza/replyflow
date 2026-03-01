@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { SessionProvider, useSession } from "next-auth/react";
 import posthog from "posthog-js";
 import { I18nProvider, useI18n } from "@/lib/i18n";
-import { analytics, persistFirstTouch, identifyUser } from "@/lib/analytics";
+import { analytics, captureEvent, persistFirstTouch, identifyUser } from "@/lib/analytics";
 import { BUILD_VERSION } from "@/lib/config";
 
 function PostHogRegistrar({ children }: { children: React.ReactNode }) {
@@ -59,6 +59,15 @@ function PostHogRegistrar({ children }: { children: React.ReactNode }) {
         name: session.user.name ?? undefined,
       });
     }
+
+    const signupEl =
+      typeof document !== "undefined"
+        ? document.getElementById("replyflow-signup-cid")
+        : null;
+    captureEvent("login_completed", {
+      provider: "google",
+      is_new_user: !!signupEl,
+    });
   }, [status, session]);
 
   return <>{children}</>;

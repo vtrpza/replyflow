@@ -1,4 +1,15 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#   FLY_API_TOKEN              - Fly.io deploy (required)
+#   SENTRY_AUTH_TOKEN          - Sentry source maps upload (optional; build works without it)
+#   NEXT_PUBLIC_POSTHOG_KEY    - PostHog project API key (optional; build passes without it, analytics disabled)
+#   NEXT_PUBLIC_POSTHOG_HOST   - Not a secret; set in env below (default https://us.i.posthog.com)
+#   NEXT_PUBLIC_PRE_RELEASE    - "true" | "false" (optional)
+#   NEXT_PUBLIC_BILLING_ENABLED - "true" | "false" (optional)
+#   NEXT_PUBLIC_REDDIT_PIXEL_ID - Reddit Ads pixel ID (optional)
+#
+# For full analytics in production, set NEXT_PUBLIC_POSTHOG_KEY and NEXT_PUBLIC_REDDIT_PIXEL_ID.
 
 name: Fly Deploy
 on:

@@ -18,6 +18,7 @@ import {
   SignalsBar,
   DataCard,
 } from "@/components/dashboard";
+import { captureEvent } from "@/lib/analytics";
 
 interface Stats {
   totalJobs: number;
@@ -65,6 +66,7 @@ export default function Dashboard() {
   const [calculating, setCalculating] = useState(false);
   const [initialSyncing, setInitialSyncing] = useState(false);
   const initialSyncTriggered = useRef(false);
+  const dashboardLoadedSent = useRef(false);
 
   useEffect(() => {
     fetch("/api/stats")
@@ -79,6 +81,15 @@ export default function Dashboard() {
       )
       .finally(() => setLoading(false));
   }, [toast, isPt]);
+
+  useEffect(() => {
+    if (loading || !stats || dashboardLoadedSent.current) return;
+    dashboardLoadedSent.current = true;
+    captureEvent("dashboard_loaded", {
+      jobs_count: stats.totalJobs,
+      has_sources: stats.totalReposMonitored > 0,
+    });
+  }, [loading, stats]);
 
   // Auto-sync on first visit when user has sources but no jobs yet
   useEffect(() => {

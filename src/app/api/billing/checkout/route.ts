@@ -10,7 +10,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
     const result = await createProCheckoutForUser(userId);
 
     return NextResponse.json({

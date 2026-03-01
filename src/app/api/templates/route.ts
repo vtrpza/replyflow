@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     let query = db.select().from(schema.emailTemplates);
 
     if (userId) {
-      ensureUserExists(session); // ensure user exists; userId from session is used for query
+      await ensureUserExists(session); // ensure user exists; userId from session is used for query
       const userIdFinal = userId;
       query = query.where(
         (templates) =>
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
 
     const body = await request.json();
     const { name, description, type, language, subject, subjectVariants, body: templateBody } = body;

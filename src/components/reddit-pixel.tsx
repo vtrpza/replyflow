@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { captureEvent } from "@/lib/analytics";
 
 const REDDIT_PIXEL_ID = process.env.NEXT_PUBLIC_REDDIT_PIXEL_ID;
 /** Must match SIGNUP_CONVERSION_ID_ELEMENT_ID in app/(protected)/layout.tsx */
@@ -109,6 +110,10 @@ export function RedditPixel(): null {
     const signupConversionId = signupEl?.getAttribute("data-conversion-id")?.trim();
     if (signupConversionId) {
       trackRedditConversion("SignUp", signupConversionId);
+      captureEvent("signup_completed", {
+        provider: "google",
+        conversion_id: signupConversionId,
+      });
       signupEl?.remove();
     }
   }, [status, session?.user]);

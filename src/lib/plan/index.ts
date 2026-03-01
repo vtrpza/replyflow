@@ -512,7 +512,7 @@ export interface EnsureUserResult {
  * Ensure user exists in the users table.
  * Upserts using session data so FK targets exist even without DB adapter.
  */
-export function ensureUserExists(session: Session): EnsureUserResult {
+export async function ensureUserExists(session: Session): Promise<EnsureUserResult> {
   const empty: EnsureUserResult = { userId: "", wasCreated: false };
   if (!session?.user?.id) {
     return empty;
@@ -571,7 +571,7 @@ export function ensureUserExists(session: Session): EnsureUserResult {
         build_version: BUILD_VERSION,
       },
     });
-    void phClient.shutdown();
+    await phClient.shutdown();
   } else {
     const safeEmail =
       existingByEmail && existingByEmail.id !== existingById.id
@@ -626,7 +626,7 @@ export function ensureUserExists(session: Session): EnsureUserResult {
           event: "pipeline_created",
           properties: { build_version: BUILD_VERSION, sources_count: afterCount.count },
         });
-        void phPipeline.shutdown();
+        await phPipeline.shutdown();
       }
     } catch (e) {
       console.error("Auto-discovery failed for new user:", canonicalUserId, e);

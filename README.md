@@ -183,7 +183,7 @@ Active polish areas: UX refinements, screenshots/demo material, and production h
 
 See [`docs/`](./docs/) for detailed documentation:
 
-- [Deployment runbook](./docs/DEPLOYMENT.md)
+- [Deployment runbook](./docs/DEPLOYMENT.md) (includes [GitHub Actions / CI](./docs/DEPLOYMENT.md#github-actions-ci))
 - [Sentry setup](./docs/SENTRY.md)
 - [Versioning policy](./docs/VERSIONING.md)
 - [Implementation runbook](./docs/IMPLEMENTATION_RUNBOOK.md)

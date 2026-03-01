@@ -50,7 +50,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
     let profile = getOrCreateProfile(userId);
 
     if (shouldAutoHealScore(profile)) {
@@ -103,7 +103,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { userId } = ensureUserExists(session);
+    const { userId } = await ensureUserExists(session);
     const profile = getOrCreateProfile(userId);
     const body = await request.json();
 

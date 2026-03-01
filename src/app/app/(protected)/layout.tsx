@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ensureUserExists, getOrCreateProfile } from "@/lib/plan";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { PostHogPageView } from "@/components/posthog-pageview";
 import { sendRedditConversionEvent } from "@/lib/telemetry/reddit-capi";
 
 /** Id used by RedditPixel to fire SignUp with same conversionId (dedup with CAPI). Must match id in reddit-pixel.tsx */
@@ -24,7 +25,7 @@ export default async function AppLayout({
     redirect("/app/signin");
   }
 
-  const { userId, wasCreated } = ensureUserExists(session);
+  const { userId, wasCreated } = await ensureUserExists(session);
   let signupConversionId: string | null = null;
   if (wasCreated) {
     const conversionId = generateConversionId();
@@ -42,6 +43,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex h-screen bg-[var(--rf-bg)] text-[var(--rf-text)]">
+      <PostHogPageView />
       {signupConversionId != null ? (
         <div
           id={SIGNUP_CONVERSION_ID_ELEMENT_ID}
