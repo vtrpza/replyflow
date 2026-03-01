@@ -50,6 +50,11 @@ FROM base AS runner
 
 ENV NODE_ENV=production
 
+# sqlite3 CLI for backup script (scripts/backup-db.sh) when running on Fly.io.
+RUN apt-get update -qq && \
+  apt-get install --no-install-recommends -y sqlite3 && \
+  rm -rf /var/lib/apt/lists/*
+
 # Copy the standalone server output.
 COPY --from=build /app/.next/standalone /app
 COPY --from=build /app/.next/static /app/.next/static
