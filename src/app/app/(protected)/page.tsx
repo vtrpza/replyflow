@@ -10,6 +10,8 @@ import {
   useToast,
 } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 
 interface Stats {
   totalJobs: number;
@@ -224,6 +226,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-5">
+      <WelcomeModal />
+      <OnboardingChecklist />
+
       <LoadingOverlay
         show={calculating}
         message={

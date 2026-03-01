@@ -8,6 +8,8 @@ import { Mail, Trash2 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { captureEvent } from "@/lib/analytics";
 import { LanguageSwitch } from "@/components/ui/language-switch";
+import { OnboardingStepHint } from "@/components/onboarding/OnboardingStepHint";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { BILLING_ENABLED } from "@/lib/config";
 import {
   BILLING_UPGRADE_ROUTE,
@@ -96,6 +98,7 @@ function SettingsPageContent() {
   const toast = useToast();
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
+  const { completeStep: completeOnboardingStep, state: onboardingState } = useOnboarding();
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
@@ -238,6 +241,10 @@ function SettingsPageContent() {
         });
         if (data.profileScore) {
           setProfile((prev) => ({ ...prev, profileScore: data.profileScore }));
+        }
+        // Complete onboarding step when profile has >= 2 skills
+        if (profile.skills.length >= 2 && onboardingState.currentStep === "profile") {
+          completeOnboardingStep("profile");
         }
         toast.success(isPt ? "Perfil salvo!" : "Profile saved!");
       } else {
@@ -471,6 +478,8 @@ function SettingsPageContent() {
           </button>
         </div>
       </div>
+
+      <OnboardingStepHint stepId="profile" />
 
       <div className="space-y-8">
         <section className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">

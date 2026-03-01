@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingButton, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
 import { captureEvent } from "@/lib/analytics";
+import { OnboardingStepHint } from "@/components/onboarding/OnboardingStepHint";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import {
   BILLING_UPGRADE_ROUTE,
   getDailyResetLabel,
@@ -101,6 +103,8 @@ export default function SourcesPage() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
   const { snapshot } = usePlanSnapshot();
+  const { completeStep, state: onboardingState } = useOnboarding();
+  const onboardingTriggered = useRef(false);
 
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,6 +139,18 @@ export default function SourcesPage() {
   useEffect(() => {
     loadSources();
   }, [loadSources]);
+
+  // Auto-complete onboarding "sources" step when visiting this page
+  useEffect(() => {
+    if (
+      !onboardingTriggered.current &&
+      onboardingState.currentStep === "sources" &&
+      !onboardingState.completedSteps.includes("sources")
+    ) {
+      onboardingTriggered.current = true;
+      completeStep("sources");
+    }
+  }, [onboardingState.currentStep, onboardingState.completedSteps, completeStep]);
 
   const handleUpgradeRequired = (data: unknown): void => {
     if (!BILLING_ENABLED) return;
@@ -269,6 +285,8 @@ export default function SourcesPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
+      <OnboardingStepHint stepId="sources" showMarkDone />
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">{isPt ? "Fontes" : "Sources"}</h1>

@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState, LoadingButton, SkeletonList, Tooltip, useToast } from "@/components/ui";
 import { useI18n } from "@/lib/i18n";
 import { BILLING_ENABLED } from "@/lib/config";
 import { analytics, captureEvent } from "@/lib/analytics";
 import type { InputLengthBucket } from "@/lib/analytics";
+import { OnboardingStepHint } from "@/components/onboarding/OnboardingStepHint";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import {
   BILLING_UPGRADE_ROUTE,
   formatLimit,
@@ -85,6 +87,8 @@ export default function JobsPage() {
   const { locale } = useI18n();
   const isPt = locale === "pt-BR";
   const { snapshot, refresh: refreshPlanSnapshot } = usePlanSnapshot();
+  const { completeStep: completeOnboardingStep, state: onboardingState } = useOnboarding();
+  const onboardingTriggered = useRef(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
@@ -171,6 +175,18 @@ export default function JobsPage() {
     fetchJobs();
   }, [fetchJobs]);
 
+  // Auto-complete onboarding "first_action" step when visiting this page
+  useEffect(() => {
+    if (
+      !onboardingTriggered.current &&
+      onboardingState.currentStep === "first_action" &&
+      !onboardingState.completedSteps.includes("first_action")
+    ) {
+      onboardingTriggered.current = true;
+      completeOnboardingStep("first_action");
+    }
+  }, [onboardingState.currentStep, onboardingState.completedSteps, completeOnboardingStep]);
+
   const handleDraftEmail = async (jobId: string) => {
     setDraftingJob(jobId);
     try {
@@ -198,6 +214,9 @@ export default function JobsPage() {
             reply_type: data.analytics.reply_type,
             input_length_bucket: data.analytics.input_length_bucket as InputLengthBucket,
           });
+        }
+        if (onboardingState.currentStep === "first_action") {
+          completeOnboardingStep("first_action");
         }
         toast.success(
           isPt
@@ -234,6 +253,9 @@ export default function JobsPage() {
 
       if (data.success) {
         captureEvent("job_contact_revealed", { job_id: jobId });
+        if (onboardingState.currentStep === "first_action") {
+          completeOnboardingStep("first_action");
+        }
         toast.success(isPt ? "Contato revelado" : "Contact revealed");
         void refreshPlanSnapshot();
         fetchJobs(pagination.page);
@@ -319,6 +341,8 @@ export default function JobsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">
+      <OnboardingStepHint stepId="first_action" />
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white">{isPt ? "Vagas" : "Jobs"}</h1>
         <p className="text-sm text-zinc-500 mt-1">

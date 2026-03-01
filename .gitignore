@@ -56,7 +56,11 @@ next-env.d.ts
 .agents/
 skills-lock.json
 posthog-setup-report.md
+posthog/
 
 # Local runtime data & backups
 data/
 backups/
+
+# Launch analytics (local only)
+LAUNCH.md

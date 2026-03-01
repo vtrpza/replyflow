@@ -36,6 +36,13 @@
       "when": 1772217078518,
       "tag": "0004_cool_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1772335860354,
+      "tag": "0006_goofy_iron_patriot",
+      "breakpoints": true
     }
   ]
 }

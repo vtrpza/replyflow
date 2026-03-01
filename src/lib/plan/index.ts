@@ -662,6 +662,8 @@ export function getOrCreateProfile(userId: string) {
         profileScoreMissing: "[]",
         profileScoreSuggestions: "[]",
         profileScoreUpdatedAt: now,
+        onboardingStatus: "not_started",
+        onboardingCompletedSteps: "[]",
         updatedAt: now,
       })
       .run();
@@ -671,6 +673,32 @@ export function getOrCreateProfile(userId: string) {
       .from(schema.userProfile)
       .where(eq(schema.userProfile.userId, userId))
       .get();
+  }
+
+  // Backfill: if user already has outreach records, mark onboarding as completed
+  if (profile && profile.onboardingStatus === "not_started") {
+    const outreachCount = db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.outreachRecords)
+      .where(eq(schema.outreachRecords.userId, userId))
+      .get();
+
+    if (outreachCount && outreachCount.count > 0) {
+      db.update(schema.userProfile)
+        .set({
+          onboardingStatus: "completed",
+          onboardingCompletedSteps: JSON.stringify(["welcome", "profile", "sources", "first_action"]),
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(schema.userProfile.id, profile.id))
+        .run();
+
+      profile = db
+        .select()
+        .from(schema.userProfile)
+        .where(eq(schema.userProfile.userId, userId))
+        .get();
+    }
   }
 
   return profile!;

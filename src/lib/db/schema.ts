@@ -195,6 +195,8 @@ export const userProfile = sqliteTable("user_profile", {
   profileScoreMissing: text("profile_score_missing").notNull().default("[]"),
   profileScoreSuggestions: text("profile_score_suggestions").notNull().default("[]"),
   profileScoreUpdatedAt: text("profile_score_updated_at"),
+  onboardingStatus: text("onboarding_status").notNull().default("not_started"),
+  onboardingCompletedSteps: text("onboarding_completed_steps").notNull().default("[]"),
   updatedAt: text("updated_at").notNull(),
 });
 
