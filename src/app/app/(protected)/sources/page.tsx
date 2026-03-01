@@ -34,6 +34,8 @@ interface Source {
   healthScore: number;
   healthStatus: "healthy" | "warning" | "critical";
   totalJobsFetched: number;
+  /** Actual job count from source_job_links (preferred for display). */
+  jobsCount?: number;
   lastScrapedAt: string | null;
   attributionLabel: string | null;
   attributionUrl: string | null;
@@ -500,7 +502,7 @@ export default function SourcesPage() {
                     </div>
                     <p className="text-xs text-zinc-500 mt-1 break-all">{source.fullName}</p>
                     <div className="text-xs text-zinc-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-                      <span>{isPt ? "Vagas" : "Jobs"}: <span className="text-zinc-300">{source.totalJobsFetched}</span></span>
+                      <span>{isPt ? "Vagas" : "Jobs"}: <span className="text-zinc-300">{source.jobsCount ?? source.totalJobsFetched}</span></span>
                       <span>{isPt ? "Intervalo" : "Interval"}: <span className="text-zinc-300">{source.syncIntervalMinutes}m</span></span>
                       <span>
                         {isPt ? "Ultimo sync" : "Last sync"}:{" "}

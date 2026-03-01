@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db, schema } from "@/lib/db";
 import {
@@ -147,9 +147,32 @@ export async function GET(request: NextRequest) {
       rows = rows.filter((row) => !row.enabled);
     }
 
+    const sourceIds = rows.map((r) => r.id);
+    const jobCounts =
+      sourceIds.length === 0
+        ? new Map<string, number>()
+        : new Map(
+            db
+              .select({
+                sourceId: schema.sourceJobLinks.sourceId,
+                count: sql<number>`count(*)`.as("count"),
+              })
+              .from(schema.sourceJobLinks)
+              .where(
+                and(
+                  eq(schema.sourceJobLinks.userId, userId),
+                  inArray(schema.sourceJobLinks.sourceId, sourceIds)
+                )
+              )
+              .groupBy(schema.sourceJobLinks.sourceId)
+              .all()
+              .map((r) => [r.sourceId, r.count] as const)
+          );
+
     return NextResponse.json({
       sources: rows.map((row) => ({
         ...row,
+        jobsCount: jobCounts.get(row.id) ?? 0,
         regionTags: parseJson<string[]>(row.regionTagsJson, []),
         healthBreakdown: parseJson<Record<string, number>>(row.healthBreakdownJson, {}),
       })),
