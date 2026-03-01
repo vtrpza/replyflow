@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { ToastProvider, ModalProvider } from "@/components/ui";
 import { Providers } from "@/components/providers";
+import { RedditPixel } from "@/components/reddit-pixel";
 import { Instrument_Serif } from "next/font/google";
 import { JetBrains_Mono } from "next/font/google";
 import { IBM_Plex_Sans } from "next/font/google";
@@ -108,6 +109,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="dark">
       <body className={`antialiased ${instrumentSerif.variable} ${jetbrainsMono.variable} ${ibmPlexSans.variable}`}>
         <Providers>
+          <RedditPixel />
           <ToastProvider>
             <ModalProvider>
               {children}

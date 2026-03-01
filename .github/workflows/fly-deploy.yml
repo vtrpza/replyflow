@@ -25,6 +25,7 @@ jobs:
           NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
           NEXT_PUBLIC_PRE_RELEASE: ${{ secrets.NEXT_PUBLIC_PRE_RELEASE }}
           NEXT_PUBLIC_BILLING_ENABLED: ${{ secrets.NEXT_PUBLIC_BILLING_ENABLED }}
+          NEXT_PUBLIC_REDDIT_PIXEL_ID: ${{ secrets.NEXT_PUBLIC_REDDIT_PIXEL_ID }}
   deploy:
     name: Deploy app
     needs: quality
@@ -41,9 +42,11 @@ jobs:
           --build-arg NEXT_PUBLIC_APP_VERSION=${GITHUB_SHA:0:7}
           --build-arg NEXT_PUBLIC_PRE_RELEASE=$NEXT_PUBLIC_PRE_RELEASE
           --build-arg NEXT_PUBLIC_BILLING_ENABLED=$NEXT_PUBLIC_BILLING_ENABLED
+          --build-arg NEXT_PUBLIC_REDDIT_PIXEL_ID=$NEXT_PUBLIC_REDDIT_PIXEL_ID
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
           NEXT_PUBLIC_PRE_RELEASE: ${{ secrets.NEXT_PUBLIC_PRE_RELEASE }}
           NEXT_PUBLIC_BILLING_ENABLED: ${{ secrets.NEXT_PUBLIC_BILLING_ENABLED }}
+          NEXT_PUBLIC_REDDIT_PIXEL_ID: ${{ secrets.NEXT_PUBLIC_REDDIT_PIXEL_ID }}
