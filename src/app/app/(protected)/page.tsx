@@ -57,7 +57,7 @@ function toPercent(part: number, total: number): number {
 
 export default function Dashboard() {
   const toast = useToast();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const isPt = locale === "pt-BR";
 
   const [stats, setStats] = useState<Stats | null>(null);
@@ -318,7 +318,7 @@ export default function Dashboard() {
                 return (
                   <div key={item.type}>
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-zinc-200">{item.type}</span>
+                      <span className="text-zinc-200">{t(`contractType.${item.type}`)}</span>
                       <span className="rf-number text-[var(--rf-muted)]">
                         {item.count}
                       </span>

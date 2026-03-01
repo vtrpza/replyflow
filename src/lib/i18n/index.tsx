@@ -135,6 +135,13 @@ const messages: Record<Locale, Record<string, string>> = {
     "onboarding.hint.sources": "Revise suas fontes de vagas. Elas ja foram provisionadas automaticamente.",
     "onboarding.hint.jobs": "Explore as vagas e revele um contato ou crie um rascunho para completar o onboarding.",
     "onboarding.hint.markDone": "Marcar como feito",
+
+    "contractType.CLT": "CLT",
+    "contractType.PJ": "PJ",
+    "contractType.Freela": "Freela",
+    "contractType.Internship": "Estágio",
+    "contractType.Unknown": "Desconhecido",
+    "matchReason.contractLabel": "Contrato: ",
   },
   en: {
     "language.switch": "Language",
@@ -208,6 +215,13 @@ const messages: Record<Locale, Record<string, string>> = {
     "onboarding.hint.sources": "Review your job sources. They were auto-provisioned for you.",
     "onboarding.hint.jobs": "Explore jobs and reveal a contact or create a draft to complete onboarding.",
     "onboarding.hint.markDone": "Mark as done",
+
+    "contractType.CLT": "Employment (LATAM)",
+    "contractType.PJ": "Contract",
+    "contractType.Freela": "Freelance",
+    "contractType.Internship": "Internship",
+    "contractType.Unknown": "Unknown",
+    "matchReason.contractLabel": "Contract: ",
   },
 };
 

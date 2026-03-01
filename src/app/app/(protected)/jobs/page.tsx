@@ -84,8 +84,16 @@ const SOURCE_TYPE_LABELS: Record<string, { label: string; color: string }> = {
 export default function JobsPage() {
   const router = useRouter();
   const toast = useToast();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const isPt = locale === "pt-BR";
+  const contractTypeLabel = (value: string) => t(`contractType.${value}`);
+  const localizeMatchReason = (reason: string) => {
+    if (reason.startsWith("Contract: ")) {
+      const type = reason.slice(9).trim();
+      return t("matchReason.contractLabel") + contractTypeLabel(type);
+    }
+    return reason;
+  };
   const { snapshot, refresh: refreshPlanSnapshot } = usePlanSnapshot();
   const { completeStep: completeOnboardingStep, state: onboardingState } = useOnboarding();
   const onboardingTriggered = useRef(false);
@@ -460,9 +468,9 @@ export default function JobsPage() {
                 className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-sm text-zinc-300"
               >
                 <option value="">{isPt ? "Todos" : "All"}</option>
-                <option value="CLT">CLT</option>
-                <option value="PJ">PJ</option>
-                <option value="Freela">Freela</option>
+                <option value="CLT">{contractTypeLabel("CLT")}</option>
+                <option value="PJ">{contractTypeLabel("PJ")}</option>
+                <option value="Freela">{contractTypeLabel("Freela")}</option>
               </select>
             </div>
             <div>
@@ -641,7 +649,7 @@ export default function JobsPage() {
                         )}
                         {job.salary && <span className="text-emerald-400">{job.salary}</span>}
                         {job.location && <span>{job.location}</span>}
-                        {job.contractType && <span className="px-1.5 py-0.5 text-xs bg-zinc-800 rounded">{job.contractType}</span>}
+                        {job.contractType && <span className="px-1.5 py-0.5 text-xs bg-zinc-800 rounded">{contractTypeLabel(job.contractType)}</span>}
                         {job.experienceLevel && <span className="px-1.5 py-0.5 text-xs bg-zinc-800 rounded">{job.experienceLevel}</span>}
                         <span className="text-xs">{new Date(job.createdAt).toLocaleDateString()}</span>
                       </div>
@@ -656,7 +664,7 @@ export default function JobsPage() {
                       )}
                       {job.matchExplain?.reasons?.length ? (
                         <p className="text-xs text-cyan-300 mt-2">
-                          {job.matchExplain.reasons[0]}
+                          {localizeMatchReason(job.matchExplain.reasons[0])}
                         </p>
                       ) : null}
                     </div>
@@ -666,7 +674,7 @@ export default function JobsPage() {
                         <Tooltip
                           content={
                             job.matchExplain?.reasons?.length
-                              ? job.matchExplain.reasons.slice(0, 2).join(" • ")
+                              ? job.matchExplain.reasons.slice(0, 2).map(localizeMatchReason).join(" • ")
                               : isPt
                                 ? "Score de match com base em skills, remoto, contrato, senioridade e local."
                                 : "Match score based on skills, remote, contract, level, and location."
@@ -805,7 +813,7 @@ export default function JobsPage() {
                         <div className="flex flex-wrap gap-1.5">
                           {job.matchExplain.reasons.slice(0, 4).map((reason) => (
                             <span key={reason} className="px-2 py-0.5 text-xs bg-cyan-500/10 text-cyan-300 rounded">
-                              {reason}
+                              {localizeMatchReason(reason)}
                             </span>
                           ))}
                         </div>

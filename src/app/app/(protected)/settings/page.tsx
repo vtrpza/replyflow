@@ -96,7 +96,7 @@ function SettingsPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const toast = useToast();
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const isPt = locale === "pt-BR";
   const { completeStep: completeOnboardingStep, state: onboardingState } = useOnboarding();
   const [profile, setProfile] = useState<Profile>({
@@ -925,7 +925,7 @@ function SettingsPageContent() {
                         const types = e.target.checked
                           ? [...profile.preferredContractTypes, ct]
                           : profile.preferredContractTypes.filter(
-                              (t) => t !== ct
+                              (x) => x !== ct
                             );
                         setProfile({
                           ...profile,
@@ -934,7 +934,7 @@ function SettingsPageContent() {
                       }}
                       className="w-4 h-4 rounded border-zinc-700 text-emerald-500"
                     />
-                    <span className="text-sm text-zinc-300">{ct}</span>
+                    <span className="text-sm text-zinc-300">{t(`contractType.${ct}`)}</span>
                   </label>
                 ))}
               </div>
