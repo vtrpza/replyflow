@@ -86,16 +86,6 @@ The goal is to help developers run job search with more structure, context, and 
 
 ---
 
-## Screenshots
-
-<img width="1342" height="645" alt="screenshot-fullpage-2026-02-28T03-07-22" src="https://github.com/user-attachments/assets/6d30f870-739d-46f9-94a8-11e55ec8b3c8" />
-
-
-<img width="1342" height="645" alt="screenshot-fullpage-2026-02-28T03-08-18" src="https://github.com/user-attachments/assets/bcda0ddb-e4a4-450a-8055-ef225c50179e" />
-
-
----
-
 ## Quick start
 
 ```bash
