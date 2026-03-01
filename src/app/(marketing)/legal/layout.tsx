@@ -33,10 +33,21 @@ export default function LegalLayout({
       </main>
 
       <footer className="border-t border-[var(--rf-border)] py-8 px-6">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
           <p className="text-xs text-zinc-600 font-mono">
             &copy; {new Date().getFullYear()} ReplyFlow.{" "}
             {isPt ? "Todos os direitos reservados." : "All rights reserved."}
+          </p>
+          <p className="text-xs text-zinc-500 font-mono tracking-wide">
+            Built and founded by{" "}
+            <a
+              href="https://github.com/vtrpza"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-zinc-400 hover:text-emerald-400/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 rounded"
+            >
+              Vitor Pouza
+            </a>
           </p>
         </div>
       </footer>
