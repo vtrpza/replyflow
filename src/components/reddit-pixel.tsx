@@ -27,13 +27,15 @@ export function RedditPixel(): null {
 
     // Reddit snippet: define rdt queue and load pixel script
     if (!window.rdt) {
+      type RdtQueue = { callQueue: unknown[]; sendEvent?: (...a: unknown[]) => void };
       const p = (window.rdt = function (...args: unknown[]) {
-        if (typeof (p as { sendEvent?: (...a: unknown[]) => void }).sendEvent === "function") {
-          (p as { sendEvent: (...a: unknown[]) => void }).sendEvent.apply(p, args);
+        const self = p as unknown as RdtQueue;
+        if (typeof self.sendEvent === "function") {
+          self.sendEvent.apply(p, args);
         } else {
-          (p as { callQueue: unknown[] }).callQueue.push(args);
+          self.callQueue.push(args);
         }
-      }) as { callQueue: unknown[]; sendEvent?: (...a: unknown[]) => void };
+      }) as unknown as RdtQueue;
       p.callQueue = [];
       const t = document.createElement("script");
       t.src = `https://www.redditstatic.com/ads/pixel.js?pixel_id=${REDDIT_PIXEL_ID}`;
