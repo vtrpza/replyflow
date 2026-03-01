@@ -1,4 +1,5 @@
 import { getBillingConfig } from "@/lib/billing/config";
+import { formatPriceDual } from "@/lib/billing/display-prices";
 import type {
   BillingPaymentSnapshot,
   BillingProvider,
@@ -116,11 +117,13 @@ export class AsaasBillingProvider implements BillingProvider {
   }): Promise<CheckoutSessionResult> {
     const customer = await this.createOrGetCustomer(input.user);
     const client = this.getClient();
+    const config = getBillingConfig();
+    const priceLabel = formatPriceDual(config.PLAN_PRO_MONTHLY_BRL_CENTS, config.PLAN_PRO_MONTHLY_USD_CENTS);
 
     const checkout = await client.createCheckout({
       customer: customer.providerCustomerId,
       name: "ReplyFlow Pro",
-      description: "ReplyFlow Pro mensal (R$ 39)",
+      description: `ReplyFlow Pro mensal (${priceLabel})`,
       value: input.planPriceCents / 100,
       successUrl: input.successUrl,
       cancelUrl: input.cancelUrl,

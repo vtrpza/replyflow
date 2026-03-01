@@ -20,6 +20,7 @@ const BillingConfigSchema = z.object({
   ASAAS_SUCCESS_URL: z.string().url(),
   ASAAS_CANCEL_URL: z.string().url(),
   PLAN_PRO_MONTHLY_BRL_CENTS: z.coerce.number().int().positive().default(3900),
+  PLAN_PRO_MONTHLY_USD_CENTS: z.coerce.number().int().positive().default(800),
   BILLING_GRACE_DAYS: z.coerce.number().int().min(0).max(14).default(3),
   BILLING_RECONCILE_TOKEN: z.string().min(16),
 });

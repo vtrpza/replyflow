@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { captureEvent } from "@/lib/analytics";
 
 import { BILLING_ENABLED } from "@/lib/config";
-import { useI18n } from "@/lib/i18n";
+import { getProPriceDisplay } from "@/lib/billing/display-prices";
 
 type BillingState = {
   planKey: "free" | "pro_monthly";
@@ -31,8 +31,6 @@ function formatDate(value: string | null): string {
 
 export default function BillingPage() {
   const router = useRouter();
-  const { locale } = useI18n();
-  const isPt = locale === "pt-BR";
   const [state, setState] = useState<BillingState | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -120,7 +118,7 @@ export default function BillingPage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Billing</h1>
         <p className="text-sm text-zinc-500 mt-1">
-          Gerencie seu plano ReplyFlow Pro (R$ 39/mês)
+          Gerencie seu plano ReplyFlow Pro ({getProPriceDisplay()}/mês)
         </p>
       </div>
 

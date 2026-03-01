@@ -7,6 +7,7 @@ import { LanguageSwitch } from "@/components/ui/language-switch";
 import { MobileLanguageControl } from "@/components/ui/mobile-language-control";
 import { PRE_RELEASE } from "@/lib/config";
 import { analytics } from "@/lib/analytics";
+import { FREE_PRICE_DISPLAY, getProPriceDisplay } from "@/lib/billing/display-prices";
 
 /* ───────────────────────── hooks ───────────────────────── */
 
@@ -828,7 +829,7 @@ function Pricing() {
   const plans = [
     {
       name: "Free",
-      price: "R$ 0",
+      price: FREE_PRICE_DISPLAY,
       period: isPt ? "para sempre" : "forever",
       desc: isPt ? "Estruture sua rotina sem custo inicial." : "Structure your routine with zero upfront cost.",
       features: [
@@ -844,7 +845,7 @@ function Pricing() {
     },
     {
       name: "Pro",
-      price: "R$ 39",
+      price: getProPriceDisplay(),
       period: isPt ? "/mês" : "/month",
       badge: isPt ? "em breve" : "coming soon",
       desc: isPt
@@ -892,7 +893,7 @@ function Pricing() {
               {isPt ? "Acesso completo" : "Full access"}
             </h3>
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="text-4xl font-mono font-bold text-white">R$ 0</span>
+              <span className="text-4xl font-mono font-bold text-white">{FREE_PRICE_DISPLAY}</span>
               <span className="text-sm text-[var(--rf-muted)]">
                 {isPt ? "durante o pré-lançamento" : "during pre-release"}
               </span>
