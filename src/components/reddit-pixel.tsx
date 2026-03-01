@@ -4,11 +4,46 @@ import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 
 const REDDIT_PIXEL_ID = process.env.NEXT_PUBLIC_REDDIT_PIXEL_ID;
+/** Must match cookie name set in app/(protected)/layout when wasCreated */
+const NEW_SIGNUP_COOKIE = "replyflow_new_signup";
 
 declare global {
   interface Window {
     rdt?: (method: string, ...args: unknown[]) => void;
   }
+}
+
+function generateConversionId(prefix = "ev"): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
+
+/**
+ * Send the same conversion to Reddit Conversions API (server-side) for deduplication with the pixel.
+ */
+function sendRedditCapi(eventName: string, conversionId: string): void {
+  fetch("/api/telemetry/reddit-conversion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventName, conversionId }),
+  }).catch(() => {});
+}
+
+/**
+ * Track a Reddit conversion event with a unique conversionId (for dedup with CAPI).
+ * Use for events you set up in the Event Setup Tool (e.g. SignUp, Purchase).
+ * Also sends the event to the Conversions API with the same conversionId.
+ */
+export function trackRedditConversion(
+  eventName: string,
+  conversionId?: string,
+): void {
+  if (typeof window === "undefined" || !window.rdt || !REDDIT_PIXEL_ID) return;
+  const id = conversionId ?? generateConversionId(eventName.toLowerCase());
+  window.rdt("track", eventName, { conversionId: id });
+  sendRedditCapi(eventName, id);
 }
 
 /**
@@ -65,8 +100,18 @@ export function RedditPixel(): null {
     } else {
       window.rdt("init", REDDIT_PIXEL_ID);
     }
-    window.rdt("track", "PageVisit");
-  }, [status, session?.user?.email, session?.user?.id]);
+    window.rdt("track", "PageVisit", {
+      conversionId: generateConversionId("pagevisit"),
+    });
+
+    // If server set new-signup cookie (first session after signup), fire Reddit SignUp with same conversion_id and clear cookie
+    if (typeof document !== "undefined" && document.cookie.includes(`${NEW_SIGNUP_COOKIE}=`)) {
+      const match = document.cookie.match(new RegExp(`${NEW_SIGNUP_COOKIE}=([^;]+)`));
+      const signupConversionId = match?.[1]?.trim();
+      trackRedditConversion("SignUp", signupConversionId ?? undefined);
+      document.cookie = `${NEW_SIGNUP_COOKIE}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    }
+  }, [status, session?.user]);
 
   return null;
 }

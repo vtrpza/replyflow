@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { Sidebar } from "@/components/ui/sidebar";
 import { MobileTopBar } from "@/components/ui/mobile-top-bar";
 import { MobileTabBar } from "@/components/ui/mobile-tab-bar";
@@ -5,6 +6,13 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { ensureUserExists, getOrCreateProfile } from "@/lib/plan";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { sendRedditConversionEvent } from "@/lib/telemetry/reddit-capi";
+
+const REDDIT_SIGNUP_COOKIE = "replyflow_new_signup";
+
+function generateConversionId(): string {
+  return crypto.randomUUID?.() ?? `ev_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
 
 export default async function AppLayout({
   children,
@@ -16,7 +24,19 @@ export default async function AppLayout({
     redirect("/app/signin");
   }
 
-  const userId = ensureUserExists(session);
+  const { userId, wasCreated } = ensureUserExists(session);
+  if (wasCreated) {
+    const conversionId = generateConversionId();
+    await sendRedditConversionEvent({
+      eventName: "SignUp",
+      conversionId,
+      user: {
+        ...(session.user?.email && { email: session.user.email }),
+        ...(session.user?.id && { external_id: session.user.id }),
+      },
+    });
+    (await cookies()).set(REDDIT_SIGNUP_COOKIE, conversionId, { maxAge: 60, path: "/" });
+  }
   getOrCreateProfile(userId);
 
   return (
