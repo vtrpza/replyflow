@@ -300,9 +300,8 @@ export function runSourceDiscovery(userId: string, minAutoEnableConfidence = 80)
     }
 
     const confidence = normalizeConfidence(source.confidence, 80);
-    const shouldEnableCandidate = source.enabledByDefault === undefined
-      ? confidence >= minAutoEnableConfidence
-      : !!source.enabledByDefault;
+    // All connectors are enabled by default; only explicit false disables
+    const shouldEnableCandidate = source.enabledByDefault === false ? false : true;
     const shouldEnable = shouldEnableCandidate && canAutoEnable(source.sourceType as SourceType);
 
     const prefixMap: Record<string, string> = {
