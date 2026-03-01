@@ -51,12 +51,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const titles: Record<Locale, { title: string; description: string }> = {
     "pt-BR": {
-      title: "ReplyFlow — Pipeline de busca de vagas para devs que assumem ownership",
-      description: "Acompanhe leads, escreva emails, envie, faça follow-up e mensure respostas — em um só lugar.",
+      title: "ReplyFlow — Um pipeline para toda sua busca de emprego",
+      description: "Vagas, etapas de ATS, contatos de recrutadores e follow-ups em um lugar só. Grátis durante o pré-lançamento.",
     },
     en: {
-      title: "ReplyFlow — Job-search workflow product for developers who take ownership",
-      description: "Track leads, draft emails, send, follow up, and measure replies — in one place.",
+      title: "ReplyFlow — One pipeline for your entire job search",
+      description: "Jobs, ATS stages, recruiter contacts, and follow-ups in one place. Free during pre-release.",
     },
   };
 
@@ -68,7 +68,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     openGraph: {
       title: "ReplyFlow",
-      description: "Outreach pipeline for devs who take ownership.",
+      description: "One pipeline for jobs, contacts, and follow-ups. Free for early adopters.",
       images: [
         {
           url: "/brand/replyflow/replyflow-og.png",

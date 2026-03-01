@@ -131,55 +131,55 @@ function useTypewriter(lines: string[], speed = 40, delay = 600) {
 /* ───────────────────────── data ───────────────────────── */
 
 const STATS = [
-  { value: 1, suffix: "", enLabel: "Unified pipeline", ptLabel: "Pipeline único" },
-  { value: 71, suffix: "+", enLabel: "Connectors", ptLabel: "Conectores" },
-  { value: 10, suffix: "+", enLabel: "Templates", ptLabel: "Templates" },
-  { value: 2, suffix: "", enLabel: "Outreach languages", ptLabel: "Idiomas de outreach" },
+  { value: 6, suffix: "", enLabel: "Source connectors", ptLabel: "Conectores de fonte" },
+  { value: 48, suffix: "+", enLabel: "Pre-built boards", ptLabel: "Boards pré-configurados" },
+  { value: 10, suffix: "", enLabel: "Outreach templates", ptLabel: "Templates de outreach" },
+  { value: 2, suffix: "", enLabel: "Languages (PT-BR + EN)", ptLabel: "Idiomas (PT-BR + EN)" },
 ];
 
 const TERMINAL_LINES_EN = [
   "$ replyflow collect --sources github,greenhouse,lever",
-  "  ✓ Opportunities centralized in one inbox",
+  "  ✓ 23 new roles from 4 sources",
   "$ replyflow prioritize --profile ./cv.json",
-  "  ✓ High-fit roles ranked for this week",
+  "  ✓ 8 high-fit roles ranked for this week",
   "$ replyflow outreach --lang en --account gmail",
-  "  ✓ Personalized emails sent with full history",
+  "  ✓ 3 personalized emails queued to send",
   "$ replyflow followup --cadence 4d",
-  "  ✓ Next actions scheduled per role and contact",
+  "  ✓ 5 follow-ups scheduled for Thursday",
 ];
 
 const TERMINAL_LINES_PT = [
   "$ replyflow collect --sources github,greenhouse,lever",
-  "  ✓ Oportunidades centralizadas em um só inbox",
+  "  ✓ 23 novas vagas de 4 fontes",
   "$ replyflow prioritize --profile ./cv.json",
-  "  ✓ Vagas de maior fit rankeadas para a semana",
+  "  ✓ 8 vagas de alto fit rankeadas para a semana",
   "$ replyflow outreach --lang pt-br --account gmail",
-  "  ✓ E-mails personalizados enviados com histórico",
+  "  ✓ 3 e-mails personalizados na fila de envio",
   "$ replyflow followup --cadence 4d",
-  "  ✓ Próximas ações agendadas por vaga e contato",
+  "  ✓ 5 follow-ups agendados para quinta-feira",
 ];
 
 const WHY_USE_ITEMS = [
   {
     id: "pain",
-    ptTitle: "Sem processo, sua busca vira ruído",
-    ptDesc: "Vaga salva no LinkedIn, candidatura no ATS, contato no inbox, follow-up em lembrete solto. Você trabalha muito, mas sem clareza de prioridade e sem histórico confiável.",
-    enTitle: "Without a system, your search turns into noise",
-    enDesc: "Saved jobs in LinkedIn, ATS submissions elsewhere, recruiter contacts in inbox, follow-ups in random reminders. High effort, low clarity, weak continuity.",
+    ptTitle: "Sua busca vive em 5 ferramentas que não se conversam",
+    ptDesc: "Vagas salvas no LinkedIn. Candidaturas no Greenhouse. Threads de recrutador no Gmail. Follow-ups no app de notas. Você se esforça de verdade mas perde de vista quem contatou, em que etapa está e o que fazer a seguir.",
+    enTitle: "Your search lives in 5 tools that don't talk to each other",
+    enDesc: "Jobs saved in LinkedIn. Applications tracked in Greenhouse. Recruiter threads buried in Gmail. Follow-ups in your notes app. You put in real effort but lose track of who you contacted, what stage you're at, and what to do next.",
   },
   {
     id: "solution",
-    ptTitle: "Feito para busca de emprego no mercado real",
-    ptDesc: "ReplyFlow unifica vaga, ATS, contato e outreach no mesmo fluxo. Você coleta oportunidades, prioriza por fit, contata com contexto e executa follow-up sem perder timing.",
-    enTitle: "Built for real-market job search",
-    enDesc: "ReplyFlow unifies jobs, ATS, contacts, and outreach in one flow. Collect opportunities, prioritize by fit, reach out with context, and follow up on schedule.",
+    ptTitle: "Um pipeline. Vagas, contatos, mensagens, etapas — tudo conectado.",
+    ptDesc: "Cada vaga tem sua etapa de ATS, contatos de recrutador, histórico de outreach e próxima ação em um registro só. Você vê o que precisa de atenção na semana sem trocar de aba.",
+    enTitle: "One pipeline. Jobs, contacts, messages, stages — all linked.",
+    enDesc: "Every job has its ATS stage, recruiter contacts, outreach history, and next action in one record. You see what needs attention this week without switching tabs.",
   },
   {
     id: "outcome",
-    ptTitle: "Direção e consistência no que importa",
-    ptDesc: "Menos candidaturas no escuro. Mais clareza de decisão, mais disciplina de execução e mais oportunidades reais de resposta.",
-    enTitle: "Direction and consistency where it matters",
-    enDesc: "Fewer blind applications. Better decisions, more disciplined execution, and more real reply opportunities.",
+    ptTitle: "O resultado: você sabe exatamente onde está",
+    ptDesc: "Cada oportunidade aberta tem status claro e próximo passo definido. Você para de adivinhar e passa a executar com contexto completo.",
+    enTitle: "The result: you know exactly where you stand",
+    enDesc: "Every open opportunity has a clear status and next step. You stop guessing and start executing with full context.",
   },
 ];
 
@@ -232,7 +232,7 @@ const BENTO_FEATURES = [
   {
     size: "wide" as const,
     visual: "chart" as const,
-    tag: "PRIORIZATION",
+    tag: "PRIORITIZATION",
     title: "Prioritization by technical fit",
     desc: "Rank your week by technical alignment and context quality. Why it matters: better allocation of effort and attention.",
     ptTitle: "Priorização por fit técnico",
@@ -243,33 +243,33 @@ const BENTO_FEATURES = [
 const HOW_IT_WORKS = [
   {
     step: "01",
-    enTitle: "Connect sources",
-    enDesc: "Bring jobs and contacts into one flow from your core channels.",
-    ptTitle: "Conecte suas fontes",
-    ptDesc: "Traga vagas e contatos para um fluxo único a partir dos seus canais principais.",
+    enTitle: "Add your sources",
+    enDesc: "Connect GitHub repos, Greenhouse, Lever, Ashby, Workable, or Recruitee boards. Jobs sync into your pipeline.",
+    ptTitle: "Adicione suas fontes",
+    ptDesc: "Conecte repositórios do GitHub, Greenhouse, Lever, Ashby, Workable ou Recruitee. As vagas sincronizam no seu pipeline.",
   },
   {
     step: "02",
-    enTitle: "Prioritize and contact",
-    enDesc: "Select what deserves effort first, personalize your message, and keep every action logged.",
-    ptTitle: "Priorize e contate",
-    ptDesc: "Defina o que merece esforço primeiro, personalize a mensagem e registre cada ação.",
+    enTitle: "Rank and reach out",
+    enDesc: "Sort roles by technical fit. Find recruiter contacts. Draft personalized emails and send from your Gmail.",
+    ptTitle: "Ranqueie e contate",
+    ptDesc: "Ordene vagas por fit técnico. Encontre contatos de recrutadores. Crie e-mails personalizados e envie pelo seu Gmail.",
   },
   {
     step: "03",
-    enTitle: "Execute follow-ups",
-    enDesc: "Keep ATS and outreach in sync with a clear cadence and complete history per opportunity.",
-    ptTitle: "Faça follow-up",
-    ptDesc: "Mantenha ATS e contato direto sincronizados com cadência clara e histórico completo por oportunidade.",
+    enTitle: "Follow up without dropping balls",
+    enDesc: "Track ATS stages, outreach attempts, and replies per role. See what needs attention today.",
+    ptTitle: "Faça follow-up sem perder o fio",
+    ptDesc: "Acompanhe etapas de ATS, tentativas de outreach e respostas por vaga. Veja o que precisa de atenção hoje.",
   },
 ];
 
 const FAQ_ITEMS = [
   {
     q: "Is ReplyFlow a job board?",
-    a: "No. It is an execution system for your search: jobs, ATS stages, recruiter contacts, and follow-ups in one operational flow.",
+    a: "No. It is a pipeline tool for your search: jobs, ATS stages, recruiter contacts, and follow-ups in one place.",
     ptQ: "A ReplyFlow é um job board?",
-    ptA: "Não. É um sistema de execução da busca: vagas, etapas de ATS, contatos e follow-ups no mesmo fluxo operacional.",
+    ptA: "Não. É uma ferramenta de pipeline para sua busca: vagas, etapas de ATS, contatos e follow-ups em um lugar só.",
   },
   {
     q: "Do I need outreach for it to be useful?",
@@ -291,9 +291,9 @@ const FAQ_ITEMS = [
   },
   {
     q: "Is it secure?",
-    a: "Security is handled through scoped OAuth permissions and controlled access to your connected account data.",
+    a: "Yes. Your Gmail credentials never touch our servers. Security is handled through scoped OAuth permissions and controlled access to your connected account data.",
     ptQ: "É seguro?",
-    ptA: "A segurança é tratada com permissões OAuth escopadas e controle de acesso aos dados das contas conectadas.",
+    ptA: "Sim. Suas credenciais do Gmail nunca passam pelos nossos servidores. A segurança é tratada com permissões OAuth escopadas e controle de acesso aos dados das contas conectadas.",
   },
   {
     q: "Does it work for Brazil and international roles?",
@@ -464,7 +464,7 @@ function Hero() {
             <span className="hidden sm:inline text-zinc-700">•</span>
             <span className="text-xs font-mono text-[var(--rf-muted)]">
               {PRE_RELEASE
-                ? (isPt ? "acesso Pro completo, sem custo" : "full Pro access, zero cost")
+                ? (isPt ? "tudo grátis para early adopters" : "all features free for early adopters")
                 : (isPt ? "para devs em busca ativa" : "for devs in active search")}
             </span>
           </div>
@@ -472,22 +472,22 @@ function Hero() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-[var(--font-serif)] italic tracking-tight leading-[1.08] mb-6">
             <span className="text-white">
               {isPt
-                ? "Menos candidaturas no escuro."
-                : "Stop applying blindly."}
+                ? "Sua busca está espalhada."
+                : "Your job search is scattered."}
             </span>
             <br />
             <span className="rf-gradient-text">
               {isPt
-                ? "Mais entrevistas."
-                : "Start getting interviews."}
+                ? "Transforme em sistema."
+                : "Make it a system."}
             </span>
           </h1>
 
           <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed font-[var(--font-sans-display)]">
             {PRE_RELEASE
               ? (isPt
-                ? "ReplyFlow está em pré-lançamento com acesso total liberado. Organize oportunidades, priorize por fit técnico e execute follow-ups — tudo sem custo, sem limites."
-                : "ReplyFlow is in pre-release with full access unlocked. Organize opportunities, prioritize by technical fit, and execute follow-ups — all free, no limits.")
+                ? "Um pipeline para vagas, etapas de ATS, contatos de recrutadores e follow-ups. Conecte 6 tipos de fonte. Priorize por fit. Envie outreach pelo seu Gmail."
+                : "One pipeline for jobs, ATS stages, recruiter contacts, and follow-ups. Connect 6 source types. Prioritize by fit. Send outreach from your Gmail.")
               : (isPt
                 ? "ReplyFlow transforma sua busca de emprego em um sistema operacional: você organiza oportunidades em um fluxo único, prioriza onde vale investir energia e mantém follow-up consistente."
                 : "ReplyFlow turns your job search into an operating system: organize opportunities in one flow, prioritize where effort matters, and keep follow-ups consistent.")}
@@ -515,7 +515,7 @@ function Hero() {
 
           <p className="mt-5 text-xs text-zinc-600 font-mono">
             {PRE_RELEASE
-              ? (isPt ? "pré-lançamento — todos os recursos Pro liberados" : "pre-release — all Pro features unlocked")
+              ? (isPt ? "sem cartão de crédito — cancele ou exporte seus dados quando quiser" : "no credit card — cancel or export your data anytime")
               : (isPt ? "comece sem custo — organize sua busca com método" : "start free — run your search with structure")}
           </p>
         </div>
@@ -582,7 +582,7 @@ function StatsBar() {
               : (isPt ? "Cancele quando quiser" : "Cancel anytime")}
           </span>
           <span className="hidden sm:inline text-zinc-700">|</span>
-          <span>{isPt ? "Feito para devs BR" : "Built for BR developers"}</span>
+          <span>{isPt ? "Funciona para vagas BR + internacionais" : "Works for BR + international roles"}</span>
         </div>
       </div>
     </section>
@@ -629,7 +629,7 @@ function ProblemSolution() {
             {isPt ? "POR QUE USAR" : "WHY USE IT"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white tracking-tight max-w-3xl mx-auto">
-            {isPt ? "Você não precisa de mais vagas. Precisa de direção." : "You don't need more listings. You need direction."}
+            {isPt ? "Você não precisa de mais vagas. Precisa de um lugar só para operar sua busca." : "You don't need more listings. You need one place to run your search."}
           </h2>
           <p className="mt-4 text-sm sm:text-base text-[var(--rf-muted)] max-w-2xl mx-auto">
             {isPt
@@ -715,10 +715,10 @@ function Features() {
       <div ref={revealRef} className="rf-reveal max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <p className="text-xs font-mono text-[var(--rf-cyan)] uppercase tracking-widest mb-3">
-            {isPt ? "PILARES" : "CORE PILLARS"}
+            {isPt ? "FUNCIONALIDADES" : "FEATURES"}
           </p>
           <h2 className="text-3xl sm:text-4xl font-[var(--font-serif)] italic text-white">
-            {isPt ? "Pilares operacionais para busca séria." : "Operational pillars for serious job search."}
+            {isPt ? "Seis ferramentas. Um fluxo." : "Six tools. One workflow."}
           </h2>
         </div>
 
@@ -753,8 +753,8 @@ function Features() {
         <div className="mt-12 text-center">
           <p className="text-sm text-zinc-600 font-mono">
             {isPt
-              ? "\"Menos ruído. Mais direção de execução.\""
-              : "\"Less noise. More execution direction.\""}
+              ? "\"Menos troca de aba. Mais execução.\""
+              : "\"Less tab-switching. More doing.\""}
           </p>
         </div>
       </div>
@@ -1118,14 +1118,14 @@ function FinalCta() {
       <div ref={revealRef} className="rf-reveal relative max-w-3xl mx-auto text-center">
         <h2 className="text-3xl sm:text-4xl md:text-5xl font-[var(--font-serif)] italic text-white tracking-tight mb-5">
           {PRE_RELEASE
-            ? (isPt ? "Acesso total. Antes de todo mundo." : "Full access. Before everyone else.")
+            ? (isPt ? "Pare de alternar entre abas. Comece a operar sua busca." : "Stop juggling tabs. Start running your search.")
             : (isPt ? "Pare de improvisar sua busca de emprego." : "Stop improvising your job search.")}
         </h2>
         <p className="text-base sm:text-lg text-[var(--rf-muted)] max-w-xl mx-auto mb-8 leading-relaxed">
           {PRE_RELEASE
             ? (isPt
-              ? "O ReplyFlow está em pré-lançamento. Todos os recursos Pro estão liberados para quem começar agora — sem custo, sem limites."
-              : "ReplyFlow is in pre-release. Every Pro feature is unlocked for those who start now — no cost, no limits.")
+              ? "Pré-lançamento: todos os recursos liberados, custo zero. Entre agora e ajude a moldar o produto com seu feedback."
+              : "Pre-release: all features unlocked, zero cost. Join now and shape the product with your feedback.")
             : (isPt
               ? "Organize seu pipeline, priorize melhor e execute com consistência do primeiro contato ao follow-up."
               : "Organize your pipeline, prioritize better, and execute consistently from first contact to follow-up.")}
@@ -1140,7 +1140,7 @@ function FinalCta() {
           >
             <span className="font-mono text-xs opacity-70">&gt;</span>
             {PRE_RELEASE
-              ? (isPt ? "Entrar no pré-lançamento" : "Join the pre-release")
+              ? (isPt ? "Começar grátis" : "Get started free")
               : (isPt ? "Começar grátis no ReplyFlow" : "Start free on ReplyFlow")}
           </Link>
           <Link
